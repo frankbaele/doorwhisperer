@@ -1,87 +1,76 @@
-var mousePosition = require('touch-position')();
-var drawTriangles = require('draw-triangles-2d');
-var createApp = require('canvas-loop');
-document.addEventListener("DOMContentLoaded", function () {
-    // get a Canvas2D context
-    var ctx = require('2d-context')();
-    var canvas = ctx.canvas;
-    document.body.appendChild(canvas);
+var THREE = require('three.js');
+var scene, camera, renderer;
+var geometry, material, mesh, wireframe;
+require('./pointerlock');
 
-    // get some cool colours
-    var colors = require('array-range')(100).map(function () {
-        var hue = Math.random() * 260;
-        return 'hsl(' + hue.toFixed(15) + ', 50%, 50%)'
-    });
 
-    // set up our 3D camera
-    var camera = require('perspective-camera')({
-        fov: Math.PI / 4,
-        near: 0.01,
-        far: 100
-    });
+function init() {
+    scene = new THREE.Scene();
+    var texture = THREE.ImageUtils.loadTexture('img/wall.jpg', {}, function() {
+        camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera.position.z = 300;
+        var light = new THREE.PointLight(0xffffff);
+        light.position.set(-100,200,100);
+        scene.add(light);
 
-    // get a 3D mesh (any simplicial complex will work)
-    var icosphere = require('icosphere')(1);
+        material = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'gray'} );
+        wireframe = new THREE.MeshBasicMaterial( { wireframe:true, color: 'gray'} );
+        geometry = new THREE.BoxGeometry( 600, 300,10  );
+        var center = new THREE.Mesh( geometry, material );
+        scene.add(center);
 
-    var time = 0;
+        var left =  new THREE.Mesh( geometry, material );
+        left.rotateY(Math.PI / 2);
+        left.position.x = -300;
+        left.position.z = 300;
+        scene.add(left);
 
-    // create a full-screen render loop for our canvas
-    var app = createApp(canvas).start();
-    app.on('tick', function (dt) {
-        time += dt / 1000;
+        var right =  new THREE.Mesh( geometry, material);
+        right.rotateY(Math.PI / 2);
+        right.position.x = 300;
+        right.position.z = 300;
+        scene.add(right);
 
-        // viewport bounds
-        var width = app.shape[0],
-            height = app.shape[1];
-        var viewport = [0, 0, width, height];
+        var behind =  new THREE.Mesh( geometry, wireframe);
+        behind.position.z = 600;
 
-        ctx.clearRect(0, 0, width, height);
+        scene.add(behind);
 
-        // rotate our camera around center on XZ plane
-        var orbit = 3.5;
-        var x = Math.cos(time / 4) * orbit;
-        var z = Math.sin(time / 4) * orbit;
-        var y = Math.tan(time / 4) * orbit;
-        camera.identity();
-        camera.translate([x, y, z]);
-        camera.lookAt([0, 0, 0]);
-        camera.viewport = viewport;
+        renderer = new THREE.WebGLRenderer();
 
-        // update camera matrices !
-        camera.update();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        document.body.appendChild( renderer.domElement );
+        animate();
+    })
 
-        // project the 3D points into 2D screen-space
-        var positions = icosphere.positions.map(function (point) {
-            return camera.project(point)
-        });
 
-        // now draw each line with some cool color
-        icosphere.cells.forEach(function (cell, i) {
-            drawTriangle(cell, positions, i, false)
-        });
+}
 
-        // get a ray from the mouse position
-        var mouse = [ mousePosition[0], height - mousePosition[1] ];
-        var ray = camera.createPickingRay(mouse);
+document.onkeydown = checkKey;
 
-        // find the first intersected face and draw it, filled
-        for (var i = 0; i < icosphere.cells.length; i++) {
-            var cell = icosphere.cells[i];
-            var hit = ray.intersectsTriangleCell(cell, icosphere.positions);
-            if (hit) {
-                drawTriangle(cell, positions, i, true);
-                break
-            }
-        }
-    });
+function checkKey(e) {
 
-    function drawTriangle (cell, positions, index, fill) {
-        ctx.beginPath();
-        ctx.lineCap = 'round';
-        ctx.lineWidth = 1;
-        ctx.fillStyle = ctx.strokeStyle = colors[index % colors.length];
-        drawTriangles(ctx, positions, icosphere.cells, index, index + 1);
-        if (fill) ctx.fill();
-        else ctx.stroke()
+    e = e || window.event;
+    var delta = 200;
+    switch(e.keyCode){
+        case 37 : //left arrow 向左箭头
+            camera.rotation.y = camera.rotation.y + Math.PI/2;
+            break;
+        case 38 : // up arrow 向上箭头
+            break;
+        case 39 : // right arrow 向右箭头
+            camera.rotation.y = camera.rotation.y - Math.PI/2;
+            break;
+        case 40 : //down arrow向下箭头
+            break;
+
     }
-});
+    animate();
+}
+
+function animate() {
+    requestAnimationFrame( animate );
+    renderer.render( scene, camera);
+}
+
+window.app = init;
