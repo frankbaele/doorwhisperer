@@ -37111,25 +37111,27 @@ function init() {
         light.position.set(-100,200,100);
         scene.add(light);
 
-        material = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'gray'} );
-        wireframe = new THREE.MeshBasicMaterial( { wireframe:true, color: 'gray'} );
+        var gray = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'gray'} );
+        var green = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'green'} );
+        var red = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'red'} );
+        var blue = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'blue'} );
         geometry = new THREE.BoxGeometry( 600, 300,10  );
-        var center = new THREE.Mesh( geometry, material );
+        var center = new THREE.Mesh( geometry, blue );
         scene.add(center);
 
-        var left =  new THREE.Mesh( geometry, material );
+        var left =  new THREE.Mesh( geometry, gray );
         left.rotateY(Math.PI / 2);
         left.position.x = -300;
         left.position.z = 300;
         scene.add(left);
 
-        var right =  new THREE.Mesh( geometry, material);
+        var right =  new THREE.Mesh( geometry, green);
         right.rotateY(Math.PI / 2);
         right.position.x = 300;
         right.position.z = 300;
         scene.add(right);
 
-        var behind =  new THREE.Mesh( geometry, wireframe);
+        var behind =  new THREE.Mesh( geometry, red);
         behind.position.z = 600;
 
         scene.add(behind);
