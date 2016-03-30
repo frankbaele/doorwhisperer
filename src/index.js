@@ -1,4 +1,6 @@
 var THREE = require('three.js');
+var TWEEN = require('tween.js');
+
 var scene, camera, renderer;
 var geometry, material, mesh, wireframe;
 require('./pointerlock');
@@ -54,12 +56,16 @@ function checkKey(e) {
     var delta = 200;
     switch(e.keyCode){
         case 37 : //left arrow 向左箭头
-            camera.rotation.y = camera.rotation.y + Math.PI/2;
+            new TWEEN.Tween(camera.rotation)
+                .to({ y: camera.rotation.y + Math.PI/2 }, 500)
+                .start();
             break;
         case 38 : // up arrow 向上箭头
             break;
         case 39 : // right arrow 向右箭头
-            camera.rotation.y = camera.rotation.y - Math.PI/2;
+            new TWEEN.Tween(camera.rotation)
+                .to({ y: camera.rotation.y - Math.PI/2 }, 500)
+                .start();
             break;
         case 40 : //down arrow向下箭头
             break;
@@ -69,6 +75,7 @@ function checkKey(e) {
 
 function animate() {
     requestAnimationFrame( animate );
+    TWEEN.update();
     renderer.render( scene, camera);
 }
 
