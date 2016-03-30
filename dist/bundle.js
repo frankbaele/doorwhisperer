@@ -36258,16 +36258,15 @@ function checkKey(e) {
     var delta = 200;
     switch(e.keyCode){
         case 37 : //left arrow 向左箭头
-            camera.rotation.y = camera.rotation.y - Math.PI/2;
+            camera.rotation.y = camera.rotation.y + Math.PI/2;
             break;
         case 38 : // up arrow 向上箭头
             break;
         case 39 : // right arrow 向右箭头
-            camera.rotation.y = camera.rotation.y + Math.PI/2;
+            camera.rotation.y = camera.rotation.y - Math.PI/2;
             break;
         case 40 : //down arrow向下箭头
             break;
-
     }
     animate();
 }

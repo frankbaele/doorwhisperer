@@ -63,7 +63,6 @@ function checkKey(e) {
             break;
         case 40 : //down arrow向下箭头
             break;
-
     }
     animate();
 }
