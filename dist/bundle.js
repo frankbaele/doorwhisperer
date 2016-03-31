@@ -37748,40 +37748,50 @@ var THREE = require('three.js');
 var wall = require('./wall');
 
 module.exports = function(opts){
-
     var group = new THREE.Object3D();
     group.position.x = opts.x;
     group.position.y = opts.y;
     group.position.z = opts.z;
-    group.add(wall({x:0, y:0, z:0, rotation: 0}));
-    group.add(wall({x:-125, y:0, z:475, rotation: Math.PI / 2}));
-    group.add(wall({x:475, y:0, z:475, rotation: Math.PI / 2}));
-    group.add(wall({x:0, y:0, z:600, rotation: 0}));
+    if(opts.walls.top){
+        group.add(wall({x:0, y:0, z:0, rotation: 0}));
+    }
+    if(opts.walls.left){
+        group.add(wall({x:-125, y:0, z:475, rotation: Math.PI / 2}));
+    }
+    if(opts.walls.right){
+        group.add(wall({x:475, y:0, z:475, rotation: Math.PI / 2}));
+    }
+    if(opts.walls.bottom){
+        group.add(wall({x:0, y:0, z:600, rotation: 0}));
+    }
     return group;
 };
 },{"./wall":7,"three.js":3}],7:[function(require,module,exports){
 var THREE = require('three.js');
-
+var wallTexture = new THREE.TextureLoader().load('img/wall.jpg');
+wallTexture.wrapS = THREE.RepeatWrapping;
+wallTexture.wrapT = THREE.RepeatWrapping;
+wallTexture.repeat.set( 1, 1 );
+var woodTexture = new THREE.TextureLoader().load('img/wood.jpg');
+woodTexture.wrapS = THREE.RepeatWrapping;
+woodTexture.wrapT = THREE.RepeatWrapping;
+woodTexture.repeat.set( 1, 1 );
+var wallPiece = new THREE.BoxGeometry(250, 300,10 );
+var wallMat = new THREE.MeshBasicMaterial( { map:wallTexture, color: 'white'} );
+var woodMat = new THREE.MeshBasicMaterial( { map:woodTexture, color: 'white'} );
 module.exports = function(opts){
     var group = new THREE.Object3D();
-    var wallTexture = new THREE.TextureLoader().load('img/wall.jpg');
-    var woodTexture = new THREE.TextureLoader().load('img/wood.jpg');
-    var wallMat = new THREE.MeshBasicMaterial( { map:wallTexture, color: 'white'} );
-    var woodMat = new THREE.MeshBasicMaterial( { map:woodTexture, color: 'white'} );
-    var wallPiece = new THREE.BoxGeometry(250, 300,10 );
     var left = new THREE.Mesh( wallPiece, wallMat);
-    var right = new THREE.Mesh( wallPiece, woodMat);
+    var right = new THREE.Mesh( wallPiece, wallMat);
     right.position.x = 350;
     group.add(left);
     group.add(right);
-
-    group.position.x = opts.x;
+    group.position.x = opts.x - 300;
     group.position.y = opts.y;
     group.position.z = opts.z;
     group.rotateY(opts.rotation);
-
     return group;
-}
+};
 },{"three.js":3}],8:[function(require,module,exports){
 module.exports=[
   [1,1,1],
@@ -37810,9 +37820,9 @@ function init() {
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
         if(birdView){
-            camera.position.z = 1000;
-            camera.position.y = 500;
-            camera.rotation.x = camera.rotation.x - Math.PI/2/2;
+            camera.position.z = 600;
+            camera.position.y = 2000;
+            camera.rotation.x = camera.rotation.x - Math.PI/2;
         } else {
             camera.position.z = 300;
         }
@@ -37824,7 +37834,16 @@ function init() {
             var z = index * 600;
             _.forEach(row, function(cell , cellIndex){
                 var x = cellIndex * 600;
-                scene.add(room({x:x,y:0,z:z}));
+                var walls = {};
+                walls.left = true;
+                walls.top = true;
+                if(cellIndex == row.length - 1){
+                    walls.right = true;
+                }
+                if(index == map.length - 1){
+                    walls.bottom = true;
+                }
+                scene.add(room({x:x,y:0,z:z, walls: walls}));
             })
         });
 
@@ -37861,7 +37880,6 @@ function checkKey(e) {
         case 40 : //down arrow向下箭头
             break;
     }
-
     animate();
 }
 

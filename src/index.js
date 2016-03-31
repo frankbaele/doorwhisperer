@@ -15,9 +15,9 @@ function init() {
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
         if(birdView){
-            camera.position.z = 1000;
-            camera.position.y = 500;
-            camera.rotation.x = camera.rotation.x - Math.PI/2/2;
+            camera.position.z = 600;
+            camera.position.y = 2000;
+            camera.rotation.x = camera.rotation.x - Math.PI/2;
         } else {
             camera.position.z = 300;
         }
@@ -29,7 +29,16 @@ function init() {
             var z = index * 600;
             _.forEach(row, function(cell , cellIndex){
                 var x = cellIndex * 600;
-                scene.add(room({x:x,y:0,z:z}));
+                var walls = {};
+                walls.left = true;
+                walls.top = true;
+                if(cellIndex == row.length - 1){
+                    walls.right = true;
+                }
+                if(index == map.length - 1){
+                    walls.bottom = true;
+                }
+                scene.add(room({x:x,y:0,z:z, walls: walls}));
             })
         });
 
@@ -66,7 +75,6 @@ function checkKey(e) {
         case 40 : //down arrow向下箭头
             break;
     }
-
     animate();
 }
 
