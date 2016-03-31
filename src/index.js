@@ -3,50 +3,26 @@ var TWEEN = require('tween.js');
 
 var scene, camera, renderer;
 var geometry, material, mesh, wireframe;
-require('./pointerlock');
-
+var room = require('./components/room');
+var textureLoader = require('./services/textures');
 
 function init() {
-    scene = new THREE.Scene();
-    var texture = THREE.ImageUtils.loadTexture('img/wall.jpg', {}, function() {
+
+    textureLoader(function(){
+        scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
         camera.position.z = 300;
         var light = new THREE.PointLight(0xffffff);
         light.position.set(-100,200,100);
         scene.add(light);
-
-        var gray = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'gray'} );
-        var green = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'green'} );
-        var red = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'red'} );
-        var blue = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'blue'} );
-        geometry = new THREE.BoxGeometry( 600, 300,10  );
-        var center = new THREE.Mesh( geometry, blue );
-        scene.add(center);
-
-        var left =  new THREE.Mesh( geometry, gray );
-        left.rotateY(Math.PI / 2);
-        left.position.x = -300;
-        left.position.z = 300;
-        scene.add(left);
-
-        var right =  new THREE.Mesh( geometry, green);
-        right.rotateY(Math.PI / 2);
-        right.position.x = 300;
-        right.position.z = 300;
-        scene.add(right);
-
-        var behind =  new THREE.Mesh( geometry, red);
-        behind.position.z = 600;
-
-        scene.add(behind);
+        scene.add(room());
 
         renderer = new THREE.WebGLRenderer();
 
         renderer.setSize( window.innerWidth, window.innerHeight );
         document.body.appendChild( renderer.domElement );
         animate();
-    })
-
+    });
 
 }
 
@@ -64,7 +40,7 @@ function checkKey(e) {
             break;
         case 38 : // up arrow 向上箭头
             break;
-        case 39 : // right arrow 向右箭头
+        case 39 : // right arrow 向右箭头`
             new TWEEN.Tween(camera.rotation)
                 .to({ y: camera.rotation.y - Math.PI/2 }, 500)
                 .start();
