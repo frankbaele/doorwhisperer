@@ -10,6 +10,7 @@ var room = require('./components/room');
 var textureLoader = require('./services/textures');
 
 function init() {
+
     textureLoader(function(){
         var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
         var birdView = false;

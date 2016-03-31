@@ -37814,9 +37814,10 @@ var room = require('./components/room');
 var textureLoader = require('./services/textures');
 
 function init() {
+    
     textureLoader(function(){
         var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
-        var birdView = true;
+        var birdView = false;
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
         if(birdView){
