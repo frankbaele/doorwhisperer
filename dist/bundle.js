@@ -649,20 +649,6 @@ function identity(value) {
 module.exports = forEach;
 
 },{"lodash._baseeach":1}],3:[function(require,module,exports){
-var THREE = require('three');
-
-console.warn( "WARNING: The 'three.js' npm package is deprecated in favor of the 'three' npm package, please upgrade.");
-
-if (typeof exports !== 'undefined') {
-  if (typeof module !== 'undefined' && module.exports) {
-    exports = module.exports = THREE;
-  }
-  exports.THREE = THREE;
-} else {
-  this['THREE'] = THREE;
-}
-
-},{"three":4}],4:[function(require,module,exports){
 var self = self || {};// File:src/Three.js
 
 /**
@@ -36851,7 +36837,7 @@ if (typeof exports !== 'undefined') {
   this['THREE'] = THREE;
 }
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 /**
  * Tween.js - Licensed under the MIT license
  * https://github.com/tweenjs/tween.js
@@ -37743,8 +37729,8 @@ TWEEN.Interpolation = {
 
 })(this);
 
-},{}],6:[function(require,module,exports){
-var THREE = require('three.js');
+},{}],5:[function(require,module,exports){
+var THREE = require('three');
 var wall = require('./wall');
 
 module.exports = function(opts){
@@ -37766,8 +37752,8 @@ module.exports = function(opts){
     }
     return group;
 };
-},{"./wall":7,"three.js":3}],7:[function(require,module,exports){
-var THREE = require('three.js');
+},{"./wall":6,"three":3}],6:[function(require,module,exports){
+var THREE = require('three');
 var wallTexture = new THREE.TextureLoader().load('img/wall.jpg');
 wallTexture.wrapS = THREE.RepeatWrapping;
 wallTexture.wrapT = THREE.RepeatWrapping;
@@ -37776,34 +37762,40 @@ var woodTexture = new THREE.TextureLoader().load('img/wood.jpg');
 woodTexture.wrapS = THREE.RepeatWrapping;
 woodTexture.wrapT = THREE.RepeatWrapping;
 woodTexture.repeat.set( 1, 1 );
-var wallPiece = new THREE.BoxGeometry(250, 300,10 );
+
 var wallMat = new THREE.MeshBasicMaterial( { map:wallTexture, color: 'white'} );
 var woodMat = new THREE.MeshBasicMaterial( { map:woodTexture, color: 'white'} );
+var mergeGeometry = new THREE.Geometry();
+var wallPiece = new THREE.BoxGeometry(250,300,10);
+var walltop = new THREE.BoxGeometry(100,50,10);
+walltop.applyMatrix( new THREE.Matrix4().makeTranslation(175, 125, 0) );
+mergeGeometry.merge( wallPiece, wallPiece.matrix);
+mergeGeometry.merge( walltop, walltop.matrix);
+wallPiece.applyMatrix( new THREE.Matrix4().makeTranslation(350, 0, 0) );
+mergeGeometry.merge( wallPiece, walltop.matrix);
+
 module.exports = function(opts){
     var group = new THREE.Object3D();
-    var left = new THREE.Mesh( wallPiece, wallMat);
-    var right = new THREE.Mesh( wallPiece, wallMat);
-    right.position.x = 350;
-    group.add(left);
-    group.add(right);
-    group.position.x = opts.x - 300;
+    //right.position.x = 350;
+    group.add(new THREE.Mesh(mergeGeometry));
+    group.position.x = opts.x;
     group.position.y = opts.y;
     group.position.z = opts.z;
     group.rotateY(opts.rotation);
     return group;
 };
-},{"three.js":3}],8:[function(require,module,exports){
+},{"three":3}],7:[function(require,module,exports){
 module.exports=[
   [1,1,1],
   [1,1,1]
 ]
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 module.exports=[
   "img/wall.jpg",
   "img/wood.jpg"
 ]
-},{}],10:[function(require,module,exports){
-var THREE = require('three.js');
+},{}],9:[function(require,module,exports){
+var THREE = require('three');
 var TWEEN = require('tween.js');
 var _ = {
     forEach : require('lodash.foreach')
@@ -37818,7 +37810,7 @@ function init() {
     textureLoader(function(){
         var birdView = false;
         scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera = new THREE.PerspectiveCamera( 100, window.innerWidth / window.innerHeight, 1, 10000 );
         if(birdView){
             camera.position.z = 600;
             camera.position.y = 2000;
@@ -37878,6 +37870,7 @@ function checkKey(e) {
             break;
 
         case 40 : //down arrow向下箭头
+            camera.translateZ(100);
             break;
     }
     animate();
@@ -37891,8 +37884,8 @@ function animate() {
 }
 
 window.app = init;
-},{"./components/room":6,"./config/map.json":8,"./services/textures":11,"lodash.foreach":2,"three.js":3,"tween.js":5}],11:[function(require,module,exports){
-var THREE = require('three.js');
+},{"./components/room":5,"./config/map.json":7,"./services/textures":10,"lodash.foreach":2,"three":3,"tween.js":4}],10:[function(require,module,exports){
+var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
 };
@@ -37906,10 +37899,8 @@ module.exports = function(callback){
         callback();
     };
     _.forEach(textureList, function(texture){
-        textureLoader.load(texture, function(){
-            console.log(texture);
-        });
+        textureLoader.load(texture);
     });
 
 };
-},{"../config/textures.json":9,"lodash.foreach":2,"three.js":3}]},{},[10]);
+},{"../config/textures.json":8,"lodash.foreach":2,"three":3}]},{},[9]);

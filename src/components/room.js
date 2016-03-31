@@ -1,4 +1,4 @@
-var THREE = require('three.js');
+var THREE = require('three');
 var wall = require('./wall');
 
 module.exports = function(opts){

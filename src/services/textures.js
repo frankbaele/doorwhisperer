@@ -1,4 +1,4 @@
-var THREE = require('three.js');
+var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
 };
@@ -12,9 +12,7 @@ module.exports = function(callback){
         callback();
     };
     _.forEach(textureList, function(texture){
-        textureLoader.load(texture, function(){
-            console.log(texture);
-        });
+        textureLoader.load(texture);
     });
 
 };

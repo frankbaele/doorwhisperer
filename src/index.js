@@ -1,4 +1,4 @@
-var THREE = require('three.js');
+var THREE = require('three');
 var TWEEN = require('tween.js');
 var _ = {
     forEach : require('lodash.foreach')
@@ -13,7 +13,7 @@ function init() {
     textureLoader(function(){
         var birdView = false;
         scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera = new THREE.PerspectiveCamera( 100, window.innerWidth / window.innerHeight, 1, 10000 );
         if(birdView){
             camera.position.z = 600;
             camera.position.y = 2000;
@@ -73,6 +73,7 @@ function checkKey(e) {
             break;
 
         case 40 : //down arrow向下箭头
+            camera.translateZ(100);
             break;
     }
     animate();

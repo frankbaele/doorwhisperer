@@ -26,7 +26,7 @@
   "dependencies": {
     "browserify-versionify": "^1.0.6",
     "lodash.foreach": "^4.1.1",
-    "three.js": "^0.73.2",
+    "three": "^0.73.2",
     "tone": "^0.6.1",
     "tween.js": "^16.3.4"
   }
