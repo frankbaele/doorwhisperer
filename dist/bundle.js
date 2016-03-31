@@ -37754,30 +37754,36 @@ module.exports = function(opts){
 };
 },{"./wall":6,"three":3}],6:[function(require,module,exports){
 var THREE = require('three');
-var wallTexture = new THREE.TextureLoader().load('img/wall.jpg');
+var wallTexture = new THREE.TextureLoader().load('img/cobblestone.png');
 wallTexture.wrapS = THREE.RepeatWrapping;
 wallTexture.wrapT = THREE.RepeatWrapping;
-wallTexture.repeat.set( 1, 1 );
-var woodTexture = new THREE.TextureLoader().load('img/wood.jpg');
+wallTexture.repeat.set(8,8);
+var woodTexture = new THREE.TextureLoader().load('img/planks.png');
 woodTexture.wrapS = THREE.RepeatWrapping;
 woodTexture.wrapT = THREE.RepeatWrapping;
-woodTexture.repeat.set( 1, 1 );
+woodTexture.repeat.set(2,4);
 
 var wallMat = new THREE.MeshBasicMaterial( { map:wallTexture, color: 'white'} );
 var woodMat = new THREE.MeshBasicMaterial( { map:woodTexture, color: 'white'} );
 var mergeGeometry = new THREE.Geometry();
 var wallPiece = new THREE.BoxGeometry(250,300,10);
-var walltop = new THREE.BoxGeometry(100,50,10);
-walltop.applyMatrix( new THREE.Matrix4().makeTranslation(175, 125, 0) );
-mergeGeometry.merge( wallPiece, wallPiece.matrix);
-mergeGeometry.merge( walltop, walltop.matrix);
-wallPiece.applyMatrix( new THREE.Matrix4().makeTranslation(350, 0, 0) );
-mergeGeometry.merge( wallPiece, walltop.matrix);
+var wallPieceTop = new THREE.BoxGeometry(100,50,10);
+var doorPiece = new THREE.BoxGeometry(100,250,10);
 
+wallPieceTop.applyMatrix( new THREE.Matrix4().makeTranslation(175, 125, 0) );
+mergeGeometry.merge( wallPiece, wallPiece.matrix);
+mergeGeometry.merge( wallPieceTop, wallPieceTop.matrix);
+wallPiece.applyMatrix( new THREE.Matrix4().makeTranslation(350, 0, 0));
+mergeGeometry.merge( wallPiece, wallPieceTop.matrix);
 module.exports = function(opts){
+    var wallMesh = new THREE.Mesh(mergeGeometry, wallMat);
+    var doorMesh = new THREE.Mesh(doorPiece,woodMat);
     var group = new THREE.Object3D();
     //right.position.x = 350;
-    group.add(new THREE.Mesh(mergeGeometry));
+    group.add(wallMesh);
+    doorMesh.position.x = 175;
+    doorMesh.position.y = -25;
+    group.add(doorMesh);
     group.position.x = opts.x;
     group.position.y = opts.y;
     group.position.z = opts.z;
@@ -37791,8 +37797,9 @@ module.exports=[
 ]
 },{}],8:[function(require,module,exports){
 module.exports=[
-  "img/wall.jpg",
-  "img/wood.jpg"
+  "img/cobblestone.png",
+  "img/planks.png",
+  "img/stonebrick.png"
 ]
 },{}],9:[function(require,module,exports){
 var THREE = require('three');
@@ -37808,9 +37815,10 @@ var textureLoader = require('./services/textures');
 
 function init() {
     textureLoader(function(){
-        var birdView = false;
+        var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
+        var birdView = true;
         scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera( 100, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
         if(birdView){
             camera.position.z = 600;
             camera.position.y = 2000;
@@ -37818,10 +37826,6 @@ function init() {
         } else {
             camera.position.z = 300;
         }
-
-        var light = new THREE.PointLight(0xffffff);
-        light.position.set(-100,200,100);
-        scene.add(light);
         _.forEach(map, function(row, index){
             var z = index * 600;
             _.forEach(row, function(cell , cellIndex){
@@ -37838,6 +37842,11 @@ function init() {
                 scene.add(room({x:x,y:0,z:z, walls: walls}));
             })
         });
+
+        var geometry = new THREE.PlaneGeometry( map.length * 600, 0, map[0].length * 600 );
+        var material = new THREE.MeshBasicMaterial( {color: 0xffff00, map: floorTexture} );
+        var plane = new THREE.Mesh( geometry, material );
+        scene.add(plane);
 
         renderer = new THREE.WebGLRenderer();
 

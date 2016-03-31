@@ -11,9 +11,10 @@ var textureLoader = require('./services/textures');
 
 function init() {
     textureLoader(function(){
+        var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
         var birdView = false;
         scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera( 100, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
         if(birdView){
             camera.position.z = 600;
             camera.position.y = 2000;
@@ -21,10 +22,6 @@ function init() {
         } else {
             camera.position.z = 300;
         }
-
-        var light = new THREE.PointLight(0xffffff);
-        light.position.set(-100,200,100);
-        scene.add(light);
         _.forEach(map, function(row, index){
             var z = index * 600;
             _.forEach(row, function(cell , cellIndex){
@@ -41,6 +38,11 @@ function init() {
                 scene.add(room({x:x,y:0,z:z, walls: walls}));
             })
         });
+
+        var geometry = new THREE.PlaneGeometry( map.length * 600, 0, map[0].length * 600 );
+        var material = new THREE.MeshBasicMaterial( {color: 0xffff00, map: floorTexture} );
+        var plane = new THREE.Mesh( geometry, material );
+        scene.add(plane);
 
         renderer = new THREE.WebGLRenderer();
 
