@@ -37745,57 +37745,88 @@ TWEEN.Interpolation = {
 
 },{}],6:[function(require,module,exports){
 var THREE = require('three.js');
+var wall = require('./wall');
 
-module.exports = function(){
-    var texture = new THREE.TextureLoader().load('img/wall.jpg');
-    var group = new THREE.Object3D();//create an empty container
-    var gray = new THREE.MeshBasicMaterial( { wireframe:false, map:texture, color: 'gray'} );
-    var geometry = new THREE.BoxGeometry( 600, 300,10 );
-    var center = new THREE.Mesh( geometry, gray );
+module.exports = function(opts){
 
-    var left =  new THREE.Mesh( geometry, gray );
-    left.rotateY(Math.PI / 2);
-    left.position.x = -300;
-    left.position.z = 300;
+    var group = new THREE.Object3D();
+    group.position.x = opts.x;
+    group.position.y = opts.y;
+    group.position.z = opts.z;
+    group.add(wall({x:0, y:0, z:0, rotation: 0}));
+    group.add(wall({x:-125, y:0, z:475, rotation: Math.PI / 2}));
+    group.add(wall({x:475, y:0, z:475, rotation: Math.PI / 2}));
+    group.add(wall({x:0, y:0, z:600, rotation: 0}));
+    return group;
+};
+},{"./wall":7,"three.js":3}],7:[function(require,module,exports){
+var THREE = require('three.js');
 
-    var right =  new THREE.Mesh( geometry, gray);
-    right.rotateY(Math.PI / 2);
-    right.position.x = 300;
-    right.position.z = 300;
-
-    var behind =  new THREE.Mesh( geometry, gray);
-    behind.position.z = 600;
-    group.add(behind);
-    group.add(center);
+module.exports = function(opts){
+    var group = new THREE.Object3D();
+    var wallTexture = new THREE.TextureLoader().load('img/wall.jpg');
+    var woodTexture = new THREE.TextureLoader().load('img/wood.jpg');
+    var wallMat = new THREE.MeshBasicMaterial( { map:wallTexture, color: 'white'} );
+    var woodMat = new THREE.MeshBasicMaterial( { map:woodTexture, color: 'white'} );
+    var wallPiece = new THREE.BoxGeometry(250, 300,10 );
+    var left = new THREE.Mesh( wallPiece, wallMat);
+    var right = new THREE.Mesh( wallPiece, woodMat);
+    right.position.x = 350;
     group.add(left);
     group.add(right);
 
+    group.position.x = opts.x;
+    group.position.y = opts.y;
+    group.position.z = opts.z;
+    group.rotateY(opts.rotation);
 
     return group;
-};
-},{"three.js":3}],7:[function(require,module,exports){
+}
+},{"three.js":3}],8:[function(require,module,exports){
 module.exports=[
-  "img/wall.jpg", "img/wall.png"
+  [1,1,1],
+  [1,1,1]
 ]
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+module.exports=[
+  "img/wall.jpg",
+  "img/wood.jpg"
+]
+},{}],10:[function(require,module,exports){
 var THREE = require('three.js');
 var TWEEN = require('tween.js');
-
+var _ = {
+    forEach : require('lodash.foreach')
+};
+var map = require('./config/map.json');
 var scene, camera, renderer;
 var geometry, material, mesh, wireframe;
 var room = require('./components/room');
 var textureLoader = require('./services/textures');
 
 function init() {
-
     textureLoader(function(){
+        var birdView = false;
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
-        camera.position.z = 300;
+        if(birdView){
+            camera.position.z = 1000;
+            camera.position.y = 500;
+            camera.rotation.x = camera.rotation.x - Math.PI/2/2;
+        } else {
+            camera.position.z = 300;
+        }
+
         var light = new THREE.PointLight(0xffffff);
         light.position.set(-100,200,100);
         scene.add(light);
-        scene.add(room());
+        _.forEach(map, function(row, index){
+            var z = index * 600;
+            _.forEach(row, function(cell , cellIndex){
+                var x = cellIndex * 600;
+                scene.add(room({x:x,y:0,z:z}));
+            })
+        });
 
         renderer = new THREE.WebGLRenderer();
 
@@ -37815,21 +37846,25 @@ function checkKey(e) {
     switch(e.keyCode){
         case 37 : //left arrow 向左箭头
             new TWEEN.Tween(camera.rotation)
-                .to({ y: camera.rotation.y + Math.PI/2 }, 500)
+                .to({ y: camera.rotation.y + Math.PI/2 }, 200)
                 .start();
             break;
         case 38 : // up arrow 向上箭头
+            camera.translateZ(-100);
             break;
         case 39 : // right arrow 向右箭头`
             new TWEEN.Tween(camera.rotation)
-                .to({ y: camera.rotation.y - Math.PI/2 }, 500)
+                .to({ y: camera.rotation.y - Math.PI/2 }, 200)
                 .start();
             break;
+
         case 40 : //down arrow向下箭头
             break;
     }
+
     animate();
 }
+
 
 function animate() {
     requestAnimationFrame( animate );
@@ -37838,7 +37873,7 @@ function animate() {
 }
 
 window.app = init;
-},{"./components/room":6,"./services/textures":9,"three.js":3,"tween.js":5}],9:[function(require,module,exports){
+},{"./components/room":6,"./config/map.json":8,"./services/textures":11,"lodash.foreach":2,"three.js":3,"tween.js":5}],11:[function(require,module,exports){
 var THREE = require('three.js');
 var _ = {
     forEach : require('lodash.foreach')
@@ -37859,4 +37894,4 @@ module.exports = function(callback){
     });
 
 };
-},{"../config/textures.json":7,"lodash.foreach":2,"three.js":3}]},{},[8]);
+},{"../config/textures.json":9,"lodash.foreach":2,"three.js":3}]},{},[10]);
