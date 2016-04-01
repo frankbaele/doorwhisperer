@@ -2,7 +2,7 @@ var THREE = require('three');
 var TWEEN = require('tween.js');
 module.exports = function (mediator) {
     var birdView = false;
-    var rotating = false;
+    var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
 
     if (birdView) {
@@ -16,30 +16,53 @@ module.exports = function (mediator) {
     mediator.subscribe('camera.rotate', rotate);
     mediator.subscribe('camera.move', move);
 
-    function move(direction){
-        if(direction == 'back'){
-            camera.translateZ(175);
+    function move(direction) {
+        moving = true;
+        if (direction == 'back') {
+            temp = 175;
         }
-        if(direction == 'forward'){
-            camera.translateZ(-175);
+        if (direction == 'forward') {
+            temp = - 175;
         }
+        var worldDirection = camera.getWorldDirection();
+        var value = camera.position;
+
+        console.log();
+        if (worldDirection.x == 1) {
+            value.x = value.x - temp;
+        } else if (worldDirection.x == -1) {
+            value.x = value.x + temp;
+        } else if (worldDirection.z == 1) {
+            value.z = value.z - temp;
+        } else if (worldDirection.z == -1){
+            value.z = value.z + temp;
+        }
+
+        new TWEEN.Tween(camera.position)
+            .to({z: value.z, x: value.x}, 400)
+            .onComplete(function () {
+                moving = false
+            })
+            .start();
     }
+
     function rotate(direction) {
-        if (!rotating) {
-            rotating = true;
-            var value;
+        if (!moving) {
+            moving = true;
+            var value = camera.rotation.y;
             if (direction == 'left') {
-                value = camera.rotation.y + Math.PI / 2;
+                value = value + Math.PI / 2;
             } else {
-                value = camera.rotation.y - Math.PI / 2;
+                value = value - Math.PI / 2;
             }
             new TWEEN.Tween(camera.rotation)
                 .to({y: value}, 400)
-                .onComplete(function(){
-                    rotating = false
+                .onComplete(function () {
+                    moving = false
                 })
                 .start();
         }
     }
+
     return camera;
 };
