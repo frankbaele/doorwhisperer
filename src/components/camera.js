@@ -4,6 +4,7 @@ module.exports = function (mediator) {
     var birdView = false;
     var rotating = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
+
     if (birdView) {
         camera.position.z = 600;
         camera.position.y = 2000;
@@ -12,21 +13,17 @@ module.exports = function (mediator) {
         camera.position.z = 300;
     }
 
-    mediator.subscribe('camera.transform', function (transform) {
-        switch (transform) {
-            case 'left' :
-                rotate('left');
-                break;
-            case 'right' :
-                rotate('right');
-                break;
-            case 'up' :
-                break;
-            case 'down' :
-                break;
-        }
-    });
+    mediator.subscribe('camera.rotate', rotate);
+    mediator.subscribe('camera.move', move);
 
+    function move(direction){
+        if(direction == 'back'){
+            camera.translateZ(175);
+        }
+        if(direction == 'forward'){
+            camera.translateZ(-175);
+        }
+    }
     function rotate(direction) {
         if (!rotating) {
             rotating = true;

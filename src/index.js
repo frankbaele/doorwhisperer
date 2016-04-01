@@ -6,6 +6,7 @@ var scene = require('./services/scene')(mediator);
 var map = require('./config/map.json');
 var controls = require('./controls/controls')(mediator);
 var camera = require('./components/camera')(mediator);
+var user = require('./services/user')(mediator);
 var room = require('./components/room');
 var textureLoader = require('./services/textures');
 
