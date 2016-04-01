@@ -1,5 +1,9 @@
 var THREE = require('three');
 var TWEEN = require('tween.js');
+var _ = {
+    clone: require('lodash.clone')
+};
+
 module.exports = function (mediator) {
     var birdView = false;
     var moving = false;
@@ -25,9 +29,8 @@ module.exports = function (mediator) {
             temp = - 175;
         }
         var worldDirection = camera.getWorldDirection();
-        var value = camera.position;
+        var value = _.clone(camera.position);
 
-        console.log();
         if (worldDirection.x == 1) {
             value.x = value.x - temp;
         } else if (worldDirection.x == -1) {

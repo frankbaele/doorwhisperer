@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "browserify-versionify": "^1.0.6",
+    "lodash.clone": "^4.3.2",
     "lodash.foreach": "^4.1.1",
     "mediator-js": "^0.9.9",
     "three": "^0.73.2",
