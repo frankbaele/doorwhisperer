@@ -8,17 +8,13 @@ module.exports = function (mediator) {
     var birdView = false;
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-
-    if (birdView) {
-        camera.position.z = 600;
-        camera.position.y = 2000;
-        camera.rotation.x = camera.rotation.x - Math.PI / 2;
-    } else {
-        camera.position.z = 300;
-    }
-
     mediator.subscribe('camera.rotate', rotate);
     mediator.subscribe('camera.move', move);
+    mediator.subscribe('camera.center', function(coords){
+        camera.position.z = coords.z;
+        camera.position.y = coords.y;
+        camera.position.x = coords.x;
+    });
 
     function move(direction) {
         moving = true;

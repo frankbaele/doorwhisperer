@@ -5,7 +5,9 @@ module.exports = function(mediator){
     mediator.subscribe('scene.add',function(object){
         scene.add(object);
     });
-
+    mediator.subscribe('scene.remove',function(object){
+        scene.remove(object);
+    });
     return scene;
 
 };

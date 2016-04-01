@@ -27,9 +27,7 @@ module.exports = function(opts){
     var floor = new THREE.Mesh( geometry, material );
     floor.position.y = -128;
     floor.position.z = 320;
-
     floor.rotateX(Math.PI / 2);
     group.add(floor);
-
     return group;
 };

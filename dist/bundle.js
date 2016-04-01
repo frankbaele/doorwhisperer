@@ -40532,17 +40532,13 @@ module.exports = function (mediator) {
     var birdView = false;
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-
-    if (birdView) {
-        camera.position.z = 600;
-        camera.position.y = 2000;
-        camera.rotation.x = camera.rotation.x - Math.PI / 2;
-    } else {
-        camera.position.z = 300;
-    }
-
     mediator.subscribe('camera.rotate', rotate);
     mediator.subscribe('camera.move', move);
+    mediator.subscribe('camera.center', function(coords){
+        camera.position.z = coords.z;
+        camera.position.y = coords.y;
+        camera.position.x = coords.x;
+    });
 
     function move(direction) {
         moving = true;
@@ -40624,10 +40620,8 @@ module.exports = function(opts){
     var floor = new THREE.Mesh( geometry, material );
     floor.position.y = -128;
     floor.position.z = 320;
-
     floor.rotateX(Math.PI / 2);
     group.add(floor);
-
     return group;
 };
 },{"./wall":14,"three":9}],14:[function(require,module,exports){
@@ -40715,21 +40709,14 @@ var TWEEN = require('tween.js');
 var Mediator = require("mediator-js").Mediator,
     mediator = new Mediator();
 var scene = require('./services/scene')(mediator);
-var map = require('./config/map.json');
 var controls = require('./controls/controls')(mediator);
 var camera = require('./components/camera')(mediator);
-var user = require('./services/user')(mediator);
-var room = require('./components/room');
+var roomGen = require('./services/roomGenerator')(mediator);
 var textureLoader = require('./services/textures');
 
 function init() {
     textureLoader(function(){
-        var walls = {};
-        walls.left = true;
-        walls.top = true;
-        walls.right = true;
-        walls.bottom = true;
-        mediator.publish('scene.add',room({x:0,y:0,z:0, walls: walls}));
+        var user = require('./services/user')(mediator);
         renderer = new THREE.WebGLRenderer();
         renderer.setSize( window.innerWidth, window.innerHeight );
         document.body.appendChild( renderer.domElement );
@@ -40745,7 +40732,27 @@ function animate() {
 }
 
 window.app = init;
-},{"./components/camera":12,"./components/room":13,"./config/map.json":15,"./controls/controls":17,"./services/scene":19,"./services/textures":20,"./services/user":21,"mediator-js":5,"three":9,"tween.js":10}],19:[function(require,module,exports){
+},{"./components/camera":12,"./controls/controls":17,"./services/roomGenerator":19,"./services/scene":20,"./services/textures":21,"./services/user":22,"mediator-js":5,"three":9,"tween.js":10}],19:[function(require,module,exports){
+var room = require('../components/room');
+var map = require('../config/map.json');
+module.exports = function (mediator) {
+    var rooms = {};
+    mediator.subscribe('room.add', function (coords) {
+        var walls = {};
+        walls.left = true;
+        walls.top = true;
+        walls.right = true;
+        walls.bottom = true;
+        var instance = room({x: coords.x * 640, y: 0, z: coords.z * 640, walls: walls});
+        mediator.publish('scene.add', instance);
+        rooms[coords.x + '_' + coords.z] = instance;
+    });
+
+    mediator.subscribe('room.remove', function (coords) {
+        mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z]);
+    });
+};
+},{"../components/room":13,"../config/map.json":15}],20:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -40753,11 +40760,13 @@ module.exports = function(mediator){
     mediator.subscribe('scene.add',function(object){
         scene.add(object);
     });
-
+    mediator.subscribe('scene.remove',function(object){
+        scene.remove(object);
+    });
     return scene;
 
 };
-},{"three":9}],20:[function(require,module,exports){
+},{"three":9}],21:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -40776,41 +40785,67 @@ module.exports = function(callback){
     });
 
 };
-},{"../config/textures.json":16,"lodash.foreach":4,"three":9}],21:[function(require,module,exports){
+},{"../config/textures.json":16,"lodash.foreach":4,"three":9}],22:[function(require,module,exports){
+_ = {
+    clone: require('lodash.clone')
+};
 module.exports = function (mediator) {
     var direction = 0;
     var directions = ['N', 'E', 'S', 'W'];
     var center = true;
-
-    var coords = {
+    var position = {
         x: 0,
-        y: 0
+        z: 0
     };
-
+    mediator.publish('camera.center', {x: position.x * 640, z: position.z * 640  + 320, y: 0});
+    mediator.publish('room.add', position);
     mediator.subscribe('input', function (type) {
         if (center) {
             if (type == 'left') {
-                if(direction == 0){
+                if (direction == 0) {
                     direction = directions.length - 1;
                 } else {
                     direction = direction - 1;
                 }
                 mediator.publish('camera.rotate', 'left');
             } else if (type == 'right') {
-                if(direction == directions.length - 1){
+                if (direction == directions.length - 1) {
                     direction = 0;
                 } else {
                     direction = direction + 1;
                 }
                 mediator.publish('camera.rotate', 'right');
             }
-            if(type == 'forward'){
+            if (type == 'forward') {
                 mediator.publish('camera.move', 'forward');
+                var coords = _.clone(position);
+                if (direction == 0) {
+                    coords.z--;
+                } else if (direction == 1) {
+                    coords.x++;
+                } else if (direction == 2) {
+                    coords.z++;
+                } else if (direction == 3) {
+                    coords.x--;
+                }
+                mediator.publish('room.add', coords);
                 center = false;
             }
         } else {
-            if(type == 'back'){
+            if (type == 'back') {
                 mediator.publish('camera.move', 'back');
+                var coords = _.clone(position);
+
+                if (direction == 0) {
+                    coords.z--;
+                } else if (direction == 1) {
+                    coords.x++;
+                } else if (direction == 2) {
+                    coords.z++;
+                } else if (direction == 3) {
+                    coords.x--;
+                }
+                mediator.publish('room.remove', coords);
                 center = true;
             }
 
@@ -40819,7 +40854,8 @@ module.exports = function (mediator) {
     return {
         direction: direction,
         center: center,
-        coords: coords
+        position: position
     }
+
 };
-},{}]},{},[18]);
+},{"lodash.clone":3}]},{},[18]);
