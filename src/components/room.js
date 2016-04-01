@@ -10,13 +10,14 @@ module.exports = function(opts){
         group.add(wall({x:0, y:0, z:0, rotation: 0}));
     }
     if(opts.walls.left){
-        group.add(wall({x:-125, y:0, z:475, rotation: Math.PI / 2}));
+        group.add(wall({x:-320, y:0, z:320, rotation: Math.PI / 2}));
     }
     if(opts.walls.right){
-        group.add(wall({x:475, y:0, z:475, rotation: Math.PI / 2}));
+        group.add(wall({x:320, y:0, z:320, rotation: Math.PI / 2}));
     }
     if(opts.walls.bottom){
-        group.add(wall({x:0, y:0, z:600, rotation: 0}));
+        group.add(wall({x:0, y:0, z:640, rotation: 0}));
     }
+
     return group;
 };

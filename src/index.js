@@ -39,12 +39,12 @@ function init() {
                 scene.add(room({x:x,y:0,z:z, walls: walls}));
             })
         });
-
+        /*
         var geometry = new THREE.PlaneGeometry( map.length * 600, 0, map[0].length * 600 );
         var material = new THREE.MeshBasicMaterial( {color: 0xffff00, map: floorTexture} );
         var plane = new THREE.Mesh( geometry, material );
         scene.add(plane);
-
+        */
         renderer = new THREE.WebGLRenderer();
 
         renderer.setSize( window.innerWidth, window.innerHeight );
