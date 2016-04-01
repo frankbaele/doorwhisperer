@@ -1,8 +1,19 @@
 var THREE = require('three');
-var vkey = require('vkey');
+
 
 module.exports  = function(mediator){
-    document.addEventListener('keydown', function(ev) {
-        mediator.publish('keypress', vkey[ev.keyCode]);
-    }, false)
+    var input = require('./input')(mediator);
+
+
+    mediator.subscribe('keypress', function (code) {
+        if (code == '<left>') {
+            mediator.publish('camera.transform', 'left');
+        }
+        if(code == '<right>'){
+            mediator.publish('camera.transform', 'right');
+        }
+
+    })
+
+
 };

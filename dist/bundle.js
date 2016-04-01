@@ -38847,20 +38847,21 @@ module.exports = function (mediator) {
         camera.position.z = 300;
     }
 
-    mediator.subscribe('keypress', function (input) {
-        switch (input) {
-            case '<left>' :
+    mediator.subscribe('camera.transform', function (transform) {
+        switch (transform) {
+            case 'left' :
                 rotate('left');
                 break;
-            case '<right>' :
+            case 'right' :
                 rotate('right');
                 break;
-            case '<up>' :
+            case 'up' :
                 break;
-            case '<down>' :
+            case 'down' :
                 break;
         }
     });
+
     function rotate(direction) {
         if (!rotating) {
             rotating = true;
@@ -38877,9 +38878,7 @@ module.exports = function (mediator) {
                 })
                 .start();
         }
-
     }
-
     return camera;
 };
 
@@ -38979,6 +38978,25 @@ module.exports=[
 ]
 },{}],15:[function(require,module,exports){
 var THREE = require('three');
+
+
+module.exports  = function(mediator){
+    var input = require('./input')(mediator);
+
+
+    mediator.subscribe('keypress', function (code) {
+        if (code == '<left>') {
+            mediator.publish('camera.transform', 'left');
+        }
+        if(code == '<right>'){
+            mediator.publish('camera.transform', 'right');
+        }
+
+    })
+
+
+};
+},{"./input":16,"three":7}],16:[function(require,module,exports){
 var vkey = require('vkey');
 
 module.exports  = function(mediator){
@@ -38986,7 +39004,7 @@ module.exports  = function(mediator){
         mediator.publish('keypress', vkey[ev.keyCode]);
     }, false)
 };
-},{"three":7,"vkey":9}],16:[function(require,module,exports){
+},{"vkey":9}],17:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var Mediator = require("mediator-js").Mediator,
@@ -39021,7 +39039,7 @@ function animate() {
 }
 
 window.app = init;
-},{"./components/camera":10,"./components/room":11,"./config/map.json":13,"./controls/controls":15,"./services/scene":17,"./services/textures":18,"mediator-js":3,"three":7,"tween.js":8}],17:[function(require,module,exports){
+},{"./components/camera":10,"./components/room":11,"./config/map.json":13,"./controls/controls":15,"./services/scene":18,"./services/textures":19,"mediator-js":3,"three":7,"tween.js":8}],18:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -39033,7 +39051,7 @@ module.exports = function(mediator){
     return scene;
 
 };
-},{"three":7}],18:[function(require,module,exports){
+},{"three":7}],19:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -39052,4 +39070,4 @@ module.exports = function(callback){
     });
 
 };
-},{"../config/textures.json":14,"lodash.foreach":2,"three":7}]},{},[16]);
+},{"../config/textures.json":14,"lodash.foreach":2,"three":7}]},{},[17]);

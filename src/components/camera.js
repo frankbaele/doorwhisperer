@@ -12,20 +12,21 @@ module.exports = function (mediator) {
         camera.position.z = 300;
     }
 
-    mediator.subscribe('keypress', function (input) {
-        switch (input) {
-            case '<left>' :
+    mediator.subscribe('camera.transform', function (transform) {
+        switch (transform) {
+            case 'left' :
                 rotate('left');
                 break;
-            case '<right>' :
+            case 'right' :
                 rotate('right');
                 break;
-            case '<up>' :
+            case 'up' :
                 break;
-            case '<down>' :
+            case 'down' :
                 break;
         }
     });
+
     function rotate(direction) {
         if (!rotating) {
             rotating = true;
@@ -42,8 +43,6 @@ module.exports = function (mediator) {
                 })
                 .start();
         }
-
     }
-
     return camera;
 };
