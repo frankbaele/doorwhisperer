@@ -20,7 +20,6 @@ mergeGeometry.applyMatrix( new THREE.Matrix4().makeTranslation(-192,  0, 0));
 var wallPieceTop = new THREE.BoxGeometry(128,64,8);
 wallPieceTop.applyMatrix( new THREE.Matrix4().makeTranslation(0,96, 0));
 
-
 module.exports = function(opts){
     var wallMesh = new THREE.Mesh(mergeGeometry, wallMat);
     var topMesh = new THREE.Mesh(wallPieceTop,topMat);
