@@ -40778,18 +40778,30 @@ module.exports = function(callback){
 };
 },{"../config/textures.json":16,"lodash.foreach":4,"three":9}],21:[function(require,module,exports){
 module.exports = function (mediator) {
-    var direction = 'N';
+    var direction = 0;
+    var directions = ['N', 'E', 'S', 'W'];
     var center = true;
 
     var coords = {
         x: 0,
         y: 0
     };
+
     mediator.subscribe('input', function (type) {
         if (center) {
             if (type == 'left') {
+                if(direction == 0){
+                    direction = directions.length - 1;
+                } else {
+                    direction = direction - 1;
+                }
                 mediator.publish('camera.rotate', 'left');
             } else if (type == 'right') {
+                if(direction == directions.length - 1){
+                    direction = 0;
+                } else {
+                    direction = direction + 1;
+                }
                 mediator.publish('camera.rotate', 'right');
             }
             if(type == 'forward'){
