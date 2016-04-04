@@ -1,11 +1,11 @@
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var CONST = require('../const');
-var libs = require('../libs')
+var libs = require('../libs');
 var _ = {
     clone: require('lodash.clone')
 };
-
+var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
@@ -13,18 +13,17 @@ module.exports = function (mediator) {
     mediator.subscribe('camera.move', move);
     mediator.subscribe('camera.move.room', moveRoom);
     mediator.subscribe('camera.center', function (coords) {
-        camera.position.z = coords.z * CONST.roomSize + CONST.roomSize / 2;
-        camera.position.y = 0;
-        camera.position.x = coords.x * CONST.roomSize;
+        camera.position.z = coords.z * CONST.room.width + CONST.room.width / 2;
+        camera.position.y = height;
+        camera.position.x = coords.x * CONST.room.width;
     });
-
 
     function moveRoom(coords) {
         moving = true;
         var value = {};
-        value.x = coords.x * CONST.roomSize;
-        value.z = coords.z * CONST.roomSize + CONST.roomSize / 2;
-        value.y = 0;
+        value.x = coords.x * CONST.room.width;
+        value.z = coords.z * CONST.room.width + CONST.room.width / 2;
+        value.y = height;
         var distance = libs.distanceVector(camera.position, value);
 
         new TWEEN.Tween(camera.position)
@@ -38,10 +37,10 @@ module.exports = function (mediator) {
     function move(direction) {
         moving = true;
         if (direction == 'back') {
-            temp = 175;
+            temp = CONST.room.width * 0.25;
         }
         if (direction == 'forward') {
-            temp = -175;
+            temp = -CONST.room.width * 0.25;
         }
         var worldDirection = camera.getWorldDirection();
         var value = _.clone(camera.position);

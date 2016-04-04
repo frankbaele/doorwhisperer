@@ -40525,11 +40525,11 @@ for(i = 112; i < 136; ++i) {
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var CONST = require('../const');
-var libs = require('../libs')
+var libs = require('../libs');
 var _ = {
     clone: require('lodash.clone')
 };
-
+var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
@@ -40537,18 +40537,17 @@ module.exports = function (mediator) {
     mediator.subscribe('camera.move', move);
     mediator.subscribe('camera.move.room', moveRoom);
     mediator.subscribe('camera.center', function (coords) {
-        camera.position.z = coords.z * CONST.roomSize + CONST.roomSize / 2;
-        camera.position.y = 0;
-        camera.position.x = coords.x * CONST.roomSize;
+        camera.position.z = coords.z * CONST.room.width + CONST.room.width / 2;
+        camera.position.y = height;
+        camera.position.x = coords.x * CONST.room.width;
     });
-
 
     function moveRoom(coords) {
         moving = true;
         var value = {};
-        value.x = coords.x * CONST.roomSize;
-        value.z = coords.z * CONST.roomSize + CONST.roomSize / 2;
-        value.y = 0;
+        value.x = coords.x * CONST.room.width;
+        value.z = coords.z * CONST.room.width + CONST.room.width / 2;
+        value.y = height;
         var distance = libs.distanceVector(camera.position, value);
 
         new TWEEN.Tween(camera.position)
@@ -40562,10 +40561,10 @@ module.exports = function (mediator) {
     function move(direction) {
         moving = true;
         if (direction == 'back') {
-            temp = 175;
+            temp = CONST.room.width * 0.25;
         }
         if (direction == 'forward') {
-            temp = -175;
+            temp = -CONST.room.width * 0.25;
         }
         var worldDirection = camera.getWorldDirection();
         var value = _.clone(camera.position);
@@ -40627,49 +40626,53 @@ module.exports = function(opts){
         group.add(wall({x:0, y:0, z:0, rotation: 0}));
     }
     if(opts.walls.left){
-        group.add(wall({x:-CONST.roomSize/2, y:0, z:CONST.roomSize/2, rotation: Math.PI / 2}));
+        group.add(wall({x:-CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
     }
     if(opts.walls.right){
-        group.add(wall({x:CONST.roomSize/2, y:0, z:CONST.roomSize/2, rotation: Math.PI / 2}));
+        group.add(wall({x:CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
     }
     if(opts.walls.bottom){
-        group.add(wall({x:0, y:0, z:CONST.roomSize, rotation: 0}));
+        group.add(wall({x:0, y:0, z:CONST.room.width, rotation: 0}));
     }
-    var geometry = new THREE.PlaneGeometry( CONST.roomSize, CONST.roomSize, CONST.roomSize);
+    var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
     var material = new THREE.MeshBasicMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
     var floor = new THREE.Mesh( geometry, material );
-    floor.position.y = - CONST.roomSize / 5;
-    floor.position.z = CONST.roomSize/2;
+    floor.position.y = - CONST.room.height/2;
+    floor.position.z = CONST.room.width/2;
+
     floor.rotateX(Math.PI / 2);
     group.add(floor);
+    group.position.y = CONST.room.height/2;
     return group;
 };
 },{"../const":17,"./wall":14,"three":9}],14:[function(require,module,exports){
 var THREE = require('three');
+var CONST = require('../const');
+// Textures
 var wallTexture = new THREE.TextureLoader().load('img/cobblestone.png');
 wallTexture.wrapS = THREE.RepeatWrapping;
 wallTexture.wrapT = THREE.RepeatWrapping;
-wallTexture.repeat.set(4,4);
+wallTexture.repeat.set((CONST.room.width - CONST.door.width) / 2 / CONST.texture.widht, CONST.room.height / CONST.texture.height);
 
 var topTexture = new THREE.TextureLoader().load('img/cobblestone.png');
 topTexture.wrapS = THREE.RepeatWrapping;
 topTexture.wrapT = THREE.RepeatWrapping;
-topTexture.repeat.set(2,1);
-
-var wallMat = new THREE.MeshBasicMaterial( { map:wallTexture} );
-var topMat = new THREE.MeshBasicMaterial( { map:topTexture} );
+topTexture.repeat.set(CONST.door.width / CONST.texture.widht, (CONST.room.height - CONST.door.height) / CONST.texture.height);
+// Materials
+var wallMat = new THREE.MeshBasicMaterial({map: wallTexture});
+var topMat = new THREE.MeshBasicMaterial({map: topTexture});
+// Objects
 var mergeGeometry = new THREE.Geometry();
-var wallPiece = new THREE.BoxGeometry(256,256,8);
-mergeGeometry.merge( wallPiece, wallPiece.matrix);
-wallPiece.applyMatrix( new THREE.Matrix4().makeTranslation(384, 0, 0));
-mergeGeometry.merge( wallPiece, wallPiece.matrix);
-mergeGeometry.applyMatrix( new THREE.Matrix4().makeTranslation(-192,  0, 0));
-var wallPieceTop = new THREE.BoxGeometry(128,64,8);
-wallPieceTop.applyMatrix( new THREE.Matrix4().makeTranslation(0,96, 0));
-
-module.exports = function(opts){
+var wallPiece = new THREE.BoxGeometry((CONST.room.width - CONST.door.width) / 2, CONST.room.height, 8);
+mergeGeometry.merge(wallPiece, wallPiece.matrix);
+wallPiece.applyMatrix(new THREE.Matrix4().makeTranslation((CONST.room.width - CONST.door.width) / 2 + CONST.door.width, 0, 0));
+mergeGeometry.merge(wallPiece, wallPiece.matrix);
+mergeGeometry.center()
+var wallPieceTop = new THREE.BoxGeometry(CONST.door.width, CONST.room.height - CONST.door.height, 8);
+wallPieceTop.applyMatrix(new THREE.Matrix4().makeTranslation(0, CONST.door.height / 2, 0));
+module.exports = function (opts) {
     var wallMesh = new THREE.Mesh(mergeGeometry, wallMat);
-    var topMesh = new THREE.Mesh(wallPieceTop,topMat);
+    var topMesh = new THREE.Mesh(wallPieceTop, topMat);
     var group = new THREE.Object3D();
     group.add(wallMesh);
     group.add(topMesh);
@@ -40679,7 +40682,7 @@ module.exports = function(opts){
     group.rotateY(opts.rotation);
     return group;
 };
-},{"three":9}],15:[function(require,module,exports){
+},{"../const":17,"three":9}],15:[function(require,module,exports){
 module.exports=[
   [{
 
@@ -40704,9 +40707,23 @@ module.exports=[
 ]
 },{}],17:[function(require,module,exports){
 var CONST = {};
+CONST.texture = {
+    widht: 32,
+    height: 32
+};
 
-CONST.roomSize = 640;
+CONST.room = {
+    height: 96,
+    width: 352
+};
+
+CONST.door = {
+    height: 64,
+    width: 32
+};
+
 CONST.speed = 0.45;
+
 
 module.exports = CONST;
 },{}],18:[function(require,module,exports){
@@ -40783,7 +40800,7 @@ module.exports = function (mediator) {
         walls.top = true;
         walls.right = true;
         walls.bottom = true;
-        var instance = room({x: coords.x * CONST.roomSize, y: 0, z: coords.z * CONST.roomSize, walls: walls});
+        var instance = room({x: coords.x * CONST.room.width, y: 0, z: coords.z * CONST.room.width, walls: walls});
         mediator.publish('scene.add', instance);
         rooms[coords.x + '_' + coords.z] = instance;
     });
