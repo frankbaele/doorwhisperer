@@ -1,5 +1,6 @@
 var THREE = require('three');
 var CONST = require('../const');
+
 // Textures
 var wallTexture = new THREE.TextureLoader().load('img/cobblestone.png');
 wallTexture.wrapS = THREE.RepeatWrapping;
@@ -15,13 +16,16 @@ var wallMat = new THREE.MeshBasicMaterial({map: wallTexture});
 var topMat = new THREE.MeshBasicMaterial({map: topTexture});
 // Objects
 var mergeGeometry = new THREE.Geometry();
-var wallPiece = new THREE.BoxGeometry((CONST.room.width - CONST.door.width) / 2, CONST.room.height, 8);
+
+var wallPiece = new THREE.BoxGeometry((CONST.room.width - CONST.door.width) / 2, CONST.room.height, 32);
 mergeGeometry.merge(wallPiece, wallPiece.matrix);
 wallPiece.applyMatrix(new THREE.Matrix4().makeTranslation((CONST.room.width - CONST.door.width) / 2 + CONST.door.width, 0, 0));
 mergeGeometry.merge(wallPiece, wallPiece.matrix);
-mergeGeometry.center()
-var wallPieceTop = new THREE.BoxGeometry(CONST.door.width, CONST.room.height - CONST.door.height, 8);
+mergeGeometry.center();
+
+var wallPieceTop = new THREE.BoxGeometry(CONST.door.width, CONST.room.height - CONST.door.height, 32);
 wallPieceTop.applyMatrix(new THREE.Matrix4().makeTranslation(0, CONST.door.height / 2, 0));
+
 module.exports = function (opts) {
     var wallMesh = new THREE.Mesh(mergeGeometry, wallMat);
     var topMesh = new THREE.Mesh(wallPieceTop, topMat);
