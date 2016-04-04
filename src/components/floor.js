@@ -5,7 +5,7 @@ floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
-var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
+var material = new THREE.MeshLambertMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 
 
 module.exports = function(){

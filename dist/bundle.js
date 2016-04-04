@@ -40619,7 +40619,7 @@ floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
-var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
+var material = new THREE.MeshLambertMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 
 module.exports = function(){
     var floor = new THREE.Mesh( geometry, material );
@@ -40633,8 +40633,8 @@ var THREE = require('three');
 var CONST = require('../const');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
 var bottomTex = new THREE.TextureLoader().load('img/door/door_wood_lower.png');
-var upperMat = new THREE.MeshPhongMaterial({map: upperTex});
-var bottomMat = new THREE.MeshPhongMaterial({map: bottomTex});
+var upperMat = new THREE.MeshLambertMaterial({map: upperTex});
+var bottomMat = new THREE.MeshLambertMaterial({map: bottomTex});
 var doorPiece = new THREE.BoxGeometry(32, 32, 8);
 module.exports = function(opts){
     var group = new THREE.Object3D();
@@ -40657,7 +40657,7 @@ floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
-var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
+var material = new THREE.MeshLambertMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 
 
 module.exports = function(){
@@ -40741,8 +40741,8 @@ topTexture.wrapS = THREE.RepeatWrapping;
 topTexture.wrapT = THREE.RepeatWrapping;
 topTexture.repeat.set(CONST.door.width / CONST.texture.widht, (CONST.room.height - CONST.door.height) / CONST.texture.height);
 // Materials
-var wallMat = new THREE.MeshPhongMaterial({map: wallTexture});
-var topMat = new THREE.MeshPhongMaterial({map: topTexture});
+var wallMat = new THREE.MeshLambertMaterial({map: wallTexture});
+var topMat = new THREE.MeshLambertMaterial({map: topTexture});
 // Objects
 var mergeGeometry = new THREE.Geometry();
 
