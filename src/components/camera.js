@@ -9,6 +9,9 @@ var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
+    var light = new THREE.PointLight( 0x404040 , 1, 200 );
+    light.position.set(0,64,0);
+    camera.add(light);
     mediator.subscribe('camera.rotate', rotate);
     mediator.subscribe('camera.move', move);
     mediator.subscribe('camera.move.room', moveRoom);
@@ -17,7 +20,7 @@ module.exports = function (mediator) {
         camera.position.y = height;
         camera.position.x = coords.x * CONST.room.width;
     });
-
+    mediator.publish('scene.add', camera);
     function moveRoom(coords) {
         moving = true;
         var value = {};

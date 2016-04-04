@@ -7,7 +7,6 @@ floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
 var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 
-
 module.exports = function(){
     var floor = new THREE.Mesh( geometry, material );
     floor.position.y = CONST.room.height/2;

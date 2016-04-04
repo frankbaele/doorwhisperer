@@ -40533,6 +40533,9 @@ var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
+    var light = new THREE.PointLight( 0x404040 , 1, 200 );
+    light.position.set(0,64,0);
+    camera.add(light);
     mediator.subscribe('camera.rotate', rotate);
     mediator.subscribe('camera.move', move);
     mediator.subscribe('camera.move.room', moveRoom);
@@ -40541,7 +40544,7 @@ module.exports = function (mediator) {
         camera.position.y = height;
         camera.position.x = coords.x * CONST.room.width;
     });
-
+    mediator.publish('scene.add', camera);
     function moveRoom(coords) {
         moving = true;
         var value = {};
@@ -40618,7 +40621,6 @@ floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
 var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 
-
 module.exports = function(){
     var floor = new THREE.Mesh( geometry, material );
     floor.position.y = CONST.room.height/2;
@@ -40670,9 +40672,9 @@ var THREE = require('three');
 var CONST = require('../const');
 module.exports = function(opts){
     var group = new THREE.Object3D();
-    var light = new THREE.PointLight( 0xff0000, 1, 100 );
+    var light = new THREE.PointLight( 0xff0000, 0.5, 100 );
     light.position.z = 32;
-    var light2 = new THREE.PointLight( 0xff0000, 1, 100 );
+    var light2 = new THREE.PointLight( 0xff0000, 0.5, 100 );
     light2.position.z = -32;
     group.add(light);
     group.add(light2);
