@@ -2,6 +2,7 @@ var THREE = require('three');
 var CONST = require('../const');
 var door = require('./door');
 var wall = require('./wall');
+var lights = require('./lights');
 var floor = require('./floor');
 var ceiling = require('./ceiling');
 
@@ -13,22 +14,25 @@ module.exports = function(opts){
     if(opts.walls.top){
         group.add(wall({x:0, y:0, z:0, rotation: 0}));
         group.add(door({x:0, y:0, z:0, rotation: 0}));
+        group.add(lights({x:0, y:0, z:0, rotation: 0}));
     }
 
     if(opts.walls.left){
         group.add(wall({x:-CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
         group.add(door({x:-CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
+        group.add(lights({x:-CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
     }
 
     if(opts.walls.right){
         group.add(wall({x:CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
         group.add(door({x:CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
-
+        group.add(lights({x:CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
     }
 
     if(opts.walls.bottom){
         group.add(wall({x:0, y:0, z:CONST.room.width, rotation: 0}));
         group.add(door({x:0, y:0, z:CONST.room.width, rotation: 0}));
+        group.add(lights({x:0, y:0, z:CONST.room.width, rotation: 0}));
     }
     group.add(floor());
     group.add(ceiling());

@@ -40608,7 +40608,7 @@ module.exports = function (mediator) {
     return camera;
 };
 
-},{"../const":20,"../libs":23,"lodash.clone":3,"three":9,"tween.js":10}],13:[function(require,module,exports){
+},{"../const":21,"../libs":24,"lodash.clone":3,"three":9,"tween.js":10}],13:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var floorTexture = new THREE.TextureLoader().load('img/cobblestone_mossy.png');
@@ -40616,7 +40616,7 @@ floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
-var material = new THREE.MeshBasicMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
+var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 
 
 module.exports = function(){
@@ -40626,13 +40626,13 @@ module.exports = function(){
     floor.rotateX(Math.PI / 2);
     return floor;
 };
-},{"../const":20,"three":9}],14:[function(require,module,exports){
+},{"../const":21,"three":9}],14:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
 var bottomTex = new THREE.TextureLoader().load('img/door/door_wood_lower.png');
-var upperMat = new THREE.MeshBasicMaterial({map: upperTex});
-var bottomMat = new THREE.MeshBasicMaterial({map: bottomTex});
+var upperMat = new THREE.MeshPhongMaterial({map: upperTex});
+var bottomMat = new THREE.MeshPhongMaterial({map: bottomTex});
 var doorPiece = new THREE.BoxGeometry(32, 32, 8);
 module.exports = function(opts){
     var group = new THREE.Object3D();
@@ -40641,14 +40641,13 @@ module.exports = function(opts){
     group.add(upper);
     bottom.position.y = -32;
     group.add(bottom);
-
     group.position.x = opts.x;
     group.position.y = opts.y;
     group.position.z = opts.z;
     group.rotateY(opts.rotation);
     return group;
 };
-},{"../const":20,"three":9}],15:[function(require,module,exports){
+},{"../const":21,"three":9}],15:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
@@ -40656,7 +40655,7 @@ floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
-var material = new THREE.MeshBasicMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
+var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 
 
 module.exports = function(){
@@ -40666,11 +40665,29 @@ module.exports = function(){
     floor.rotateX(Math.PI / 2);
     return floor;
 };
-},{"../const":20,"three":9}],16:[function(require,module,exports){
+},{"../const":21,"three":9}],16:[function(require,module,exports){
+var THREE = require('three');
+var CONST = require('../const');
+module.exports = function(opts){
+    var group = new THREE.Object3D();
+    var light = new THREE.PointLight( 0xff0000, 1, 100 );
+    light.position.z = 32;
+    var light2 = new THREE.PointLight( 0xff0000, 1, 100 );
+    light2.position.z = -32;
+    group.add(light);
+    group.add(light2);
+    group.position.x = opts.x;
+    group.position.y = opts.y;
+    group.position.z = opts.z;
+    group.rotateY(opts.rotation);
+    return group;
+};
+},{"../const":21,"three":9}],17:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var door = require('./door');
 var wall = require('./wall');
+var lights = require('./lights');
 var floor = require('./floor');
 var ceiling = require('./ceiling');
 
@@ -40682,29 +40699,32 @@ module.exports = function(opts){
     if(opts.walls.top){
         group.add(wall({x:0, y:0, z:0, rotation: 0}));
         group.add(door({x:0, y:0, z:0, rotation: 0}));
+        group.add(lights({x:0, y:0, z:0, rotation: 0}));
     }
 
     if(opts.walls.left){
         group.add(wall({x:-CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
         group.add(door({x:-CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
+        group.add(lights({x:-CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
     }
 
     if(opts.walls.right){
         group.add(wall({x:CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
         group.add(door({x:CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
-
+        group.add(lights({x:CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI / 2}));
     }
 
     if(opts.walls.bottom){
         group.add(wall({x:0, y:0, z:CONST.room.width, rotation: 0}));
         group.add(door({x:0, y:0, z:CONST.room.width, rotation: 0}));
+        group.add(lights({x:0, y:0, z:CONST.room.width, rotation: 0}));
     }
     group.add(floor());
     group.add(ceiling());
     group.position.y = CONST.room.height/2;
     return group;
 };
-},{"../const":20,"./ceiling":13,"./door":14,"./floor":15,"./wall":17,"three":9}],17:[function(require,module,exports){
+},{"../const":21,"./ceiling":13,"./door":14,"./floor":15,"./lights":16,"./wall":18,"three":9}],18:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -40719,8 +40739,8 @@ topTexture.wrapS = THREE.RepeatWrapping;
 topTexture.wrapT = THREE.RepeatWrapping;
 topTexture.repeat.set(CONST.door.width / CONST.texture.widht, (CONST.room.height - CONST.door.height) / CONST.texture.height);
 // Materials
-var wallMat = new THREE.MeshBasicMaterial({map: wallTexture});
-var topMat = new THREE.MeshBasicMaterial({map: topTexture});
+var wallMat = new THREE.MeshPhongMaterial({map: wallTexture});
+var topMat = new THREE.MeshPhongMaterial({map: topTexture});
 // Objects
 var mergeGeometry = new THREE.Geometry();
 
@@ -40745,7 +40765,7 @@ module.exports = function (opts) {
     group.rotateY(opts.rotation);
     return group;
 };
-},{"../const":20,"three":9}],18:[function(require,module,exports){
+},{"../const":21,"three":9}],19:[function(require,module,exports){
 module.exports=[
   [{
 
@@ -40762,7 +40782,7 @@ module.exports=[
 
   }]
 ]
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module.exports=[
   "img/cobblestone.png",
   "img/cobblestone_mossy.png",
@@ -40770,7 +40790,7 @@ module.exports=[
   "img/door/door_wood_upper.png",
   "img/stonebrick.png"
 ]
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var CONST = {};
 CONST.texture = {
     widht: 32,
@@ -40791,7 +40811,7 @@ CONST.speed = 0.45;
 
 
 module.exports = CONST;
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var THREE = require('three');
 var vkey = require('vkey');
 
@@ -40812,7 +40832,7 @@ module.exports = function (mediator) {
         }
     }, false)
 };
-},{"three":9,"vkey":11}],22:[function(require,module,exports){
+},{"three":9,"vkey":11}],23:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var Mediator = require("mediator-js").Mediator,
@@ -40841,7 +40861,7 @@ function animate() {
 }
 
 window.app = init;
-},{"./components/camera":12,"./controls/controls":21,"./services/roomGenerator":24,"./services/scene":25,"./services/textures":26,"./services/user":27,"mediator-js":5,"three":9,"tween.js":10}],23:[function(require,module,exports){
+},{"./components/camera":12,"./controls/controls":22,"./services/roomGenerator":25,"./services/scene":26,"./services/textures":27,"./services/user":28,"mediator-js":5,"three":9,"tween.js":10}],24:[function(require,module,exports){
 var libs = {};
 
 libs.distanceVector = function (v1, v2) {
@@ -40853,7 +40873,7 @@ libs.distanceVector = function (v1, v2) {
 };
 
 module.exports = libs;
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var room = require('../components/room');
 var map = require('../config/map.json');
 var CONST = require('../const');
@@ -40874,7 +40894,7 @@ module.exports = function (mediator) {
         mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z]);
     });
 };
-},{"../components/room":16,"../config/map.json":18,"../const":20}],25:[function(require,module,exports){
+},{"../components/room":17,"../config/map.json":19,"../const":21}],26:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -40888,7 +40908,7 @@ module.exports = function(mediator){
     return scene;
 
 };
-},{"three":9}],26:[function(require,module,exports){
+},{"three":9}],27:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -40907,7 +40927,7 @@ module.exports = function(callback){
     });
 
 };
-},{"../config/textures.json":19,"lodash.foreach":4,"three":9}],27:[function(require,module,exports){
+},{"../config/textures.json":20,"lodash.foreach":4,"three":9}],28:[function(require,module,exports){
 _ = {
     clone: require('lodash.clone')
 };
@@ -40987,4 +41007,4 @@ module.exports = function (mediator) {
     }
 
 };
-},{"../const":20,"lodash.clone":3}]},{},[22]);
+},{"../const":21,"lodash.clone":3}]},{},[23]);
