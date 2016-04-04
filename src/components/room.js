@@ -3,6 +3,7 @@ var CONST = require('../const');
 var door = require('./door');
 var wall = require('./wall');
 var floor = require('./floor');
+var ceiling = require('./ceiling');
 
 module.exports = function(opts){
     var group = new THREE.Object3D();
@@ -30,6 +31,7 @@ module.exports = function(opts){
         group.add(door({x:0, y:0, z:CONST.room.width, rotation: 0}));
     }
     group.add(floor());
+    group.add(ceiling());
     group.position.y = CONST.room.height/2;
     return group;
 };

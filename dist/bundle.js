@@ -40608,7 +40608,25 @@ module.exports = function (mediator) {
     return camera;
 };
 
-},{"../const":19,"../libs":22,"lodash.clone":3,"three":9,"tween.js":10}],13:[function(require,module,exports){
+},{"../const":20,"../libs":23,"lodash.clone":3,"three":9,"tween.js":10}],13:[function(require,module,exports){
+var THREE = require('three');
+var CONST = require('../const');
+var floorTexture = new THREE.TextureLoader().load('img/cobblestone_mossy.png');
+floorTexture.wrapS = THREE.RepeatWrapping;
+floorTexture.wrapT = THREE.RepeatWrapping;
+floorTexture.repeat.set(20,20);
+var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
+var material = new THREE.MeshBasicMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
+
+
+module.exports = function(){
+    var floor = new THREE.Mesh( geometry, material );
+    floor.position.y = CONST.room.height/2;
+    floor.position.z = CONST.room.width/2;
+    floor.rotateX(Math.PI / 2);
+    return floor;
+};
+},{"../const":20,"three":9}],14:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
@@ -40630,7 +40648,7 @@ module.exports = function(opts){
     group.rotateY(opts.rotation);
     return group;
 };
-},{"../const":19,"three":9}],14:[function(require,module,exports){
+},{"../const":20,"three":9}],15:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
@@ -40648,12 +40666,13 @@ module.exports = function(){
     floor.rotateX(Math.PI / 2);
     return floor;
 };
-},{"../const":19,"three":9}],15:[function(require,module,exports){
+},{"../const":20,"three":9}],16:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var door = require('./door');
 var wall = require('./wall');
 var floor = require('./floor');
+var ceiling = require('./ceiling');
 
 module.exports = function(opts){
     var group = new THREE.Object3D();
@@ -40681,10 +40700,11 @@ module.exports = function(opts){
         group.add(door({x:0, y:0, z:CONST.room.width, rotation: 0}));
     }
     group.add(floor());
+    group.add(ceiling());
     group.position.y = CONST.room.height/2;
     return group;
 };
-},{"../const":19,"./door":13,"./floor":14,"./wall":16,"three":9}],16:[function(require,module,exports){
+},{"../const":20,"./ceiling":13,"./door":14,"./floor":15,"./wall":17,"three":9}],17:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -40725,7 +40745,7 @@ module.exports = function (opts) {
     group.rotateY(opts.rotation);
     return group;
 };
-},{"../const":19,"three":9}],17:[function(require,module,exports){
+},{"../const":20,"three":9}],18:[function(require,module,exports){
 module.exports=[
   [{
 
@@ -40742,13 +40762,15 @@ module.exports=[
 
   }]
 ]
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 module.exports=[
   "img/cobblestone.png",
-  "img/planks.png",
+  "img/cobblestone_mossy.png",
+  "img/door/door_wood_lower.png",
+  "img/door/door_wood_upper.png",
   "img/stonebrick.png"
 ]
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var CONST = {};
 CONST.texture = {
     widht: 32,
@@ -40769,7 +40791,7 @@ CONST.speed = 0.45;
 
 
 module.exports = CONST;
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var THREE = require('three');
 var vkey = require('vkey');
 
@@ -40790,7 +40812,7 @@ module.exports = function (mediator) {
         }
     }, false)
 };
-},{"three":9,"vkey":11}],21:[function(require,module,exports){
+},{"three":9,"vkey":11}],22:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var Mediator = require("mediator-js").Mediator,
@@ -40819,7 +40841,7 @@ function animate() {
 }
 
 window.app = init;
-},{"./components/camera":12,"./controls/controls":20,"./services/roomGenerator":23,"./services/scene":24,"./services/textures":25,"./services/user":26,"mediator-js":5,"three":9,"tween.js":10}],22:[function(require,module,exports){
+},{"./components/camera":12,"./controls/controls":21,"./services/roomGenerator":24,"./services/scene":25,"./services/textures":26,"./services/user":27,"mediator-js":5,"three":9,"tween.js":10}],23:[function(require,module,exports){
 var libs = {};
 
 libs.distanceVector = function (v1, v2) {
@@ -40831,7 +40853,7 @@ libs.distanceVector = function (v1, v2) {
 };
 
 module.exports = libs;
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var room = require('../components/room');
 var map = require('../config/map.json');
 var CONST = require('../const');
@@ -40852,7 +40874,7 @@ module.exports = function (mediator) {
         mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z]);
     });
 };
-},{"../components/room":15,"../config/map.json":17,"../const":19}],24:[function(require,module,exports){
+},{"../components/room":16,"../config/map.json":18,"../const":20}],25:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -40866,7 +40888,7 @@ module.exports = function(mediator){
     return scene;
 
 };
-},{"three":9}],25:[function(require,module,exports){
+},{"three":9}],26:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -40885,7 +40907,7 @@ module.exports = function(callback){
     });
 
 };
-},{"../config/textures.json":18,"lodash.foreach":4,"three":9}],26:[function(require,module,exports){
+},{"../config/textures.json":19,"lodash.foreach":4,"three":9}],27:[function(require,module,exports){
 _ = {
     clone: require('lodash.clone')
 };
@@ -40965,4 +40987,4 @@ module.exports = function (mediator) {
     }
 
 };
-},{"../const":19,"lodash.clone":3}]},{},[21]);
+},{"../const":20,"lodash.clone":3}]},{},[22]);
