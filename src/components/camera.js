@@ -9,7 +9,7 @@ var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-    var light = new THREE.PointLight( 0x404040 , 1, 200 );
+    var light = new THREE.PointLight( 0x404040 , 1, 200);
     light.position.set(0,64,0);
     camera.add(light);
     mediator.subscribe('camera.rotate', rotate);
@@ -30,7 +30,7 @@ module.exports = function (mediator) {
         var distance = libs.distanceVector(camera.position, value);
 
         new TWEEN.Tween(camera.position)
-            .to({z: value.z, x: value.x}, Math.abs(distance)/CONST.speed)
+            .to({z: value.z, x: value.x}, Math.abs(distance)/CONST.speed * 1000)
             .onComplete(function () {
                 moving = false
             })
@@ -59,7 +59,7 @@ module.exports = function (mediator) {
         }
 
         new TWEEN.Tween(camera.position)
-            .to({z: value.z, x: value.x}, Math.abs(temp) / CONST.speed)
+            .to({z: value.z, x: value.x}, Math.abs(temp) /CONST.speed * 1000)
             .onComplete(function () {
                 moving = false
             })
