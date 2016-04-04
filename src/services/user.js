@@ -1,6 +1,7 @@
 _ = {
     clone: require('lodash.clone')
 };
+var CONST = require('../const');
 module.exports = function (mediator) {
     var direction = 0;
     var directions = ['N', 'E', 'S', 'W'];
@@ -9,7 +10,7 @@ module.exports = function (mediator) {
         x: 0,
         z: 0
     };
-    mediator.publish('camera.center', {x: position.x * 640, z: position.z * 640  + 320, y: 0});
+    mediator.publish('camera.center', position);
     mediator.publish('room.add', position);
     mediator.subscribe('input', function (type) {
         if (center) {
@@ -44,23 +45,29 @@ module.exports = function (mediator) {
                 center = false;
             }
         } else {
+            var coords = _.clone(position);
+            if (direction == 0) {
+                coords.z--;
+            } else if (direction == 1) {
+                coords.x++;
+            } else if (direction == 2) {
+                coords.z++;
+            } else if (direction == 3) {
+                coords.x--;
+            }
+
             if (type == 'back') {
                 mediator.publish('camera.move', 'back');
-                var coords = _.clone(position);
-
-                if (direction == 0) {
-                    coords.z--;
-                } else if (direction == 1) {
-                    coords.x++;
-                } else if (direction == 2) {
-                    coords.z++;
-                } else if (direction == 3) {
-                    coords.x--;
-                }
                 mediator.publish('room.remove', coords);
                 center = true;
             }
 
+            if(type =='forward'){
+                mediator.publish('camera.move.room', coords);
+                mediator.publish('room.remove', position);
+                center = true;
+                position = coords;
+            }
         }
     });
     return {

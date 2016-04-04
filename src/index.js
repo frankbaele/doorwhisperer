@@ -12,7 +12,7 @@ function init() {
     textureLoader(function(){
         var user = require('./services/user')(mediator);
         renderer = new THREE.WebGLRenderer();
-        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setSize( window.innerWidth - 10, window.innerHeight -10);
         document.body.appendChild( renderer.domElement );
         animate();
     });

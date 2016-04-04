@@ -40524,21 +40524,40 @@ for(i = 112; i < 136; ++i) {
 },{}],12:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
+var CONST = require('../const');
+var libs = require('../libs')
 var _ = {
     clone: require('lodash.clone')
 };
 
 module.exports = function (mediator) {
-    var birdView = false;
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
     mediator.subscribe('camera.rotate', rotate);
     mediator.subscribe('camera.move', move);
-    mediator.subscribe('camera.center', function(coords){
-        camera.position.z = coords.z;
-        camera.position.y = coords.y;
-        camera.position.x = coords.x;
+    mediator.subscribe('camera.move.room', moveRoom);
+    mediator.subscribe('camera.center', function (coords) {
+        camera.position.z = coords.z * CONST.roomSize + CONST.roomSize / 2;
+        camera.position.y = 0;
+        camera.position.x = coords.x * CONST.roomSize;
     });
+
+
+    function moveRoom(coords) {
+        moving = true;
+        var value = {};
+        value.x = coords.x * CONST.roomSize;
+        value.z = coords.z * CONST.roomSize + CONST.roomSize / 2;
+        value.y = 0;
+        var distance = libs.distanceVector(camera.position, value);
+
+        new TWEEN.Tween(camera.position)
+            .to({z: value.z, x: value.x}, Math.abs(distance)/CONST.speed)
+            .onComplete(function () {
+                moving = false
+            })
+            .start();
+    }
 
     function move(direction) {
         moving = true;
@@ -40546,7 +40565,7 @@ module.exports = function (mediator) {
             temp = 175;
         }
         if (direction == 'forward') {
-            temp = - 175;
+            temp = -175;
         }
         var worldDirection = camera.getWorldDirection();
         var value = _.clone(camera.position);
@@ -40557,12 +40576,12 @@ module.exports = function (mediator) {
             value.x = value.x + temp;
         } else if (worldDirection.z == 1) {
             value.z = value.z - temp;
-        } else if (worldDirection.z == -1){
+        } else if (worldDirection.z == -1) {
             value.z = value.z + temp;
         }
 
         new TWEEN.Tween(camera.position)
-            .to({z: value.z, x: value.x}, 400)
+            .to({z: value.z, x: value.x}, Math.abs(temp) / CONST.speed)
             .onComplete(function () {
                 moving = false
             })
@@ -40590,8 +40609,9 @@ module.exports = function (mediator) {
     return camera;
 };
 
-},{"lodash.clone":3,"three":9,"tween.js":10}],13:[function(require,module,exports){
+},{"../const":17,"../libs":20,"lodash.clone":3,"three":9,"tween.js":10}],13:[function(require,module,exports){
 var THREE = require('three');
+var CONST = require('../const');
 var wall = require('./wall');
 var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
 floorTexture.wrapS = THREE.RepeatWrapping;
@@ -40607,24 +40627,24 @@ module.exports = function(opts){
         group.add(wall({x:0, y:0, z:0, rotation: 0}));
     }
     if(opts.walls.left){
-        group.add(wall({x:-320, y:0, z:320, rotation: Math.PI / 2}));
+        group.add(wall({x:-CONST.roomSize/2, y:0, z:CONST.roomSize/2, rotation: Math.PI / 2}));
     }
     if(opts.walls.right){
-        group.add(wall({x:320, y:0, z:320, rotation: Math.PI / 2}));
+        group.add(wall({x:CONST.roomSize/2, y:0, z:CONST.roomSize/2, rotation: Math.PI / 2}));
     }
     if(opts.walls.bottom){
-        group.add(wall({x:0, y:0, z:640, rotation: 0}));
+        group.add(wall({x:0, y:0, z:CONST.roomSize, rotation: 0}));
     }
-    var geometry = new THREE.PlaneGeometry( 640, 640, 640);
+    var geometry = new THREE.PlaneGeometry( CONST.roomSize, CONST.roomSize, CONST.roomSize);
     var material = new THREE.MeshBasicMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
     var floor = new THREE.Mesh( geometry, material );
-    floor.position.y = -128;
-    floor.position.z = 320;
+    floor.position.y = - CONST.roomSize / 5;
+    floor.position.z = CONST.roomSize/2;
     floor.rotateX(Math.PI / 2);
     group.add(floor);
     return group;
 };
-},{"./wall":14,"three":9}],14:[function(require,module,exports){
+},{"../const":17,"./wall":14,"three":9}],14:[function(require,module,exports){
 var THREE = require('three');
 var wallTexture = new THREE.TextureLoader().load('img/cobblestone.png');
 wallTexture.wrapS = THREE.RepeatWrapping;
@@ -40683,6 +40703,13 @@ module.exports=[
   "img/stonebrick.png"
 ]
 },{}],17:[function(require,module,exports){
+var CONST = {};
+
+CONST.roomSize = 640;
+CONST.speed = 0.45;
+
+module.exports = CONST;
+},{}],18:[function(require,module,exports){
 var THREE = require('three');
 var vkey = require('vkey');
 
@@ -40703,7 +40730,7 @@ module.exports = function (mediator) {
         }
     }, false)
 };
-},{"three":9,"vkey":11}],18:[function(require,module,exports){
+},{"three":9,"vkey":11}],19:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var Mediator = require("mediator-js").Mediator,
@@ -40718,7 +40745,7 @@ function init() {
     textureLoader(function(){
         var user = require('./services/user')(mediator);
         renderer = new THREE.WebGLRenderer();
-        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setSize( window.innerWidth - 10, window.innerHeight -10);
         document.body.appendChild( renderer.domElement );
         animate();
     });
@@ -40732,9 +40759,22 @@ function animate() {
 }
 
 window.app = init;
-},{"./components/camera":12,"./controls/controls":17,"./services/roomGenerator":19,"./services/scene":20,"./services/textures":21,"./services/user":22,"mediator-js":5,"three":9,"tween.js":10}],19:[function(require,module,exports){
+},{"./components/camera":12,"./controls/controls":18,"./services/roomGenerator":21,"./services/scene":22,"./services/textures":23,"./services/user":24,"mediator-js":5,"three":9,"tween.js":10}],20:[function(require,module,exports){
+var libs = {};
+
+libs.distanceVector = function (v1, v2) {
+    var dx = v1.x - v2.x;
+    var dy = v1.y - v2.y;
+    var dz = v1.z - v2.z;
+
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+};
+
+module.exports = libs;
+},{}],21:[function(require,module,exports){
 var room = require('../components/room');
 var map = require('../config/map.json');
+var CONST = require('../const');
 module.exports = function (mediator) {
     var rooms = {};
     mediator.subscribe('room.add', function (coords) {
@@ -40743,7 +40783,7 @@ module.exports = function (mediator) {
         walls.top = true;
         walls.right = true;
         walls.bottom = true;
-        var instance = room({x: coords.x * 640, y: 0, z: coords.z * 640, walls: walls});
+        var instance = room({x: coords.x * CONST.roomSize, y: 0, z: coords.z * CONST.roomSize, walls: walls});
         mediator.publish('scene.add', instance);
         rooms[coords.x + '_' + coords.z] = instance;
     });
@@ -40752,7 +40792,7 @@ module.exports = function (mediator) {
         mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z]);
     });
 };
-},{"../components/room":13,"../config/map.json":15}],20:[function(require,module,exports){
+},{"../components/room":13,"../config/map.json":15,"../const":17}],22:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -40766,7 +40806,7 @@ module.exports = function(mediator){
     return scene;
 
 };
-},{"three":9}],21:[function(require,module,exports){
+},{"three":9}],23:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -40785,10 +40825,11 @@ module.exports = function(callback){
     });
 
 };
-},{"../config/textures.json":16,"lodash.foreach":4,"three":9}],22:[function(require,module,exports){
+},{"../config/textures.json":16,"lodash.foreach":4,"three":9}],24:[function(require,module,exports){
 _ = {
     clone: require('lodash.clone')
 };
+var CONST = require('../const');
 module.exports = function (mediator) {
     var direction = 0;
     var directions = ['N', 'E', 'S', 'W'];
@@ -40797,7 +40838,7 @@ module.exports = function (mediator) {
         x: 0,
         z: 0
     };
-    mediator.publish('camera.center', {x: position.x * 640, z: position.z * 640  + 320, y: 0});
+    mediator.publish('camera.center', position);
     mediator.publish('room.add', position);
     mediator.subscribe('input', function (type) {
         if (center) {
@@ -40832,23 +40873,29 @@ module.exports = function (mediator) {
                 center = false;
             }
         } else {
+            var coords = _.clone(position);
+            if (direction == 0) {
+                coords.z--;
+            } else if (direction == 1) {
+                coords.x++;
+            } else if (direction == 2) {
+                coords.z++;
+            } else if (direction == 3) {
+                coords.x--;
+            }
+
             if (type == 'back') {
                 mediator.publish('camera.move', 'back');
-                var coords = _.clone(position);
-
-                if (direction == 0) {
-                    coords.z--;
-                } else if (direction == 1) {
-                    coords.x++;
-                } else if (direction == 2) {
-                    coords.z++;
-                } else if (direction == 3) {
-                    coords.x--;
-                }
                 mediator.publish('room.remove', coords);
                 center = true;
             }
 
+            if(type =='forward'){
+                mediator.publish('camera.move.room', coords);
+                mediator.publish('room.remove', position);
+                center = true;
+                position = coords;
+            }
         }
     });
     return {
@@ -40858,4 +40905,4 @@ module.exports = function (mediator) {
     }
 
 };
-},{"lodash.clone":3}]},{},[18]);
+},{"../const":17,"lodash.clone":3}]},{},[19]);
