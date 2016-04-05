@@ -5,16 +5,12 @@ var bottomTex = new THREE.TextureLoader().load('img/door/door_wood_lower.png');
 var upperMat = new THREE.MeshLambertMaterial({map: upperTex});
 var bottomMat = new THREE.MeshLambertMaterial({map: bottomTex});
 var doorPiece = new THREE.BoxGeometry(32, 32, 8);
-module.exports = function(opts){
+module.exports = function(){
     var group = new THREE.Object3D();
     var upper = new THREE.Mesh(doorPiece, upperMat);
     var bottom = new THREE.Mesh(doorPiece, bottomMat);
     group.add(upper);
     bottom.position.y = -32;
     group.add(bottom);
-    group.position.x = opts.x;
-    group.position.y = opts.y;
-    group.position.z = opts.z;
-    group.rotateY(opts.rotation);
     return group;
 };

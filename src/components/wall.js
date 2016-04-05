@@ -26,15 +26,11 @@ mergeGeometry.center();
 var wallPieceTop = new THREE.BoxGeometry(CONST.door.width, CONST.room.height - CONST.door.height, 32);
 wallPieceTop.applyMatrix(new THREE.Matrix4().makeTranslation(0, CONST.door.height / 2, 0));
 
-module.exports = function (opts) {
+module.exports = function () {
     var wallMesh = new THREE.Mesh(mergeGeometry, wallMat);
     var topMesh = new THREE.Mesh(wallPieceTop, topMat);
     var group = new THREE.Object3D();
     group.add(wallMesh);
     group.add(topMesh);
-    group.position.x = opts.x;
-    group.position.y = opts.y;
-    group.position.z = opts.z;
-    group.rotateY(opts.rotation);
     return group;
 };
