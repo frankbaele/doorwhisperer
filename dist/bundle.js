@@ -43318,13 +43318,16 @@ module.exports = function(opts){
     var group = new THREE.Object3D();
     group.add(wall());
     group.add(door());
-    group.add(lights());
-
-    group.position.x = opts.x;
-    group.position.y = opts.y;
-    group.position.z = opts.z;
-    group.rotateY(opts.rotation);
-
+    var lightLeft = lights();
+    var lightRight = lights();
+    lightLeft.position.z = 32;
+    lightLeft.position.x = -32;
+    lightRight.position.z = 32;
+    lightRight.position.x = 48;
+    group.add(lightLeft);
+    group.add(lightRight);
+    group.position.set(opts.x,opts.y, opts.z);
+    group.rotation.y = opts.rotation;
     return group;
 };
 },{"../const":24,"./door":16,"./lights":19,"./wall":21,"three":11}],18:[function(require,module,exports){
@@ -43335,8 +43338,7 @@ floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
-var material = new THREE.MeshLambertMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
-
+var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 module.exports = function(){
     var floor = new THREE.Mesh( geometry, material );
     floor.position.y = - CONST.room.height/2;
@@ -43349,14 +43351,10 @@ var THREE = require('three');
 var CONST = require('../const');
 module.exports = function(){
     var group = new THREE.Object3D();
-    var light = new THREE.PointLight( 0xE25822, 1, 75);
-    var sphereSize = 1;
-    light.position.z = 40;
-    light.position.y = -32;
+    var light = new THREE.PointLight( 0xE25822, 2, 75);
+
     group.add(light);
-    var pointLightHelper = new THREE.PointLightHelper( light, sphereSize );
-    group.add(pointLightHelper);
-    return light;
+    return group;
 };
 },{"../const":24,"three":11}],20:[function(require,module,exports){
 var THREE = require('three');
@@ -43364,30 +43362,29 @@ var CONST = require('../const');
 var facet = require('./facet');
 var floor = require('./floor');
 var ceiling = require('./ceiling');
+var lights = require('./lights');
+module.exports = function (opts) {
 
-module.exports = function(opts){
     var group = new THREE.Object3D();
-    group.position.x = opts.x;
-    group.position.y = opts.y;
-    group.position.z = opts.z;
-    if(opts.walls.top){
-        group.add(facet({x:0, y:0, z:0, rotation: 0}));
-    }
-    if(opts.walls.left){
-        group.add(facet({x:-CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: Math.PI /2}));
-    }
-    if(opts.walls.right){
-        group.add(facet({x:CONST.room.width/2, y:0, z:CONST.room.width/2, rotation: -Math.PI /2}));
-    }
-    if(opts.walls.bottom){
-        group.add(facet({x:0, y:0, z:CONST.room.width, rotation: Math.PI}));
-    }
     group.add(floor());
+    if (opts.walls.top) {
+        group.add(facet({x: 0, y: 0, z: 0, rotation: 0}));
+    }
+    if (opts.walls.left) {
+        group.add(facet({x: -CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
+    }
+    if (opts.walls.right) {
+        group.add(facet({x: CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
+    }
+    if (opts.walls.bottom) {
+        group.add(facet({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
+    }
+
     group.add(ceiling());
-    group.position.y = CONST.room.height/2;
+    group.position.set(opts.x, opts.y + CONST.room.height/2, opts.z);
     return group;
 };
-},{"../const":24,"./ceiling":15,"./facet":17,"./floor":18,"three":11}],21:[function(require,module,exports){
+},{"../const":24,"./ceiling":15,"./facet":17,"./floor":18,"./lights":19,"three":11}],21:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 

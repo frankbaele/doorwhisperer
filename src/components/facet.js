@@ -8,12 +8,15 @@ module.exports = function(opts){
     var group = new THREE.Object3D();
     group.add(wall());
     group.add(door());
-    group.add(lights());
-
-    group.position.x = opts.x;
-    group.position.y = opts.y;
-    group.position.z = opts.z;
-    group.rotateY(opts.rotation);
-
+    var lightLeft = lights();
+    var lightRight = lights();
+    lightLeft.position.z = 32;
+    lightLeft.position.x = -32;
+    lightRight.position.z = 32;
+    lightRight.position.x = 48;
+    group.add(lightLeft);
+    group.add(lightRight);
+    group.position.set(opts.x,opts.y, opts.z);
+    group.rotation.y = opts.rotation;
     return group;
 };
