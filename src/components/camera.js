@@ -22,28 +22,27 @@ module.exports = function (mediator) {
         camera.position.x = coords.x * CONST.room.width;
     });
     mediator.publish('scene.add', camera);
-    function moveRoom(coords) {
-        moving = true;
+    function moveRoom(opts) {
         var value = {};
-        value.x = coords.x * CONST.room.width;
-        value.z = coords.z * CONST.room.width + CONST.room.width / 2;
+        value.x = opts.coords.x * CONST.room.width;
+        value.z = opts.coords.z * CONST.room.width + CONST.room.width / 2;
         value.y = height;
         var distance = libs.distanceVector(camera.position, value);
-
         new TWEEN.Tween(camera.position)
             .to({z: value.z, x: value.x}, Math.abs(distance)/CONST.speed * 1000)
             .onComplete(function () {
-                moving = false
+                if(opts.callback){
+                    opts.callback();
+                }
             })
             .start();
     }
 
-    function move(direction) {
-        moving = true;
-        if (direction == 'back') {
+    function move(opts) {
+        if (opts.direction == 'back') {
             temp = CONST.room.width * 0.25;
         }
-        if (direction == 'forward') {
+        if (opts.direction == 'forward') {
             temp = -CONST.room.width * 0.25;
         }
         var worldDirection = camera.getWorldDirection();
@@ -62,27 +61,28 @@ module.exports = function (mediator) {
         new TWEEN.Tween(camera.position)
             .to({z: value.z, x: value.x}, Math.abs(temp) /CONST.speed * 1000)
             .onComplete(function () {
-                moving = false
+                if(opts.callback){
+                    opts.callback();
+                }
             })
             .start();
     }
 
-    function rotate(direction) {
-        if (!moving) {
-            moving = true;
-            var value = camera.rotation.y;
-            if (direction == 'left') {
-                value = value + Math.PI / 2;
-            } else {
-                value = value - Math.PI / 2;
-            }
-            new TWEEN.Tween(camera.rotation)
-                .to({y: value}, 400)
-                .onComplete(function () {
-                    moving = false
-                })
-                .start();
+    function rotate(opts) {
+        var value = camera.rotation.y;
+        if (opts.direction == 'left') {
+            value = value + Math.PI / 2;
+        } else {
+            value = value - Math.PI / 2;
         }
+        new TWEEN.Tween(camera.rotation)
+            .to({y: value}, 400)
+            .onComplete(function () {
+                if(opts.callback){
+                    opts.callback();
+                }
+            })
+            .start();
     }
 
     return camera;

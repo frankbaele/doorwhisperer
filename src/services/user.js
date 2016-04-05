@@ -4,6 +4,7 @@ _ = {
 var CONST = require('../const');
 module.exports = function (mediator) {
     var direction = 0;
+    var moving = false;
     var directions = ['N', 'E', 'S', 'W'];
     var center = true;
     var position = {
@@ -13,24 +14,59 @@ module.exports = function (mediator) {
     mediator.publish('camera.center', position);
     mediator.publish('room.add', position);
     mediator.subscribe('input', function (type) {
-        if (center) {
-            if (type == 'left') {
-                if (direction == 0) {
-                    direction = directions.length - 1;
-                } else {
-                    direction = direction - 1;
+        if(!moving){
+            if (center) {
+                if (type == 'left') {
+                    if (direction == 0) {
+                        direction = directions.length - 1;
+                    } else {
+                        direction = direction - 1;
+                    }
+                    moving = true;
+                    mediator.publish('camera.rotate', {
+                        'direction': 'left',
+                        'callback': function () {
+                            moving = false;
+                        }
+                    });
+                } else if (type == 'right') {
+                    moving = true;
+                    if (direction == directions.length - 1) {
+                        direction = 0;
+                    } else {
+                        direction = direction + 1;
+                    }
+                    mediator.publish('camera.rotate', {
+                        'direction': 'right',
+                        'callback': function () {
+                            moving = false;
+                        }
+                    });
                 }
-                mediator.publish('camera.rotate', 'left');
-            } else if (type == 'right') {
-                if (direction == directions.length - 1) {
-                    direction = 0;
-                } else {
-                    direction = direction + 1;
+                if (type == 'forward') {
+                    moving = true;
+                    mediator.publish('camera.move', {
+                        'direction': 'forward',
+                        'callback': function () {
+                            center = false;
+                            moving = false;
+                        }
+                    });
+
+                    var coords = _.clone(position);
+                    if (direction == 0) {
+                        coords.z--;
+                    } else if (direction == 1) {
+                        coords.x++;
+                    } else if (direction == 2) {
+                        coords.z++;
+                    } else if (direction == 3) {
+                        coords.x--;
+                    }
+
+                    mediator.publish('room.add', coords);
                 }
-                mediator.publish('camera.rotate', 'right');
-            }
-            if (type == 'forward') {
-                mediator.publish('camera.move', 'forward');
+            } else {
                 var coords = _.clone(position);
                 if (direction == 0) {
                     coords.z--;
@@ -41,38 +77,33 @@ module.exports = function (mediator) {
                 } else if (direction == 3) {
                     coords.x--;
                 }
-                mediator.publish('room.add', coords);
-                center = false;
-            }
-        } else {
-            var coords = _.clone(position);
-            if (direction == 0) {
-                coords.z--;
-            } else if (direction == 1) {
-                coords.x++;
-            } else if (direction == 2) {
-                coords.z++;
-            } else if (direction == 3) {
-                coords.x--;
-            }
 
-            if (type == 'back') {
-                mediator.publish('camera.move', 'back');
-                mediator.publish('room.remove', coords);
-                center = true;
-            }
-
-            if(type =='forward'){
-                mediator.publish('camera.move.room', coords);
-
-                setTimeout(function(){
-                    mediator.publish('room.remove', position);
-                    position = coords;
-                }, 300);
-                center = true;
-
+                if (type == 'back') {
+                    moving = true;
+                    mediator.publish('camera.move', {
+                        'direction': 'back',
+                        'callback': function () {
+                            center = true;
+                            moving = false;
+                            mediator.publish('room.remove', coords);
+                        }
+                    });
+                }
+                if (type == 'forward') {
+                    moving = true;
+                    mediator.publish('camera.move.room', {
+                        'coords': coords,
+                        'callback': function () {
+                            mediator.publish('room.remove', position);
+                            position = coords;
+                            center = true;
+                            moving = false;
+                        }
+                    });
+                }
             }
         }
+
     });
     return {
         direction: direction,
