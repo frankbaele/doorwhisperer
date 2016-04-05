@@ -5,16 +5,17 @@ module.exports = function (mediator) {
     var rooms = {};
     mediator.subscribe('room.add', function (coords) {
         var walls = {};
-        if (coords.z > 0) {
+
+        if(map[coords.z - 1] && map[coords.z - 1][coords.x]){
             walls.top = true;
         }
-        if (coords.z < map.length - 1 ) {
+        if(map[coords.z + 1] && map[coords.z + 1][coords.x]){
             walls.bottom = true;
         }
-        if (coords.x > 0) {
+        if(map[coords.z] && map[coords.z][coords.x - 1]){
             walls.left = true;
         }
-        if (coords.x < map[0].length - 1) {
+        if(map[coords.z] && map[coords.z][coords.x + 1]){
             walls.right = true;
         }
         var instance = room({x: coords.x * CONST.room.width, y: 0, z: coords.z * CONST.room.width, walls: walls});

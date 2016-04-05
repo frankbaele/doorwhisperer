@@ -56,8 +56,6 @@ module.exports = function (mediator) {
                     } else if (direction == 3) {
                         coords.x--;
                     }
-                    console.log(coords);
-                    console.log(map);
                     if(map[coords.z] && map[coords.z][coords.x]){
                         moving = true;
                         mediator.publish('camera.move', {
