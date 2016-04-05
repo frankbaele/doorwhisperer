@@ -64,9 +64,13 @@ module.exports = function (mediator) {
 
             if(type =='forward'){
                 mediator.publish('camera.move.room', coords);
-                mediator.publish('room.remove', position);
+
+                setTimeout(function(){
+                    mediator.publish('room.remove', position);
+                    position = coords;
+                }, 300);
                 center = true;
-                position = coords;
+
             }
         }
     });

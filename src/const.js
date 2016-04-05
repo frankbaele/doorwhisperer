@@ -6,7 +6,7 @@ CONST.texture = {
 
 CONST.room = {
     height: 96,
-    width: 352
+    width: 224
 };
 
 CONST.door = {

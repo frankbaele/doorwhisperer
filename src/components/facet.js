@@ -9,13 +9,11 @@ module.exports = function(opts){
     group.add(wall());
     group.add(door());
     var lightLeft = lights();
-    var lightRight = lights();
-    lightLeft.position.z = 32;
-    lightLeft.position.x = -32;
-    lightRight.position.z = 32;
-    lightRight.position.x = 48;
+    lightLeft.position.z = 20;
+    lightLeft.position.x = 0;
+    lightLeft.position.y = -10;
+
     group.add(lightLeft);
-    //group.add(lightRight);
     group.position.set(opts.x,opts.y, opts.z);
     group.rotation.y = opts.rotation;
     return group;

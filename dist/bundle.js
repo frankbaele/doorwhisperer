@@ -43194,8 +43194,9 @@ var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-    var light = new THREE.PointLight( 0x404040 , 1, 200);
-    light.position.set(0,64,0);
+    var light = new THREE.PointLight( 0x404040 , 2, 100);
+
+    light.position.set(0,0,0);
     camera.add(light);
     mediator.subscribe('camera.rotate', rotate);
     mediator.subscribe('camera.move', move);
@@ -43319,13 +43320,11 @@ module.exports = function(opts){
     group.add(wall());
     group.add(door());
     var lightLeft = lights();
-    var lightRight = lights();
-    lightLeft.position.z = 32;
-    lightLeft.position.x = -32;
-    lightRight.position.z = 32;
-    lightRight.position.x = 48;
+    lightLeft.position.z = 20;
+    lightLeft.position.x = 0;
+    lightLeft.position.y = -10;
+
     group.add(lightLeft);
-    //group.add(lightRight);
     group.position.set(opts.x,opts.y, opts.z);
     group.rotation.y = opts.rotation;
     return group;
@@ -43351,7 +43350,7 @@ var THREE = require('three');
 var CONST = require('../const');
 module.exports = function(){
     var group = new THREE.Object3D();
-    var light = new THREE.PointLight( 0xE25822, 2, 75);
+    var light = new THREE.PointLight( 0xE25822, 1, 50);
 
     group.add(light);
     return group;
@@ -43399,8 +43398,8 @@ topTexture.wrapS = THREE.RepeatWrapping;
 topTexture.wrapT = THREE.RepeatWrapping;
 topTexture.repeat.set(CONST.door.width / CONST.texture.widht, (CONST.room.height - CONST.door.height) / CONST.texture.height);
 // Materials
-var wallMat = new THREE.MeshPhongMaterial({map: wallTexture});
-var topMat = new THREE.MeshPhongMaterial({map: topTexture});
+var wallMat = new THREE.MeshLambertMaterial({map: wallTexture});
+var topMat = new THREE.MeshLambertMaterial({map: topTexture});
 // Objects
 var mergeGeometry = new THREE.Geometry();
 
@@ -43455,7 +43454,7 @@ CONST.texture = {
 
 CONST.room = {
     height: 96,
-    width: 352
+    width: 224
 };
 
 CONST.door = {
@@ -43649,9 +43648,13 @@ module.exports = function (mediator) {
 
             if(type =='forward'){
                 mediator.publish('camera.move.room', coords);
-                mediator.publish('room.remove', position);
+
+                setTimeout(function(){
+                    mediator.publish('room.remove', position);
+                    position = coords;
+                }, 300);
                 center = true;
-                position = coords;
+
             }
         }
     });
