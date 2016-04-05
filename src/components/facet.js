@@ -12,7 +12,6 @@ module.exports = function(opts){
     lightLeft.position.z = 20;
     lightLeft.position.x = 0;
     lightLeft.position.y = -10;
-
     group.add(lightLeft);
     group.position.set(opts.x,opts.y, opts.z);
     group.rotation.y = opts.rotation;

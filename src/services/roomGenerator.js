@@ -1,14 +1,23 @@
 var room = require('../components/room');
 var map = require('../config/map.json');
 var CONST = require('../const');
+console.log(map);
 module.exports = function (mediator) {
     var rooms = {};
     mediator.subscribe('room.add', function (coords) {
         var walls = {};
-        walls.left = true;
-        walls.top = true;
-        walls.right = true;
-        walls.bottom = true;
+        if (coords.z > 0) {
+            walls.top = true;
+        }
+        if (coords.z < map.length) {
+            walls.bottom = true;
+        }
+        if (coords.x > 0) {
+            walls.left = true;
+        }
+        if (coords.x < map.length) {
+            walls.right = true;
+        }
         var instance = room({x: coords.x * CONST.room.width, y: 0, z: coords.z * CONST.room.width, walls: walls});
         mediator.publish('scene.add', instance);
         rooms[coords.x + '_' + coords.z] = instance;

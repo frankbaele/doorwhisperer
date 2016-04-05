@@ -9,7 +9,7 @@ var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-    var light = new THREE.PointLight( 0x404040 , 2, 100);
+    var light = new THREE.PointLight( 0x404040 , 0.5, 200);
 
     light.position.set(0,0,0);
     camera.add(light);

@@ -43184,6 +43184,38 @@ for(i = 112; i < 136; ++i) {
 
 },{}],14:[function(require,module,exports){
 var THREE = require('three');
+var CONST = require('../const');
+var lights = require('./lights');
+// Textures
+var wallTexture = new THREE.TextureLoader().load('img/cobblestone.png');
+wallTexture.wrapS = THREE.RepeatWrapping;
+wallTexture.wrapT = THREE.RepeatWrapping;
+wallTexture.repeat.set(CONST.room.width / CONST.texture.widht, CONST.room.height / CONST.texture.height);
+
+// Materials
+var wallMat = new THREE.MeshLambertMaterial({map: wallTexture});
+// Objects
+
+
+var wallGem = new THREE.BoxGeometry(CONST.room.width, CONST.room.height, 32);
+
+
+module.exports = function (opts) {
+    var group = new THREE.Object3D();
+    var wallMesh = new THREE.Mesh(wallGem, wallMat);
+    wallMesh.position.set(opts.x,opts.y, opts.z);
+    wallMesh.rotation.y = opts.rotation;
+    group.add(wallMesh);
+    var light = lights();
+    light.position.z = 32;
+    light.position.x = 0;
+    light.position.y = 64;
+    group.add(light);
+
+    return group;
+};
+},{"../const":24,"./lights":19,"three":11}],15:[function(require,module,exports){
+var THREE = require('three');
 var TWEEN = require('tween.js');
 var CONST = require('../const');
 var libs = require('../libs');
@@ -43194,7 +43226,7 @@ var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-    var light = new THREE.PointLight( 0x404040 , 2, 100);
+    var light = new THREE.PointLight( 0x404040 , 0.5, 200);
 
     light.position.set(0,0,0);
     camera.add(light);
@@ -43273,25 +43305,7 @@ module.exports = function (mediator) {
     return camera;
 };
 
-},{"../const":24,"../libs":27,"lodash.clone":5,"three":11,"tween.js":12}],15:[function(require,module,exports){
-var THREE = require('three');
-var CONST = require('../const');
-var floorTexture = new THREE.TextureLoader().load('img/cobblestone_mossy.png');
-floorTexture.wrapS = THREE.RepeatWrapping;
-floorTexture.wrapT = THREE.RepeatWrapping;
-floorTexture.repeat.set(20,20);
-var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
-var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
-
-module.exports = function(){
-    var floor = new THREE.Mesh( geometry, material );
-    floor.position.y = CONST.room.height/2;
-    floor.position.z = CONST.room.width/2;
-    floor.rotateX(Math.PI / 2);
-    return floor;
-};
-
-},{"../const":24,"three":11}],16:[function(require,module,exports){
+},{"../const":24,"../libs":27,"lodash.clone":5,"three":11,"tween.js":12}],16:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
@@ -43323,7 +43337,6 @@ module.exports = function(opts){
     lightLeft.position.z = 20;
     lightLeft.position.x = 0;
     lightLeft.position.y = -10;
-
     group.add(lightLeft);
     group.position.set(opts.x,opts.y, opts.z);
     group.rotation.y = opts.rotation;
@@ -43350,7 +43363,7 @@ var THREE = require('three');
 var CONST = require('../const');
 module.exports = function(){
     var group = new THREE.Object3D();
-    var light = new THREE.PointLight( 0xE25822, 1, 75);
+    var light = new THREE.PointLight( 0xE25822, 1, 200, 5);
     group.add(light);
     return group;
 };
@@ -43359,29 +43372,38 @@ var THREE = require('three');
 var CONST = require('../const');
 var facet = require('./facet');
 var floor = require('./floor');
-var ceiling = require('./ceiling');
+var block = require('./block');
 var lights = require('./lights');
 module.exports = function (opts) {
-
     var group = new THREE.Object3D();
     group.add(floor());
+
     if (opts.walls.top) {
         group.add(facet({x: 0, y: 0, z: 0, rotation: 0}));
+    } else {
+        group.add(block({x: 0, y: 0, z: 0, rotation: 0}));
     }
     if (opts.walls.left) {
         group.add(facet({x: -CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
+    }else {
+        group.add(block({x: -CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
     }
     if (opts.walls.right) {
         group.add(facet({x: CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
+    }else {
+        group.add(block({x: CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
     }
     if (opts.walls.bottom) {
         group.add(facet({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
+    }else {
+        group.add(block({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
     }
 
     group.position.set(opts.x, opts.y + CONST.room.height/2, opts.z);
+
     return group;
 };
-},{"../const":24,"./ceiling":15,"./facet":17,"./floor":18,"./lights":19,"three":11}],21:[function(require,module,exports){
+},{"../const":24,"./block":14,"./facet":17,"./floor":18,"./lights":19,"three":11}],21:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -43513,7 +43535,7 @@ function animate() {
 }
 
 window.app = init;
-},{"./components/camera":14,"./controls/controls":25,"./services/roomGenerator":28,"./services/scene":29,"./services/textures":30,"./services/user":31,"mediator-js":7,"three":11,"tween.js":12}],27:[function(require,module,exports){
+},{"./components/camera":15,"./controls/controls":25,"./services/roomGenerator":28,"./services/scene":29,"./services/textures":30,"./services/user":31,"mediator-js":7,"three":11,"tween.js":12}],27:[function(require,module,exports){
 var libs = {};
 
 libs.distanceVector = function (v1, v2) {
@@ -43529,14 +43551,23 @@ module.exports = libs;
 var room = require('../components/room');
 var map = require('../config/map.json');
 var CONST = require('../const');
+console.log(map);
 module.exports = function (mediator) {
     var rooms = {};
     mediator.subscribe('room.add', function (coords) {
         var walls = {};
-        walls.left = true;
-        walls.top = true;
-        walls.right = true;
-        walls.bottom = true;
+        if (coords.z > 0) {
+            walls.top = true;
+        }
+        if (coords.z < map.length) {
+            walls.bottom = true;
+        }
+        if (coords.x > 0) {
+            walls.left = true;
+        }
+        if (coords.x < map.length) {
+            walls.right = true;
+        }
         var instance = room({x: coords.x * CONST.room.width, y: 0, z: coords.z * CONST.room.width, walls: walls});
         mediator.publish('scene.add', instance);
         rooms[coords.x + '_' + coords.z] = instance;
