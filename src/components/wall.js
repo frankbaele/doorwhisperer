@@ -12,8 +12,8 @@ topTexture.wrapS = THREE.RepeatWrapping;
 topTexture.wrapT = THREE.RepeatWrapping;
 topTexture.repeat.set(CONST.door.width / CONST.texture.widht, (CONST.room.height - CONST.door.height) / CONST.texture.height);
 // Materials
-var wallMat = new THREE.MeshLambertMaterial({map: wallTexture});
-var topMat = new THREE.MeshLambertMaterial({map: topTexture});
+var wallMat = new THREE.MeshPhongMaterial({map: wallTexture});
+var topMat = new THREE.MeshPhongMaterial({map: topTexture});
 // Objects
 var mergeGeometry = new THREE.Geometry();
 

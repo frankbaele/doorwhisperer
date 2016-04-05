@@ -21,7 +21,7 @@ module.exports = function (opts) {
         group.add(facet({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
     }
 
-    group.add(ceiling());
+    //group.add(ceiling());
     group.position.set(opts.x, opts.y + CONST.room.height/2, opts.z);
     return group;
 };

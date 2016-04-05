@@ -43280,7 +43280,7 @@ floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
-var material = new THREE.MeshLambertMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
+var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 
 module.exports = function(){
     var floor = new THREE.Mesh( geometry, material );
@@ -43325,7 +43325,7 @@ module.exports = function(opts){
     lightRight.position.z = 32;
     lightRight.position.x = 48;
     group.add(lightLeft);
-    group.add(lightRight);
+    //group.add(lightRight);
     group.position.set(opts.x,opts.y, opts.z);
     group.rotation.y = opts.rotation;
     return group;
@@ -43380,7 +43380,7 @@ module.exports = function (opts) {
         group.add(facet({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
     }
 
-    group.add(ceiling());
+    //group.add(ceiling());
     group.position.set(opts.x, opts.y + CONST.room.height/2, opts.z);
     return group;
 };
@@ -43399,8 +43399,8 @@ topTexture.wrapS = THREE.RepeatWrapping;
 topTexture.wrapT = THREE.RepeatWrapping;
 topTexture.repeat.set(CONST.door.width / CONST.texture.widht, (CONST.room.height - CONST.door.height) / CONST.texture.height);
 // Materials
-var wallMat = new THREE.MeshLambertMaterial({map: wallTexture});
-var topMat = new THREE.MeshLambertMaterial({map: topTexture});
+var wallMat = new THREE.MeshPhongMaterial({map: wallTexture});
+var topMat = new THREE.MeshPhongMaterial({map: topTexture});
 // Objects
 var mergeGeometry = new THREE.Geometry();
 
