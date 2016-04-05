@@ -1,7 +1,9 @@
 _ = {
     clone: require('lodash.clone')
 };
+
 var CONST = require('../const');
+var map = require('../config/map.json');
 module.exports = function (mediator) {
     var direction = 0;
     var moving = false;
@@ -44,15 +46,6 @@ module.exports = function (mediator) {
                     });
                 }
                 if (type == 'forward') {
-                    moving = true;
-                    mediator.publish('camera.move', {
-                        'direction': 'forward',
-                        'callback': function () {
-                            center = false;
-                            moving = false;
-                        }
-                    });
-
                     var coords = _.clone(position);
                     if (direction == 0) {
                         coords.z--;
@@ -63,8 +56,19 @@ module.exports = function (mediator) {
                     } else if (direction == 3) {
                         coords.x--;
                     }
-
-                    mediator.publish('room.add', coords);
+                    console.log(coords);
+                    console.log(map);
+                    if(map[coords.z] && map[coords.z][coords.x]){
+                        moving = true;
+                        mediator.publish('camera.move', {
+                            'direction': 'forward',
+                            'callback': function () {
+                                center = false;
+                                moving = false;
+                            }
+                        });
+                        mediator.publish('room.add', coords);
+                    }
                 }
             } else {
                 var coords = _.clone(position);

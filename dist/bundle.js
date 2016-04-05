@@ -43551,7 +43551,6 @@ module.exports = libs;
 var room = require('../components/room');
 var map = require('../config/map.json');
 var CONST = require('../const');
-console.log(map);
 module.exports = function (mediator) {
     var rooms = {};
     mediator.subscribe('room.add', function (coords) {
@@ -43559,13 +43558,13 @@ module.exports = function (mediator) {
         if (coords.z > 0) {
             walls.top = true;
         }
-        if (coords.z < map.length) {
+        if (coords.z < map.length - 1 ) {
             walls.bottom = true;
         }
         if (coords.x > 0) {
             walls.left = true;
         }
-        if (coords.x < map.length) {
+        if (coords.x < map[0].length - 1) {
             walls.right = true;
         }
         var instance = room({x: coords.x * CONST.room.width, y: 0, z: coords.z * CONST.room.width, walls: walls});
@@ -43614,7 +43613,9 @@ module.exports = function(callback){
 _ = {
     clone: require('lodash.clone')
 };
+
 var CONST = require('../const');
+var map = require('../config/map.json');
 module.exports = function (mediator) {
     var direction = 0;
     var moving = false;
@@ -43657,15 +43658,6 @@ module.exports = function (mediator) {
                     });
                 }
                 if (type == 'forward') {
-                    moving = true;
-                    mediator.publish('camera.move', {
-                        'direction': 'forward',
-                        'callback': function () {
-                            center = false;
-                            moving = false;
-                        }
-                    });
-
                     var coords = _.clone(position);
                     if (direction == 0) {
                         coords.z--;
@@ -43676,8 +43668,19 @@ module.exports = function (mediator) {
                     } else if (direction == 3) {
                         coords.x--;
                     }
-
-                    mediator.publish('room.add', coords);
+                    console.log(coords);
+                    console.log(map);
+                    if(map[coords.z] && map[coords.z][coords.x]){
+                        moving = true;
+                        mediator.publish('camera.move', {
+                            'direction': 'forward',
+                            'callback': function () {
+                                center = false;
+                                moving = false;
+                            }
+                        });
+                        mediator.publish('room.add', coords);
+                    }
                 }
             } else {
                 var coords = _.clone(position);
@@ -43725,4 +43728,4 @@ module.exports = function (mediator) {
     }
 
 };
-},{"../const":24,"lodash.clone":5}]},{},[26]);
+},{"../config/map.json":22,"../const":24,"lodash.clone":5}]},{},[26]);
