@@ -13,16 +13,19 @@ module.exports = function (opts) {
     } else {
         group.add(block({x: 0, y: 0, z: 0, rotation: 0}));
     }
+
     if (opts.walls.left) {
         group.add(facet({x: -CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
     }else {
         group.add(block({x: -CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
     }
+
     if (opts.walls.right) {
         group.add(facet({x: CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
     }else {
         group.add(block({x: CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
     }
+
     if (opts.walls.bottom) {
         group.add(facet({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
     }else {

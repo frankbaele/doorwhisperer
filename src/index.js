@@ -6,8 +6,8 @@ var scene = require('./services/scene')(mediator);
 var controls = require('./controls/controls')(mediator);
 var camera = require('./components/camera')(mediator);
 var roomGen = require('./services/roomGenerator')(mediator);
+var sounds = require('./sound')(mediator);
 var textureLoader = require('./services/textures');
-
 function init() {
     textureLoader(function(){
         var user = require('./services/user')(mediator);
