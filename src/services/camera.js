@@ -22,15 +22,19 @@ module.exports = function (mediator) {
         camera.position.x = coords.x * CONST.room.width;
     });
     mediator.publish('scene.add', camera);
+
     function moveRoom(opts) {
         var value = {};
         value.x = opts.coords.x * CONST.room.width;
         value.z = opts.coords.z * CONST.room.width + CONST.room.width / 2;
         value.y = height;
         var distance = libs.distanceVector(camera.position, value);
+        var time = Math.round(Math.abs(distance)/CONST.speed * 1000);
+        mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
         new TWEEN.Tween(camera.position)
-            .to({z: value.z, x: value.x}, Math.abs(distance)/CONST.speed * 1000)
+            .to({z: value.z, x: value.x},time)
             .onComplete(function () {
+                mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
                 if(opts.callback){
                     opts.callback();
                 }
@@ -57,10 +61,12 @@ module.exports = function (mediator) {
         } else if (worldDirection.z == -1) {
             value.z = value.z + temp;
         }
-
+        var time = Math.round(Math.abs(temp) /CONST.speed * 1000);
+        mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
         new TWEEN.Tween(camera.position)
-            .to({z: value.z, x: value.x}, Math.abs(temp) /CONST.speed * 1000)
+            .to({z: value.z, x: value.x}, time)
             .onComplete(function () {
+                mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
                 if(opts.callback){
                     opts.callback();
                 }
@@ -75,9 +81,12 @@ module.exports = function (mediator) {
         } else {
             value = value - Math.PI / 2;
         }
+        var time = 400;
+        mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
         new TWEEN.Tween(camera.rotation)
-            .to({y: value}, 400)
+            .to({y: value}, time)
             .onComplete(function () {
+                mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
                 if(opts.callback){
                     opts.callback();
                 }

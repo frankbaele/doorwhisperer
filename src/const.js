@@ -14,6 +14,6 @@ CONST.door = {
     width: 32
 };
 
-CONST.speed = 150;
+CONST.speed = 50;
 
 module.exports = CONST;

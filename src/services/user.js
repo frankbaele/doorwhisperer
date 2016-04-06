@@ -13,10 +13,12 @@ module.exports = function (mediator) {
         x: 0,
         z: 0
     };
+
     mediator.publish('camera.center', position);
     mediator.publish('room.add', position);
     mediator.subscribe('input', function (type) {
-        if(!moving){
+        if (!moving) {
+            moving = true;
             if (center) {
                 if (type == 'left') {
                     if (direction == 0) {
@@ -24,7 +26,6 @@ module.exports = function (mediator) {
                     } else {
                         direction = direction - 1;
                     }
-                    moving = true;
                     mediator.publish('camera.rotate', {
                         'direction': 'left',
                         'callback': function () {
@@ -32,7 +33,6 @@ module.exports = function (mediator) {
                         }
                     });
                 } else if (type == 'right') {
-                    moving = true;
                     if (direction == directions.length - 1) {
                         direction = 0;
                     } else {
@@ -56,16 +56,16 @@ module.exports = function (mediator) {
                     } else if (direction == 3) {
                         coords.x--;
                     }
-                    if(map[coords.z] && map[coords.z][coords.x]){
+                    if (map[coords.z] && map[coords.z][coords.x]) {
                         moving = true;
                         mediator.publish('camera.move', {
                             'direction': 'forward',
                             'callback': function () {
                                 center = false;
                                 moving = false;
+                                mediator.publish('room.add', coords);
                             }
                         });
-                        mediator.publish('room.add', coords);
                     }
                 }
             } else {
@@ -81,7 +81,6 @@ module.exports = function (mediator) {
                 }
 
                 if (type == 'back') {
-                    moving = true;
                     mediator.publish('camera.move', {
                         'direction': 'back',
                         'callback': function () {
@@ -92,7 +91,6 @@ module.exports = function (mediator) {
                     });
                 }
                 if (type == 'forward') {
-                    moving = true;
                     mediator.publish('camera.move.room', {
                         'coords': coords,
                         'callback': function () {

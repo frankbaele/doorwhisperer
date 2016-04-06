@@ -5,7 +5,7 @@ var Mediator = require("mediator-js").Mediator,
 var scene = require('./services/scene')(mediator);
 var $q = require('q');
 var controls = require('./controls/controls')(mediator);
-var camera = require('./components/camera')(mediator);
+var camera = require('./services/camera')(mediator);
 var roomGen = require('./services/roomGenerator')(mediator);
 var audio = require('./services/audio');
 var textures = require('./services/textures');
@@ -13,8 +13,7 @@ var textures = require('./services/textures');
 function init() {
     var defers = [];
     defers.push(textures());
-    defers.push(audio());
-
+    defers.push(audio(mediator));
     $q.all(defers).then(function(){
         var user = require('./services/user')(mediator);
         renderer = new THREE.WebGLRenderer();

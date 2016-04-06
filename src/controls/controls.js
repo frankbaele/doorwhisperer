@@ -1,8 +1,13 @@
 var THREE = require('three');
 var vkey = require('vkey');
+var _ = {
+    debounce : require('lodash.debounce')
+};
 
 module.exports = function (mediator) {
-    document.addEventListener('keydown', function (ev) {
+    document.addEventListener('keydown', _.debounce(inputListner, 100), false);
+
+    function inputListner (ev){
         var code = vkey[ev.keyCode];
         if (code == '<left>') {
             mediator.publish('input', 'left');
@@ -16,5 +21,5 @@ module.exports = function (mediator) {
         if (code == '<down>') {
             mediator.publish('input', 'back');
         }
-    }, false)
+    }
 };
