@@ -69,9 +69,9 @@ module.exports = function (mediator, listener) {
             x: coords.x,
             y: 0,
             z: coords.z,
-            walls: walls
+            walls: walls,
+            data : map[coords.z][coords.x]
         });
-
     });
 
     mediator.subscribe('room.remove', function (coords) {

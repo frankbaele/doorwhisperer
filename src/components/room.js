@@ -3,11 +3,25 @@ var CONST = require('../const');
 var facet = require('./facet');
 var floor = require('./floor');
 var block = require('./block');
+var _ = {
+    forEach : require('lodash.foreach')
+};
 var mediator;
+var listener;
+
 function create(opts){
+    var sounds = {};
     var group = new THREE.Object3D();
     group.add(floor());
-
+    if(opts.data){
+        _.forEach(opts.data.sounds, function(sound){
+            sounds[sound] = new THREE.PositionalAudio(listener);
+            sounds[sound].load(CONST.audio.url + sound);
+            sounds[sound].setRefDistance( 75 );
+            sounds[sound].autoplay = true;
+            group.add(sounds[sound]);
+        })
+    }
     if (opts.walls.top) {
         group.add(facet({x: 0, y: 0, z: 0, rotation: 0}));
     } else {
@@ -37,8 +51,9 @@ function create(opts){
     return group;
 }
 
-module.exports = function (_mediator_) {
+module.exports = function (_mediator_, _listener_) {
     mediator = _mediator_;
+    listener = _listener_;
     return {
         create: create
     }

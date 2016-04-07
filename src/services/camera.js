@@ -24,6 +24,7 @@ module.exports = function (mediator, listener) {
         camera.position.y = height;
         camera.position.x = coords.x * CONST.room.width;
     });
+
     mediator.publish('scene.add', camera);
 
     function moveRoom(opts) {

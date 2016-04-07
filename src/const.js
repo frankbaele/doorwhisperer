@@ -14,6 +14,10 @@ CONST.door = {
     width: 32
 };
 
+CONST.audio = {
+    "url" : 'audio/'
+};
+
 CONST.speed = 100;
 
 module.exports = CONST;

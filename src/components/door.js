@@ -13,7 +13,6 @@ function create(opts) {
     var x = 0;
     var z = 0;
     var light = lights();
-
     light.position.z = 0;
     light.position.x = 16;
     light.position.y = -10;
@@ -31,12 +30,14 @@ function create(opts) {
         group.position.set(x, CONST.room.height/2, z +16);
         group.rotateY(Math.PI/2);
     }
+
     else {
         //vertical movement
         x = opts.from.x * CONST.room.width;
         z = opts.to.z * CONST.room.width;
         group.position.set(x - 16, CONST.room.height/2, z);
     }
+
     var openSound = new THREE.PositionalAudio(listener);
     var closeSound = new THREE.PositionalAudio(listener);
     openSound.load('audio/door__open-close--knob.mp3');

@@ -50385,7 +50385,6 @@ function create(opts) {
     var x = 0;
     var z = 0;
     var light = lights();
-
     light.position.z = 0;
     light.position.x = 16;
     light.position.y = -10;
@@ -50403,12 +50402,14 @@ function create(opts) {
         group.position.set(x, CONST.room.height/2, z +16);
         group.rotateY(Math.PI/2);
     }
+
     else {
         //vertical movement
         x = opts.from.x * CONST.room.width;
         z = opts.to.z * CONST.room.width;
         group.position.set(x - 16, CONST.room.height/2, z);
     }
+
     var openSound = new THREE.PositionalAudio(listener);
     var closeSound = new THREE.PositionalAudio(listener);
     openSound.load('audio/door__open-close--knob.mp3');
@@ -50501,11 +50502,25 @@ var CONST = require('../const');
 var facet = require('./facet');
 var floor = require('./floor');
 var block = require('./block');
+var _ = {
+    forEach : require('lodash.foreach')
+};
 var mediator;
+var listener;
+
 function create(opts){
+    var sounds = {};
     var group = new THREE.Object3D();
     group.add(floor());
-
+    if(opts.data){
+        _.forEach(opts.data.sounds, function(sound){
+            sounds[sound] = new THREE.PositionalAudio(listener);
+            sounds[sound].load(CONST.audio.url + sound);
+            sounds[sound].setRefDistance( 75 );
+            sounds[sound].autoplay = true;
+            group.add(sounds[sound]);
+        })
+    }
     if (opts.walls.top) {
         group.add(facet({x: 0, y: 0, z: 0, rotation: 0}));
     } else {
@@ -50535,13 +50550,14 @@ function create(opts){
     return group;
 }
 
-module.exports = function (_mediator_) {
+module.exports = function (_mediator_, _listener_) {
     mediator = _mediator_;
+    listener = _listener_;
     return {
         create: create
     }
 };
-},{"../const":26,"./block":17,"./facet":19,"./floor":20,"three":14}],23:[function(require,module,exports){
+},{"../const":26,"./block":17,"./facet":19,"./floor":20,"lodash.foreach":8,"three":14}],23:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -50580,7 +50596,9 @@ module.exports = function () {
 };
 },{"../const":26,"three":14}],24:[function(require,module,exports){
 module.exports=[
-  [{},{},{}],
+  [{
+    "sounds": ["growl--distant.mp3"]
+  },{},{}],
   [{},{},{}],
   [{},{},{}]
 ]
@@ -50607,6 +50625,10 @@ CONST.room = {
 CONST.door = {
     height: 64,
     width: 32
+};
+
+CONST.audio = {
+    "url" : 'audio/'
 };
 
 CONST.speed = 100;
@@ -50709,6 +50731,7 @@ module.exports = function (mediator, listener) {
         camera.position.y = height;
         camera.position.x = coords.x * CONST.room.width;
     });
+
     mediator.publish('scene.add', camera);
 
     function moveRoom(opts) {
@@ -50860,9 +50883,9 @@ module.exports = function (mediator, listener) {
             x: coords.x,
             y: 0,
             z: coords.z,
-            walls: walls
+            walls: walls,
+            data : map[coords.z][coords.x]
         });
-
     });
 
     mediator.subscribe('room.remove', function (coords) {
