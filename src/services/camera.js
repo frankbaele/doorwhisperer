@@ -6,11 +6,15 @@ var _ = {
     clone: require('lodash.clone')
 };
 var height = CONST.texture.height + CONST.texture.height * 0.5;
-module.exports = function (mediator) {
+module.exports = function (mediator, listener) {
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
     var light = new THREE.PointLight( 0xE25822 , 1, 150);
     light.position.set(0,0,0);
     camera.add(light);
+    camera.add(listener);
+    var steps = new THREE.PositionalAudio(listener);
+    steps.load('audio/character__steps--cement.mp3');
+    camera.add(steps);
     mediator.subscribe('camera.rotate', rotate);
     mediator.subscribe('camera.move', move);
     mediator.subscribe('camera.move.room', moveRoom);
@@ -28,12 +32,12 @@ module.exports = function (mediator) {
         value.y = height;
         var distance = libs.distanceVector(camera.position, value);
         var time = Math.round(Math.abs(distance)/CONST.speed * 1000);
-        mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
+        steps.play();
         new TWEEN.Tween(camera.position)
             .easing(TWEEN.Easing.Quadratic.InOut)
             .to({z: value.z, x: value.x},time)
             .onComplete(function () {
-                mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
+                steps.stop();
                 if(opts.callback){
                     opts.callback();
                 }
@@ -61,12 +65,12 @@ module.exports = function (mediator) {
             value.z = value.z + temp;
         }
         var time = Math.round(Math.abs(temp) /CONST.speed * 1000);
-        mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
+        steps.play();
         new TWEEN.Tween(camera.position)
             .easing(TWEEN.Easing.Quadratic.InOut)
             .to({z: value.z, x: value.x}, time)
             .onComplete(function () {
-                mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
+                steps.stop();
                 if(opts.callback){
                     opts.callback();
                 }
@@ -82,12 +86,12 @@ module.exports = function (mediator) {
             value = value - Math.PI / 2;
         }
         var time = 400;
-        mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
+        steps.play();
         new TWEEN.Tween(camera.rotation)
             .easing(TWEEN.Easing.Quadratic.InOut)
             .to({y: value}, time)
             .onComplete(function () {
-                mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
+                steps.stop();
                 if(opts.callback){
                     opts.callback();
                 }

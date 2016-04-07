@@ -1,9 +1,9 @@
 var map = require('../config/map.json');
 var CONST = require('../const');
 
-module.exports = function (mediator) {
-    var room = require('../components/room')(mediator);
-    var door = require('../components/door')(mediator);
+module.exports = function (mediator, listener) {
+    var room = require('../components/room')(mediator, listener);
+    var door = require('../components/door')(mediator, listener);
     var rooms = {};
     var doors = {};
     mediator.subscribe('room.add', function (coords) {
