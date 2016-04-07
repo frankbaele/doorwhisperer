@@ -13,9 +13,21 @@ module.exports = function (mediator, listener) {
     camera.add(light);
     camera.add(listener);
     var steps = new THREE.PositionalAudio(listener);
+    var torch = new THREE.PositionalAudio(listener);
+    var ambient = new THREE.PositionalAudio(listener);
     steps.load('audio/character__steps--cement.mp3');
+    torch.load('audio/torch__burning.mp3');
+    ambient.load('audio/ambient.mp3');
+    torch.autoplay = true;
+    ambient.autoplay = true;
+    torch.setLoop(true);
+    ambient.setLoop(true);
+    ambient.setVolume(0.6);
+    torch.setVolume(0.15);
     steps.position.y = -5;
     camera.add(steps);
+    camera.add(torch);
+    camera.add(ambient);
     mediator.subscribe('camera.rotate', rotate);
     mediator.subscribe('camera.move', move);
     mediator.subscribe('camera.move.room', moveRoom);
@@ -26,7 +38,6 @@ module.exports = function (mediator, listener) {
     });
 
     mediator.publish('scene.add', camera);
-
     function moveRoom(opts) {
         var value = {};
         value.x = opts.coords.x * CONST.room.width;
