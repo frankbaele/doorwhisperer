@@ -97,12 +97,12 @@ module.exports = function (mediator) {
                     });
                 }
                 if (type == 'forward') {
-                    mediator.publish('door.open.' + id);
+                    mediator.publish('door.open.' + id, position);
                     mediator.publish('camera.move.room', {
                         'coords': coords,
                         'callback': function () {
                             mediator.publish('room.remove', position);
-                            mediator.publish('door.close.' + id);
+                            mediator.publish('door.close.' + id, position);
                             position = coords;
                             center = true;
                             moving = false;

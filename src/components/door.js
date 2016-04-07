@@ -42,15 +42,31 @@ function create(opts) {
     group.add(bottom);
     group.add(light);
     mediator.publish('scene.add', group);
-    mediator.subscribe('door.open.' + opts.id, function(){
+    mediator.subscribe('door.open.' + opts.id, function(from){
+        var value;
+        //determin direction
+
+        if(from.x == opts.from.x  && from.z == opts.from.z){
+            value = '-' + Math.PI/2;
+        } else {
+            value = '+' + Math.PI/2;
+        }
+
         new TWEEN.Tween(group.rotation)
-            .to({y: '+' + Math.PI/2}, 200)
+            .to({y: value}, 200)
             .start();
         mediator.publish('audio.play', {id:'door__open-close--knob.mp3'});
     });
-    mediator.subscribe('door.close.' + opts.id, function(){
+
+    mediator.subscribe('door.close.' + opts.id, function(from){
+        var value;
+        if(from.x == opts.from.x  && from.z == opts.from.z){
+            value = '+' + Math.PI/2;
+        } else {
+            value = '-' + Math.PI/2;
+        }
         new TWEEN.Tween(group.rotation)
-            .to({y: '-' + Math.PI/2}, 200)
+            .to({y: value}, 200)
             .start();
     });
     return group;
