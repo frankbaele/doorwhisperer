@@ -8,7 +8,7 @@ var _ = {
 var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-    var light = new THREE.PointLight( 0x404040 , 1, 200);
+    var light = new THREE.PointLight( 0xE25822 , 1, 150);
     light.position.set(0,0,0);
     camera.add(light);
     mediator.subscribe('camera.rotate', rotate);
@@ -30,6 +30,7 @@ module.exports = function (mediator) {
         var time = Math.round(Math.abs(distance)/CONST.speed * 1000);
         mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
         new TWEEN.Tween(camera.position)
+            .easing(TWEEN.Easing.Quadratic.InOut)
             .to({z: value.z, x: value.x},time)
             .onComplete(function () {
                 mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
@@ -62,6 +63,7 @@ module.exports = function (mediator) {
         var time = Math.round(Math.abs(temp) /CONST.speed * 1000);
         mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
         new TWEEN.Tween(camera.position)
+            .easing(TWEEN.Easing.Quadratic.InOut)
             .to({z: value.z, x: value.x}, time)
             .onComplete(function () {
                 mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
@@ -82,6 +84,7 @@ module.exports = function (mediator) {
         var time = 400;
         mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
         new TWEEN.Tween(camera.rotation)
+            .easing(TWEEN.Easing.Quadratic.InOut)
             .to({y: value}, time)
             .onComplete(function () {
                 mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});

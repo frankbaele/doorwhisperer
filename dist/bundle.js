@@ -50385,45 +50385,53 @@ var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
 var bottomTex = new THREE.TextureLoader().load('img/door/door_wood_lower.png');
 var upperMat = new THREE.MeshLambertMaterial({map: upperTex});
 var bottomMat = new THREE.MeshLambertMaterial({map: bottomTex});
-var doorPiece = new THREE.BoxGeometry(32, 32, 8);
+var doorPiece = new THREE.BoxGeometry(32, 32, 4);
+var TWEEN = require('tween.js');
 var mediator;
 function create(opts) {
     var x = 0;
     var z = 0;
     var light = lights();
     light.position.z = 0;
-    light.position.x = 0;
+    light.position.x = 16;
     light.position.y = -10;
 
     var group = new THREE.Object3D();
     var upper = new THREE.Mesh(doorPiece, upperMat);
     var bottom = new THREE.Mesh(doorPiece, bottomMat);
-    group.add(upper);
+    upper.position.x = 16;
+
     bottom.position.y = -32;
-    group.add(bottom);
-    group.add(light);
+    bottom.position.x = 16;
+
     // First check if how we are moving
     if (opts.from.x != opts.to.x) {
         //horizontal movement
         x = opts.to.x * CONST.room.width - CONST.room.width/2;
         z = opts.from.z * CONST.room.width + CONST.room.width/2;
-        group.position.set(x, CONST.room.height/2, z);
+        group.position.set(x, CONST.room.height/2, z +16);
         group.rotateY(Math.PI/2);
     }
     else {
         //vertical movement
         x = opts.from.x * CONST.room.width;
         z = opts.to.z * CONST.room.width;
-        group.position.set(x, CONST.room.height/2, z);
+        group.position.set(x - 16, CONST.room.height/2, z);
     }
-
+    group.add(upper);
+    group.add(bottom);
+    group.add(light);
     mediator.publish('scene.add', group);
     mediator.subscribe('door.open.' + opts.id, function(){
-        mediator.publish('scene.remove', group);
+        new TWEEN.Tween(group.rotation)
+            .to({y: '+' + Math.PI/2}, 200)
+            .start();
         mediator.publish('audio.play', {id:'door__open-close--knob.mp3'});
     });
     mediator.subscribe('door.close.' + opts.id, function(){
-        mediator.publish('scene.add', group);
+        new TWEEN.Tween(group.rotation)
+            .to({y: '-' + Math.PI/2}, 200)
+            .start();
     });
     return group;
 }
@@ -50434,7 +50442,7 @@ module.exports = function (_mediator_) {
         create: create
     };
 };
-},{"../const":28,"./lights":22,"three":15}],20:[function(require,module,exports){
+},{"../const":28,"./lights":22,"three":15,"tween.js":16}],20:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var wall = require('./wall');
@@ -50467,7 +50475,8 @@ var THREE = require('three');
 var CONST = require('../const');
 module.exports = function(){
     var group = new THREE.Object3D();
-    var light = new THREE.PointLight( 0xE25822, 1, 200, 5);
+    var light = new THREE.PointLight( 0xE25822, 1, 75, 5);
+
     group.add(light);
     return group;
 };
@@ -50713,7 +50722,7 @@ var _ = {
 var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-    var light = new THREE.PointLight( 0x404040 , 1, 200);
+    var light = new THREE.PointLight( 0xE25822 , 1, 150);
     light.position.set(0,0,0);
     camera.add(light);
     mediator.subscribe('camera.rotate', rotate);
@@ -50735,6 +50744,7 @@ module.exports = function (mediator) {
         var time = Math.round(Math.abs(distance)/CONST.speed * 1000);
         mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
         new TWEEN.Tween(camera.position)
+            .easing(TWEEN.Easing.Quadratic.InOut)
             .to({z: value.z, x: value.x},time)
             .onComplete(function () {
                 mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
@@ -50767,6 +50777,7 @@ module.exports = function (mediator) {
         var time = Math.round(Math.abs(temp) /CONST.speed * 1000);
         mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
         new TWEEN.Tween(camera.position)
+            .easing(TWEEN.Easing.Quadratic.InOut)
             .to({z: value.z, x: value.x}, time)
             .onComplete(function () {
                 mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
@@ -50787,6 +50798,7 @@ module.exports = function (mediator) {
         var time = 400;
         mediator.publish('audio.play', {id: 'character__steps--cement.mp3'});
         new TWEEN.Tween(camera.rotation)
+            .easing(TWEEN.Easing.Quadratic.InOut)
             .to({y: value}, time)
             .onComplete(function () {
                 mediator.publish('audio.stop', {id: 'character__steps--cement.mp3'});
