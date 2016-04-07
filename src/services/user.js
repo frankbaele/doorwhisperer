@@ -1,19 +1,19 @@
 _ = {
     clone: require('lodash.clone')
 };
-
+var StateMachine = require("javascript-state-machine");
 var CONST = require('../const');
 var map = require('../config/map.json');
+
 module.exports = function (mediator) {
     var direction = 0;
     var moving = false;
     var directions = ['N', 'E', 'S', 'W'];
     var center = true;
     var position = {
-        x: 0,
-        z: 0
+        x: 1,
+        z: 1
     };
-
     mediator.publish('camera.center', position);
     mediator.publish('room.add', position);
     mediator.subscribe('input', function (type) {
@@ -103,12 +103,5 @@ module.exports = function (mediator) {
                 }
             }
         }
-
     });
-    return {
-        direction: direction,
-        center: center,
-        position: position
-    }
-
 };

@@ -1,6 +1,6 @@
 var THREE = require('three');
 var CONST = require('../const');
-var lights = require('./lights');
+
 // Textures
 var wallTexture = new THREE.TextureLoader().load('img/cobblestone.png');
 wallTexture.wrapS = THREE.RepeatWrapping;
@@ -21,11 +21,5 @@ module.exports = function (opts) {
     wallMesh.position.set(opts.x,opts.y, opts.z);
     wallMesh.rotation.y = opts.rotation;
     group.add(wallMesh);
-    var light = lights();
-    light.position.z = 32;
-    light.position.x = 0;
-    light.position.y = 64;
-    group.add(light);
-
     return group;
 };

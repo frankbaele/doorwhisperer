@@ -26,6 +26,7 @@
   "dependencies": {
     "browserify-versionify": "^1.0.6",
     "howler": "v2.0.0-beta10",
+    "javascript-state-machine": "^2.3.5",
     "lodash.clone": "^4.3.2",
     "lodash.debounce": "^4.0.4",
     "lodash.foreach": "^4.1.1",

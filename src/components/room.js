@@ -3,8 +3,8 @@ var CONST = require('../const');
 var facet = require('./facet');
 var floor = require('./floor');
 var block = require('./block');
-var lights = require('./lights');
-module.exports = function (opts) {
+var mediator;
+function create(opts){
     var group = new THREE.Object3D();
     group.add(floor());
 
@@ -32,7 +32,14 @@ module.exports = function (opts) {
         group.add(block({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
     }
 
-    group.position.set(opts.x, opts.y + CONST.room.height/2, opts.z);
-
+    group.position.set(opts.x * CONST.room.width, opts.y + CONST.room.height/2, opts.z * CONST.room.width);
+    mediator.publish('scene.add', group);
     return group;
+}
+
+module.exports = function (_mediator_) {
+    mediator = _mediator_;
+    return {
+        create: create
+    }
 };

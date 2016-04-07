@@ -17,13 +17,13 @@ var topMat = new THREE.MeshLambertMaterial({map: topTexture});
 // Objects
 var mergeGeometry = new THREE.Geometry();
 
-var wallPiece = new THREE.BoxGeometry((CONST.room.width - CONST.door.width) / 2, CONST.room.height, 32);
+var wallPiece = new THREE.BoxGeometry((CONST.room.width - CONST.door.width) / 2, CONST.room.height, 16);
 mergeGeometry.merge(wallPiece, wallPiece.matrix);
 wallPiece.applyMatrix(new THREE.Matrix4().makeTranslation((CONST.room.width - CONST.door.width) / 2 + CONST.door.width, 0, 0));
 mergeGeometry.merge(wallPiece, wallPiece.matrix);
 mergeGeometry.center();
 
-var wallPieceTop = new THREE.BoxGeometry(CONST.door.width, CONST.room.height - CONST.door.height, 32);
+var wallPieceTop = new THREE.BoxGeometry(CONST.door.width, CONST.room.height - CONST.door.height, 16);
 wallPieceTop.applyMatrix(new THREE.Matrix4().makeTranslation(0, CONST.door.height / 2, 0));
 
 module.exports = function () {

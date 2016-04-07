@@ -6,6 +6,235 @@
 !function(){"use strict";HowlerGlobal.prototype._pos=[0,0,0],HowlerGlobal.prototype._orientation=[0,0,-1,0,1,0],HowlerGlobal.prototype._velocity=[0,0,0],HowlerGlobal.prototype._listenerAttr={dopplerFactor:1,speedOfSound:343.3},HowlerGlobal.prototype.pos=function(e,n,t){var o=this;return o.ctx&&o.ctx.listener?(n="number"!=typeof n?o._pos[1]:n,t="number"!=typeof t?o._pos[2]:t,"number"!=typeof e?o._pos:(o._pos=[e,n,t],o.ctx.listener.setPosition(o._pos[0],o._pos[1],o._pos[2]),o)):o},HowlerGlobal.prototype.orientation=function(e,n,t,o,r,i){var a=this;if(!a.ctx||!a.ctx.listener)return a;var p=a._orientation;return n="number"!=typeof n?p[1]:n,t="number"!=typeof t?p[2]:t,o="number"!=typeof o?p[3]:o,r="number"!=typeof r?p[4]:r,i="number"!=typeof i?p[5]:i,"number"!=typeof e?p:(a._orientation=[e,n,t,o,r,i],a.ctx.listener.setOrientation(e,n,t,o,r,i),a)},HowlerGlobal.prototype.velocity=function(e,n,t){var o=this;return o.ctx&&o.ctx.listener?(n="number"!=typeof n?o._velocity[1]:n,t="number"!=typeof t?o._velocity[2]:t,"number"!=typeof e?o._velocity:(o._velocity=[e,n,t],o.ctx.listener.setVelocity(o._velocity[0],o._velocity[1],o._velocity[2]),o)):o},HowlerGlobal.prototype.listenerAttr=function(e){var n=this;if(!n.ctx||!n.ctx.listener)return n;var t=n._listenerAttr;return e?(n._listenerAttr={dopplerFactor:"undefined"!=typeof e.dopplerFactor?e.dopplerFactor:t.dopplerFactor,speedOfSound:"undefined"!=typeof e.speedOfSound?e.speedOfSound:t.speedOfSound},n.ctx.listener.dopplerFactor=t.dopplerFactor,n.ctx.listener.speedOfSound=t.speedOfSound,n):t},Howl.prototype.init=function(e){return function(n){var t=this;return t._orientation=n.orientation||[1,0,0],t._pos=n.pos||null,t._velocity=n.velocity||[0,0,0],t._pannerAttr={coneInnerAngle:"undefined"!=typeof n.coneInnerAngle?n.coneInnerAngle:360,coneOuterAngle:"undefined"!=typeof n.coneOuterAngle?n.coneOuterAngle:360,coneOuterGain:"undefined"!=typeof n.coneOuterGain?n.coneOuterGain:0,distanceModel:"undefined"!=typeof n.distanceModel?n.distanceModel:"inverse",maxDistance:"undefined"!=typeof n.maxDistance?n.maxDistance:1e4,panningModel:"undefined"!=typeof n.panningModel?n.panningModel:"HRTF",refDistance:"undefined"!=typeof n.refDistance?n.refDistance:1,rolloffFactor:"undefined"!=typeof n.rolloffFactor?n.rolloffFactor:1},t._onpos=n.onpos?[{fn:n.onpos}]:[],t._onorientation=n.onorientation?[{fn:n.onorientation}]:[],t._onvelocity=n.onvelocity?[{fn:n.onvelocity}]:[],e.call(this,n)}}(Howl.prototype.init),Howl.prototype.pos=function(n,t,o,r){var i=this;if(!i._webAudio)return i;if("loaded"!==i._state)return i._queue.push({event:"pos",action:function(){i.pos(n,t,o,r)}}),i;if(t="number"!=typeof t?0:t,o="number"!=typeof o?-.5:o,"undefined"==typeof r){if("number"!=typeof n)return i._pos;i._pos=[n,t,o]}for(var a=i._getSoundIds(r),p=0;p<a.length;p++){var l=i._soundById(a[p]);if(l){if("number"!=typeof n)return l._pos;l._pos=[n,t,o],l._node&&(l._panner||e(l),l._panner.setPosition(n,t,o)),i._emit("pos",l._id)}}return i},Howl.prototype.orientation=function(n,t,o,r){var i=this;if(!i._webAudio)return i;if("loaded"!==i._state)return i._queue.push({event:"orientation",action:function(){i.orientation(n,t,o,r)}}),i;if(t="number"!=typeof t?i._orientation[1]:t,o="number"!=typeof o?i._orientation[2]:o,"undefined"==typeof r){if("number"!=typeof n)return i._orientation;i._orientation=[n,t,o]}for(var a=i._getSoundIds(r),p=0;p<a.length;p++){var l=i._soundById(a[p]);if(l){if("number"!=typeof n)return l._orientation;l._orientation=[n,t,o],l._node&&(l._panner||(l._pos||(l._pos=i._pos||[0,0,-.5]),e(l)),l._panner.setOrientation(n,t,o)),i._emit("orientation",l._id)}}return i},Howl.prototype.velocity=function(n,t,o,r){var i=this;if(!i._webAudio)return i;if("loaded"!==i._state)return i._queue.push({event:"velocity",action:function(){i.velocity(n,t,o,r)}}),i;if(t="number"!=typeof t?i._velocity[1]:t,o="number"!=typeof o?i._velocity[2]:o,"undefined"==typeof r){if("number"!=typeof n)return i._velocity;i._velocity=[n,t,o]}for(var a=i._getSoundIds(r),p=0;p<a.length;p++){var l=i._soundById(a[p]);if(l){if("number"!=typeof n)return l._velocity;l._velocity=[n,t,o],l._node&&(l._pos||(l._pos=i._pos||[0,0,-.5]),l._panner||e(l),l._panner.setVelocity(n,t,o)),i._emit("velocity",l._id)}}return i},Howl.prototype.pannerAttr=function(){var n,t,o,r=this,i=arguments;if(!r._webAudio)return r;if(0===i.length)return r._pannerAttr;if(1===i.length){if("object"!=typeof i[0])return o=r._soundById(parseInt(i[0],10)),o?o._pannerAttr:r._pannerAttr;n=i[0],"undefined"==typeof t&&(r._pannerAttr={coneInnerAngle:"undefined"!=typeof n.coneInnerAngle?n.coneInnerAngle:r._coneInnerAngle,coneOuterAngle:"undefined"!=typeof n.coneOuterAngle?n.coneOuterAngle:r._coneOuterAngle,coneOuterGain:"undefined"!=typeof n.coneOuterGain?n.coneOuterGain:r._coneOuterGain,distanceModel:"undefined"!=typeof n.distanceModel?n.distanceModel:r._distanceModel,maxDistance:"undefined"!=typeof n.maxDistance?n.maxDistance:r._maxDistance,panningModel:"undefined"!=typeof n.panningModel?n.panningModel:r._panningModel,refDistance:"undefined"!=typeof n.refDistance?n.refDistance:r._refDistance,rolloffFactor:"undefined"!=typeof n.rolloffFactor?n.rolloffFactor:r._rolloffFactor})}else 2===i.length&&(n=i[0],t=parseInt(i[1],10));for(var a=r._getSoundIds(t),p=0;p<a.length;p++)if(o=r._soundById(a[p])){var l=o._pannerAttr;l={coneInnerAngle:"undefined"!=typeof n.coneInnerAngle?n.coneInnerAngle:l.coneInnerAngle,coneOuterAngle:"undefined"!=typeof n.coneOuterAngle?n.coneOuterAngle:l.coneOuterAngle,coneOuterGain:"undefined"!=typeof n.coneOuterGain?n.coneOuterGain:l.coneOuterGain,distanceModel:"undefined"!=typeof n.distanceModel?n.distanceModel:l.distanceModel,maxDistance:"undefined"!=typeof n.maxDistance?n.maxDistance:l.maxDistance,panningModel:"undefined"!=typeof n.panningModel?n.panningModel:l.panningModel,refDistance:"undefined"!=typeof n.refDistance?n.refDistance:l.refDistance,rolloffFactor:"undefined"!=typeof n.rolloffFactor?n.rolloffFactor:l.rolloffFactor};var c=o._panner;c?(c.coneInnerAngle=l.coneInnerAngle,c.coneOuterAngle=l.coneOuterAngle,c.coneOuterGain=l.coneOuterGain,c.distanceModel=l.distanceModel,c.maxDistance=l.maxDistance,c.panningModel=l.panningModel,c.refDistance=l.refDistance,c.rolloffFactor=l.rolloffFactor):(o._pos||(o._pos=r._pos||[0,0,-.5]),e(o))}return r},Sound.prototype.init=function(e){return function(){var n=this,t=n._parent;n._orientation=t._orientation,n._pos=t._pos,n._velocity=t._velocity,n._pannerAttr=t._pannerAttr,e.call(this),n._pos&&t.pos(n._pos[0],n._pos[1],n._pos[2],n._id)}}(Sound.prototype.init),Sound.prototype.reset=function(e){return function(){var n=this,t=n._parent;return n._orientation=t._orientation,n._pos=t._pos,n._velocity=t._velocity,n._pannerAttr=t._pannerAttr,e.call(this)}}(Sound.prototype.reset);var e=function(e){e._panner=Howler.ctx.createPanner(),e._panner.coneInnerAngle=e._pannerAttr.coneInnerAngle,e._panner.coneOuterAngle=e._pannerAttr.coneOuterAngle,e._panner.coneOuterGain=e._pannerAttr.coneOuterGain,e._panner.distanceModel=e._pannerAttr.distanceModel,e._panner.maxDistance=e._pannerAttr.maxDistance,e._panner.panningModel=e._pannerAttr.panningModel,e._panner.refDistance=e._pannerAttr.refDistance,e._panner.rolloffFactor=e._pannerAttr.rolloffFactor,e._panner.setPosition(e._pos[0],e._pos[1],e._pos[2]),e._panner.setOrientation(e._orientation[0],e._orientation[1],e._orientation[2]),e._panner.setVelocity(e._velocity[0],e._velocity[1],e._velocity[2]),e._panner.connect(e._node),e._paused||e._parent.pause(e._id,!0).play(e._id)}}();
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],2:[function(require,module,exports){
+/*
+
+  Javascript State Machine Library - https://github.com/jakesgordon/javascript-state-machine
+
+  Copyright (c) 2012, 2013, 2014, 2015, Jake Gordon and contributors
+  Released under the MIT license - https://github.com/jakesgordon/javascript-state-machine/blob/master/LICENSE
+
+*/
+
+(function () {
+
+  var StateMachine = {
+
+    //---------------------------------------------------------------------------
+
+    VERSION: "2.3.5",
+
+    //---------------------------------------------------------------------------
+
+    Result: {
+      SUCCEEDED:    1, // the event transitioned successfully from one state to another
+      NOTRANSITION: 2, // the event was successfull but no state transition was necessary
+      CANCELLED:    3, // the event was cancelled by the caller in a beforeEvent callback
+      PENDING:      4  // the event is asynchronous and the caller is in control of when the transition occurs
+    },
+
+    Error: {
+      INVALID_TRANSITION: 100, // caller tried to fire an event that was innapropriate in the current state
+      PENDING_TRANSITION: 200, // caller tried to fire an event while an async transition was still pending
+      INVALID_CALLBACK:   300 // caller provided callback function threw an exception
+    },
+
+    WILDCARD: '*',
+    ASYNC: 'async',
+
+    //---------------------------------------------------------------------------
+
+    create: function(cfg, target) {
+
+      var initial      = (typeof cfg.initial == 'string') ? { state: cfg.initial } : cfg.initial; // allow for a simple string, or an object with { state: 'foo', event: 'setup', defer: true|false }
+      var terminal     = cfg.terminal || cfg['final'];
+      var fsm          = target || cfg.target  || {};
+      var events       = cfg.events || [];
+      var callbacks    = cfg.callbacks || {};
+      var map          = {}; // track state transitions allowed for an event { event: { from: [ to ] } }
+      var transitions  = {}; // track events allowed from a state            { state: [ event ] }
+
+      var add = function(e) {
+        var from = (e.from instanceof Array) ? e.from : (e.from ? [e.from] : [StateMachine.WILDCARD]); // allow 'wildcard' transition if 'from' is not specified
+        map[e.name] = map[e.name] || {};
+        for (var n = 0 ; n < from.length ; n++) {
+          transitions[from[n]] = transitions[from[n]] || [];
+          transitions[from[n]].push(e.name);
+
+          map[e.name][from[n]] = e.to || from[n]; // allow no-op transition if 'to' is not specified
+        }
+      };
+
+      if (initial) {
+        initial.event = initial.event || 'startup';
+        add({ name: initial.event, from: 'none', to: initial.state });
+      }
+
+      for(var n = 0 ; n < events.length ; n++)
+        add(events[n]);
+
+      for(var name in map) {
+        if (map.hasOwnProperty(name))
+          fsm[name] = StateMachine.buildEvent(name, map[name]);
+      }
+
+      for(var name in callbacks) {
+        if (callbacks.hasOwnProperty(name))
+          fsm[name] = callbacks[name]
+      }
+
+      fsm.current     = 'none';
+      fsm.is          = function(state) { return (state instanceof Array) ? (state.indexOf(this.current) >= 0) : (this.current === state); };
+      fsm.can         = function(event) { return !this.transition && (map[event].hasOwnProperty(this.current) || map[event].hasOwnProperty(StateMachine.WILDCARD)); }
+      fsm.cannot      = function(event) { return !this.can(event); };
+      fsm.transitions = function()      { return transitions[this.current]; };
+      fsm.isFinished  = function()      { return this.is(terminal); };
+      fsm.error       = cfg.error || function(name, from, to, args, error, msg, e) { throw e || msg; }; // default behavior when something unexpected happens is to throw an exception, but caller can override this behavior if desired (see github issue #3 and #17)
+
+      if (initial && !initial.defer)
+        fsm[initial.event]();
+
+      return fsm;
+
+    },
+
+    //===========================================================================
+
+    doCallback: function(fsm, func, name, from, to, args) {
+      if (func) {
+        try {
+          return func.apply(fsm, [name, from, to].concat(args));
+        }
+        catch(e) {
+          return fsm.error(name, from, to, args, StateMachine.Error.INVALID_CALLBACK, "an exception occurred in a caller-provided callback function", e);
+        }
+      }
+    },
+
+    beforeAnyEvent:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onbeforeevent'],                       name, from, to, args); },
+    afterAnyEvent:   function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onafterevent'] || fsm['onevent'],      name, from, to, args); },
+    leaveAnyState:   function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onleavestate'],                        name, from, to, args); },
+    enterAnyState:   function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onenterstate'] || fsm['onstate'],      name, from, to, args); },
+    changeState:     function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onchangestate'],                       name, from, to, args); },
+
+    beforeThisEvent: function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onbefore' + name],                     name, from, to, args); },
+    afterThisEvent:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onafter'  + name] || fsm['on' + name], name, from, to, args); },
+    leaveThisState:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onleave'  + from],                     name, from, to, args); },
+    enterThisState:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onenter'  + to]   || fsm['on' + to],   name, from, to, args); },
+
+    beforeEvent: function(fsm, name, from, to, args) {
+      if ((false === StateMachine.beforeThisEvent(fsm, name, from, to, args)) ||
+          (false === StateMachine.beforeAnyEvent( fsm, name, from, to, args)))
+        return false;
+    },
+
+    afterEvent: function(fsm, name, from, to, args) {
+      StateMachine.afterThisEvent(fsm, name, from, to, args);
+      StateMachine.afterAnyEvent( fsm, name, from, to, args);
+    },
+
+    leaveState: function(fsm, name, from, to, args) {
+      var specific = StateMachine.leaveThisState(fsm, name, from, to, args),
+          general  = StateMachine.leaveAnyState( fsm, name, from, to, args);
+      if ((false === specific) || (false === general))
+        return false;
+      else if ((StateMachine.ASYNC === specific) || (StateMachine.ASYNC === general))
+        return StateMachine.ASYNC;
+    },
+
+    enterState: function(fsm, name, from, to, args) {
+      StateMachine.enterThisState(fsm, name, from, to, args);
+      StateMachine.enterAnyState( fsm, name, from, to, args);
+    },
+
+    //===========================================================================
+
+    buildEvent: function(name, map) {
+      return function() {
+
+        var from  = this.current;
+        var to    = map[from] || map[StateMachine.WILDCARD] || from;
+        var args  = Array.prototype.slice.call(arguments); // turn arguments into pure array
+
+        if (this.transition)
+          return this.error(name, from, to, args, StateMachine.Error.PENDING_TRANSITION, "event " + name + " inappropriate because previous transition did not complete");
+
+        if (this.cannot(name))
+          return this.error(name, from, to, args, StateMachine.Error.INVALID_TRANSITION, "event " + name + " inappropriate in current state " + this.current);
+
+        if (false === StateMachine.beforeEvent(this, name, from, to, args))
+          return StateMachine.Result.CANCELLED;
+
+        if (from === to) {
+          StateMachine.afterEvent(this, name, from, to, args);
+          return StateMachine.Result.NOTRANSITION;
+        }
+
+        // prepare a transition method for use EITHER lower down, or by caller if they want an async transition (indicated by an ASYNC return value from leaveState)
+        var fsm = this;
+        this.transition = function() {
+          fsm.transition = null; // this method should only ever be called once
+          fsm.current = to;
+          StateMachine.enterState( fsm, name, from, to, args);
+          StateMachine.changeState(fsm, name, from, to, args);
+          StateMachine.afterEvent( fsm, name, from, to, args);
+          return StateMachine.Result.SUCCEEDED;
+        };
+        this.transition.cancel = function() { // provide a way for caller to cancel async transition if desired (issue #22)
+          fsm.transition = null;
+          StateMachine.afterEvent(fsm, name, from, to, args);
+        }
+
+        var leave = StateMachine.leaveState(this, name, from, to, args);
+        if (false === leave) {
+          this.transition = null;
+          return StateMachine.Result.CANCELLED;
+        }
+        else if (StateMachine.ASYNC === leave) {
+          return StateMachine.Result.PENDING;
+        }
+        else {
+          if (this.transition) // need to check in case user manually called transition() but forgot to return StateMachine.ASYNC
+            return this.transition();
+        }
+
+      };
+    }
+
+  }; // StateMachine
+
+  //===========================================================================
+
+  //======
+  // NODE
+  //======
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = StateMachine;
+    }
+    exports.StateMachine = StateMachine;
+  }
+  //============
+  // AMD/REQUIRE
+  //============
+  else if (typeof define === 'function' && define.amd) {
+    define(function(require) { return StateMachine; });
+  }
+  //========
+  // BROWSER
+  //========
+  else if (typeof window !== 'undefined') {
+    window.StateMachine = StateMachine;
+  }
+  //===========
+  // WEB WORKER
+  //===========
+  else if (typeof self !== 'undefined') {
+    self.StateMachine = StateMachine;
+  }
+
+}());
+
+},{}],3:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.5.3 (Custom Build) <https://lodash.com/>
@@ -1653,7 +1882,7 @@ Stack.prototype.set = stackSet;
 module.exports = baseClone;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 /**
  * lodash 4.1.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -2180,7 +2409,7 @@ function keys(object) {
 
 module.exports = baseEach;
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.6.0 (Custom Build) <https://lodash.com/>
@@ -4151,7 +4380,7 @@ function property(path) {
 module.exports = baseIteratee;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash._stringtopath":5}],5:[function(require,module,exports){
+},{"lodash._stringtopath":6}],6:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.7.0 (Custom Build) <https://lodash.com/>
@@ -4867,7 +5096,7 @@ function toString(value) {
 module.exports = stringToPath;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 /**
  * lodash 4.3.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -4908,7 +5137,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"lodash._baseclone":2}],7:[function(require,module,exports){
+},{"lodash._baseclone":3}],8:[function(require,module,exports){
 /**
  * lodash 4.0.4 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -5295,7 +5524,7 @@ function toNumber(value) {
 
 module.exports = debounce;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -5392,14 +5621,14 @@ var isArray = Array.isArray;
 
 module.exports = forEach;
 
-},{"lodash._baseeach":3,"lodash._baseiteratee":4}],9:[function(require,module,exports){
+},{"lodash._baseeach":4,"lodash._baseiteratee":5}],10:[function(require,module,exports){
 (function (process){
 module.exports = process.env.MEDIATOR_JS_COV
   ? require('./lib-cov/mediator')
   : require('./lib/mediator');
 
 }).call(this,require('_process'))
-},{"./lib-cov/mediator":10,"./lib/mediator":11,"_process":12}],10:[function(require,module,exports){
+},{"./lib-cov/mediator":11,"./lib/mediator":12,"_process":13}],11:[function(require,module,exports){
 /* automatically generated by JSCoverage - do not edit */
 try {
   if (typeof top === 'object' && top !== null && typeof top.opener === 'object' && top.opener !== null) {
@@ -5885,7 +6114,7 @@ _$jscoverage['mediator.js'][16]++;
   return Mediator;
 }));
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /*jslint bitwise: true, nomen: true, plusplus: true, white: true */
 
 /*!
@@ -6264,7 +6493,7 @@ _$jscoverage['mediator.js'][16]++;
   return Mediator;
 }));
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -6357,7 +6586,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -8409,7 +8638,7 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":12}],14:[function(require,module,exports){
+},{"_process":13}],15:[function(require,module,exports){
 var self = self || {};// File:src/Three.js
 
 /**
@@ -49092,7 +49321,7 @@ if (typeof exports !== 'undefined') {
   this['THREE'] = THREE;
 }
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /**
  * Tween.js - Licensed under the MIT license
  * https://github.com/tweenjs/tween.js
@@ -49984,7 +50213,7 @@ TWEEN.Interpolation = {
 
 })(this);
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -50122,10 +50351,10 @@ for(i = 112; i < 136; ++i) {
   output[i] = 'F'+(i-111)
 }
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
-var lights = require('./lights');
+
 // Textures
 var wallTexture = new THREE.TextureLoader().load('img/cobblestone.png');
 wallTexture.wrapS = THREE.RepeatWrapping;
@@ -50146,52 +50375,71 @@ module.exports = function (opts) {
     wallMesh.position.set(opts.x,opts.y, opts.z);
     wallMesh.rotation.y = opts.rotation;
     group.add(wallMesh);
-    var light = lights();
-    light.position.z = 32;
-    light.position.x = 0;
-    light.position.y = 64;
-    group.add(light);
-
     return group;
 };
-},{"../const":27,"./lights":21,"three":14}],18:[function(require,module,exports){
+},{"../const":28,"three":15}],19:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
+var lights = require('./lights');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
 var bottomTex = new THREE.TextureLoader().load('img/door/door_wood_lower.png');
 var upperMat = new THREE.MeshLambertMaterial({map: upperTex});
 var bottomMat = new THREE.MeshLambertMaterial({map: bottomTex});
 var doorPiece = new THREE.BoxGeometry(32, 32, 8);
-module.exports = function(){
+var mediator;
+function create(opts) {
+    var x = 0;
+    var z = 0;
+    var light = lights();
+    light.position.z = 0;
+    light.position.x = 0;
+    light.position.y = -10;
+
     var group = new THREE.Object3D();
     var upper = new THREE.Mesh(doorPiece, upperMat);
     var bottom = new THREE.Mesh(doorPiece, bottomMat);
     group.add(upper);
     bottom.position.y = -32;
     group.add(bottom);
+    group.add(light);
+    // First check if how we are moving
+    if (opts.from.x != opts.to.x) {
+        //horizontal movement
+        x = opts.to.x * CONST.room.width - CONST.room.width/2;
+        z = opts.from.z * CONST.room.width + CONST.room.width/2;
+        group.position.set(x, CONST.room.height/2, z);
+        group.rotateY(Math.PI/2);
+    }
+    else {
+        //vertical movement
+        x = opts.from.x * CONST.room.width;
+        z = opts.to.z * CONST.room.width;
+        group.position.set(x, CONST.room.height/2, z);
+    }
+
+    mediator.publish('scene.add', group);
     return group;
+}
+
+module.exports = function (_mediator_) {
+    mediator = _mediator_;
+    return {
+        create: create
+    };
 };
-},{"../const":27,"three":14}],19:[function(require,module,exports){
+},{"../const":28,"./lights":22,"three":15}],20:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
-var door = require('./door');
 var wall = require('./wall');
-var lights = require('./lights');
 
 module.exports = function(opts){
     var group = new THREE.Object3D();
     group.add(wall());
-    group.add(door());
-    var lightLeft = lights();
-    lightLeft.position.z = 20;
-    lightLeft.position.x = 0;
-    lightLeft.position.y = -10;
-    group.add(lightLeft);
     group.position.set(opts.x,opts.y, opts.z);
     group.rotation.y = opts.rotation;
     return group;
 };
-},{"../const":27,"./door":18,"./lights":21,"./wall":23,"three":14}],20:[function(require,module,exports){
+},{"../const":28,"./wall":24,"three":15}],21:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
@@ -50207,7 +50455,7 @@ module.exports = function(){
     floor.rotateX(Math.PI / 2);
     return floor;
 };
-},{"../const":27,"three":14}],21:[function(require,module,exports){
+},{"../const":28,"three":15}],22:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 module.exports = function(){
@@ -50216,14 +50464,14 @@ module.exports = function(){
     group.add(light);
     return group;
 };
-},{"../const":27,"three":14}],22:[function(require,module,exports){
+},{"../const":28,"three":15}],23:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var facet = require('./facet');
 var floor = require('./floor');
 var block = require('./block');
-var lights = require('./lights');
-module.exports = function (opts) {
+var mediator;
+function create(opts){
     var group = new THREE.Object3D();
     group.add(floor());
 
@@ -50251,11 +50499,18 @@ module.exports = function (opts) {
         group.add(block({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
     }
 
-    group.position.set(opts.x, opts.y + CONST.room.height/2, opts.z);
-
+    group.position.set(opts.x * CONST.room.width, opts.y + CONST.room.height/2, opts.z * CONST.room.width);
+    mediator.publish('scene.add', group);
     return group;
+}
+
+module.exports = function (_mediator_) {
+    mediator = _mediator_;
+    return {
+        create: create
+    }
 };
-},{"../const":27,"./block":17,"./facet":19,"./floor":20,"./lights":21,"three":14}],23:[function(require,module,exports){
+},{"../const":28,"./block":18,"./facet":20,"./floor":21,"three":15}],24:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -50275,13 +50530,13 @@ var topMat = new THREE.MeshLambertMaterial({map: topTexture});
 // Objects
 var mergeGeometry = new THREE.Geometry();
 
-var wallPiece = new THREE.BoxGeometry((CONST.room.width - CONST.door.width) / 2, CONST.room.height, 32);
+var wallPiece = new THREE.BoxGeometry((CONST.room.width - CONST.door.width) / 2, CONST.room.height, 16);
 mergeGeometry.merge(wallPiece, wallPiece.matrix);
 wallPiece.applyMatrix(new THREE.Matrix4().makeTranslation((CONST.room.width - CONST.door.width) / 2 + CONST.door.width, 0, 0));
 mergeGeometry.merge(wallPiece, wallPiece.matrix);
 mergeGeometry.center();
 
-var wallPieceTop = new THREE.BoxGeometry(CONST.door.width, CONST.room.height - CONST.door.height, 32);
+var wallPieceTop = new THREE.BoxGeometry(CONST.door.width, CONST.room.height - CONST.door.height, 16);
 wallPieceTop.applyMatrix(new THREE.Matrix4().makeTranslation(0, CONST.door.height / 2, 0));
 
 module.exports = function () {
@@ -50292,25 +50547,13 @@ module.exports = function () {
     group.add(topMesh);
     return group;
 };
-},{"../const":27,"three":14}],24:[function(require,module,exports){
+},{"../const":28,"three":15}],25:[function(require,module,exports){
 module.exports=[
-  [{}, null,{}],
-  [{
-
-  },{
-
-  },{
-
-  }],
-  [{
-
-  },{
-
-  },{
-
-  }]
+  [{},{},{}],
+  [{},{},{}],
+  [{},{},{}]
 ]
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports=[
   "character__steps--cement.mp3",
   "character__steps--no-shoes--cement.mp3",
@@ -50321,7 +50564,7 @@ module.exports=[
   "door__open-close--knob.mp3",
   "door__slam--wood.mp3"
 ]
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 module.exports=[
   "img/cobblestone.png",
   "img/cobblestone_mossy.png",
@@ -50329,7 +50572,7 @@ module.exports=[
   "img/door/door_wood_upper.png",
   "img/stonebrick.png"
 ]
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var CONST = {};
 CONST.texture = {
     widht: 32,
@@ -50346,10 +50589,10 @@ CONST.door = {
     width: 32
 };
 
-CONST.speed = 50;
+CONST.speed = 100;
 
 module.exports = CONST;
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 var THREE = require('three');
 var vkey = require('vkey');
 var _ = {
@@ -50375,7 +50618,7 @@ module.exports = function (mediator) {
         }
     }
 };
-},{"lodash.debounce":7,"three":14,"vkey":16}],29:[function(require,module,exports){
+},{"lodash.debounce":8,"three":15,"vkey":17}],30:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var Mediator = require("mediator-js").Mediator,
@@ -50409,7 +50652,7 @@ function animate() {
 }
 
 window.app = init;
-},{"./controls/controls":28,"./services/audio":31,"./services/camera":32,"./services/roomGenerator":33,"./services/scene":34,"./services/textures":35,"./services/user":36,"mediator-js":9,"q":13,"three":14,"tween.js":15}],30:[function(require,module,exports){
+},{"./controls/controls":29,"./services/audio":32,"./services/camera":33,"./services/roomGenerator":34,"./services/scene":35,"./services/textures":36,"./services/user":37,"mediator-js":10,"q":14,"three":15,"tween.js":16}],31:[function(require,module,exports){
 var libs = {};
 
 libs.distanceVector = function (v1, v2) {
@@ -50421,7 +50664,7 @@ libs.distanceVector = function (v1, v2) {
 };
 
 module.exports = libs;
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var Howl = require('howler').Howl;
 var audioList = require('../config/sounds.json');
 var $q = require('q');
@@ -50452,7 +50695,7 @@ module.exports = function(mediator){
 
     return $q.all(defers);
 };
-},{"../config/sounds.json":25,"howler":1,"lodash.foreach":8,"q":13}],32:[function(require,module,exports){
+},{"../config/sounds.json":26,"howler":1,"lodash.foreach":9,"q":14}],33:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var CONST = require('../const');
@@ -50464,8 +50707,7 @@ var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator) {
     var moving = false;
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-    var light = new THREE.PointLight( 0x404040 , 0.5, 200);
-
+    var light = new THREE.PointLight( 0x404040 , 1, 500);
     light.position.set(0,0,0);
     camera.add(light);
     mediator.subscribe('camera.rotate', rotate);
@@ -50552,37 +50794,84 @@ module.exports = function (mediator) {
     return camera;
 };
 
-},{"../const":27,"../libs":30,"lodash.clone":6,"three":14,"tween.js":15}],33:[function(require,module,exports){
-var room = require('../components/room');
+},{"../const":28,"../libs":31,"lodash.clone":7,"three":15,"tween.js":16}],34:[function(require,module,exports){
 var map = require('../config/map.json');
 var CONST = require('../const');
+
 module.exports = function (mediator) {
+    var room = require('../components/room')(mediator);
+    var door = require('../components/door')(mediator);
     var rooms = {};
+    var doors = {};
     mediator.subscribe('room.add', function (coords) {
         var walls = {};
-
-        if(map[coords.z - 1] && map[coords.z - 1][coords.x]){
+        if (map[coords.z - 1] && map[coords.z - 1][coords.x]) {
             walls.top = true;
+            var id = (coords.z - 1) + '_' + coords.x + '--' + coords.z + '_' + coords.x;
+            if (!doors[id]) {
+                doors[id] = door.create(
+                    {
+                        from: {x: coords.x, z: coords.z - 1},
+                        to: {x: coords.x, z: coords.z}
+                    }
+                );
+            }
         }
-        if(map[coords.z + 1] && map[coords.z + 1][coords.x]){
+
+        if (map[coords.z + 1] && map[coords.z + 1][coords.x]) {
             walls.bottom = true;
+            var id = coords.z + '_' + coords.x + '--' + (coords.z + 1) + '_' + coords.x;
+            if (!doors[id]) {
+                doors[id] = door.create(
+                    {
+                        from: {x: coords.x, z: coords.z},
+                        to: {x: coords.x, z: coords.z + 1}
+                    }
+                );
+            }
         }
-        if(map[coords.z] && map[coords.z][coords.x - 1]){
+
+        if (map[coords.z] && map[coords.z][coords.x - 1]) {
             walls.left = true;
+            var id = coords.z + '_' + (coords.x - 1) + '--' + coords.z + '_' + coords.x;
+            if (!doors[id]) {
+                doors[id] = door.create(
+                    {
+                        from: {x: coords.x - 1, z: coords.z},
+                        to: {x: coords.x, z: coords.z}
+                    }
+                );
+            }
+
         }
-        if(map[coords.z] && map[coords.z][coords.x + 1]){
+
+        if (map[coords.z] && map[coords.z][coords.x + 1]) {
             walls.right = true;
+            var id = coords.z + '_' + coords.x + '--' + coords.z + '_' + (coords.x + 1);
+            if (!doors[id]) {
+                doors[id] = door.create(
+                    {
+                        from: {x: coords.x, z: coords.z},
+                        to: {x: coords.x + 1, z: coords.z}
+                    }
+                );
+            }
         }
-        var instance = room({x: coords.x * CONST.room.width, y: 0, z: coords.z * CONST.room.width, walls: walls});
-        mediator.publish('scene.add', instance);
-        rooms[coords.x + '_' + coords.z] = instance;
+
+        rooms[coords.x + '_' + coords.z] = room.create({
+            x: coords.x,
+            y: 0,
+            z: coords.z,
+            walls: walls
+        });
+
     });
 
     mediator.subscribe('room.remove', function (coords) {
         mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z]);
     });
 };
-},{"../components/room":22,"../config/map.json":24,"../const":27}],34:[function(require,module,exports){
+},{"../components/door":19,"../components/room":23,"../config/map.json":25,"../const":28}],35:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -50596,7 +50885,7 @@ module.exports = function(mediator){
     return scene;
 
 };
-},{"three":14}],35:[function(require,module,exports){
+},{"three":15}],36:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -50617,23 +50906,23 @@ module.exports = function(){
     });
     return defer.promise;
 };
-},{"../config/textures.json":26,"lodash.foreach":8,"q":13,"three":14}],36:[function(require,module,exports){
+},{"../config/textures.json":27,"lodash.foreach":9,"q":14,"three":15}],37:[function(require,module,exports){
 _ = {
     clone: require('lodash.clone')
 };
-
+var StateMachine = require("javascript-state-machine");
 var CONST = require('../const');
 var map = require('../config/map.json');
+
 module.exports = function (mediator) {
     var direction = 0;
     var moving = false;
     var directions = ['N', 'E', 'S', 'W'];
     var center = true;
     var position = {
-        x: 0,
-        z: 0
+        x: 1,
+        z: 1
     };
-
     mediator.publish('camera.center', position);
     mediator.publish('room.add', position);
     mediator.subscribe('input', function (type) {
@@ -50723,13 +51012,6 @@ module.exports = function (mediator) {
                 }
             }
         }
-
     });
-    return {
-        direction: direction,
-        center: center,
-        position: position
-    }
-
 };
-},{"../config/map.json":24,"../const":27,"lodash.clone":6}]},{},[29]);
+},{"../config/map.json":25,"../const":28,"javascript-state-machine":2,"lodash.clone":7}]},{},[30]);
