@@ -15,7 +15,8 @@ module.exports = function (mediator) {
                 doors[id] = door.create(
                     {
                         from: {x: coords.x, z: coords.z - 1},
-                        to: {x: coords.x, z: coords.z}
+                        to: {x: coords.x, z: coords.z},
+                        id: id
                     }
                 );
             }
@@ -28,7 +29,8 @@ module.exports = function (mediator) {
                 doors[id] = door.create(
                     {
                         from: {x: coords.x, z: coords.z},
-                        to: {x: coords.x, z: coords.z + 1}
+                        to: {x: coords.x, z: coords.z + 1},
+                        id: id
                     }
                 );
             }
@@ -41,7 +43,8 @@ module.exports = function (mediator) {
                 doors[id] = door.create(
                     {
                         from: {x: coords.x - 1, z: coords.z},
-                        to: {x: coords.x, z: coords.z}
+                        to: {x: coords.x, z: coords.z},
+                        id: id
                     }
                 );
             }
@@ -55,7 +58,8 @@ module.exports = function (mediator) {
                 doors[id] = door.create(
                     {
                         from: {x: coords.x, z: coords.z},
-                        to: {x: coords.x + 1, z: coords.z}
+                        to: {x: coords.x + 1, z: coords.z},
+                        id: id
                     }
                 );
             }

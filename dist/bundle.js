@@ -50418,6 +50418,13 @@ function create(opts) {
     }
 
     mediator.publish('scene.add', group);
+    mediator.subscribe('door.open.' + opts.id, function(){
+        mediator.publish('scene.remove', group);
+        mediator.publish('audio.play', {id:'door__open-close--knob.mp3'});
+    });
+    mediator.subscribe('door.close.' + opts.id, function(){
+        mediator.publish('scene.add', group);
+    });
     return group;
 }
 
@@ -50812,7 +50819,8 @@ module.exports = function (mediator) {
                 doors[id] = door.create(
                     {
                         from: {x: coords.x, z: coords.z - 1},
-                        to: {x: coords.x, z: coords.z}
+                        to: {x: coords.x, z: coords.z},
+                        id: id
                     }
                 );
             }
@@ -50825,7 +50833,8 @@ module.exports = function (mediator) {
                 doors[id] = door.create(
                     {
                         from: {x: coords.x, z: coords.z},
-                        to: {x: coords.x, z: coords.z + 1}
+                        to: {x: coords.x, z: coords.z + 1},
+                        id: id
                     }
                 );
             }
@@ -50838,7 +50847,8 @@ module.exports = function (mediator) {
                 doors[id] = door.create(
                     {
                         from: {x: coords.x - 1, z: coords.z},
-                        to: {x: coords.x, z: coords.z}
+                        to: {x: coords.x, z: coords.z},
+                        id: id
                     }
                 );
             }
@@ -50852,7 +50862,8 @@ module.exports = function (mediator) {
                 doors[id] = door.create(
                     {
                         from: {x: coords.x, z: coords.z},
-                        to: {x: coords.x + 1, z: coords.z}
+                        to: {x: coords.x + 1, z: coords.z},
+                        id: id
                     }
                 );
             }
@@ -50955,6 +50966,7 @@ module.exports = function (mediator) {
                     });
                 }
                 if (type == 'forward') {
+
                     var coords = _.clone(position);
                     if (direction == 0) {
                         coords.z--;
@@ -50978,15 +50990,20 @@ module.exports = function (mediator) {
                     }
                 }
             } else {
+                var id;
                 var coords = _.clone(position);
                 if (direction == 0) {
                     coords.z--;
+                    id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
                 } else if (direction == 1) {
                     coords.x++;
+                    id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
                 } else if (direction == 2) {
                     coords.z++;
+                    id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
                 } else if (direction == 3) {
                     coords.x--;
+                    id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
                 }
 
                 if (type == 'back') {
@@ -51000,10 +51017,12 @@ module.exports = function (mediator) {
                     });
                 }
                 if (type == 'forward') {
+                    mediator.publish('door.open.' + id);
                     mediator.publish('camera.move.room', {
                         'coords': coords,
                         'callback': function () {
                             mediator.publish('room.remove', position);
+                            mediator.publish('door.close.' + id);
                             position = coords;
                             center = true;
                             moving = false;

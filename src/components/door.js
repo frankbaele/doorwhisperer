@@ -38,6 +38,13 @@ function create(opts) {
     }
 
     mediator.publish('scene.add', group);
+    mediator.subscribe('door.open.' + opts.id, function(){
+        mediator.publish('scene.remove', group);
+        mediator.publish('audio.play', {id:'door__open-close--knob.mp3'});
+    });
+    mediator.subscribe('door.close.' + opts.id, function(){
+        mediator.publish('scene.add', group);
+    });
     return group;
 }
 

@@ -46,6 +46,7 @@ module.exports = function (mediator) {
                     });
                 }
                 if (type == 'forward') {
+
                     var coords = _.clone(position);
                     if (direction == 0) {
                         coords.z--;
@@ -69,15 +70,20 @@ module.exports = function (mediator) {
                     }
                 }
             } else {
+                var id;
                 var coords = _.clone(position);
                 if (direction == 0) {
                     coords.z--;
+                    id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
                 } else if (direction == 1) {
                     coords.x++;
+                    id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
                 } else if (direction == 2) {
                     coords.z++;
+                    id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
                 } else if (direction == 3) {
                     coords.x--;
+                    id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
                 }
 
                 if (type == 'back') {
@@ -91,10 +97,12 @@ module.exports = function (mediator) {
                     });
                 }
                 if (type == 'forward') {
+                    mediator.publish('door.open.' + id);
                     mediator.publish('camera.move.room', {
                         'coords': coords,
                         'callback': function () {
                             mediator.publish('room.remove', position);
+                            mediator.publish('door.close.' + id);
                             position = coords;
                             center = true;
                             moving = false;
