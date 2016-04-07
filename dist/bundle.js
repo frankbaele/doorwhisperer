@@ -50699,6 +50699,7 @@ module.exports = function (mediator, listener) {
     camera.add(listener);
     var steps = new THREE.PositionalAudio(listener);
     steps.load('audio/character__steps--cement.mp3');
+    steps.position.y = -5;
     camera.add(steps);
     mediator.subscribe('camera.rotate', rotate);
     mediator.subscribe('camera.move', move);
