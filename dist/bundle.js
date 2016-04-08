@@ -50413,7 +50413,8 @@ function create(opts) {
     var openSound = new THREE.PositionalAudio(listener);
     var closeSound = new THREE.PositionalAudio(listener);
     openSound.load('audio/door__open-close--knob.mp3');
-    closeSound.load('audio/door__close--wood.mp3');
+    closeSound.load('audio/door__slam--wood.mp3');
+
     openSound.setRefDistance( 75 );
     closeSound.setRefDistance( 75 );
     group.add(upper);
