@@ -5,7 +5,7 @@ var _ = {
 };
 
 module.exports = function (mediator) {
-    document.addEventListener('keydown', _.debounce(inputListner, 100), false);
+    document.addEventListener('keydown', inputListner, false);
 
     function inputListner (ev){
         var code = vkey[ev.keyCode];
@@ -20,6 +20,9 @@ module.exports = function (mediator) {
         }
         if (code == '<down>') {
             mediator.publish('input', 'back');
+        }
+        if (code == '<space>') {
+            mediator.publish('input', 'enter');
         }
     }
 };

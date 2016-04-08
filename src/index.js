@@ -21,7 +21,6 @@ function init() {
     });
 }
 
-
 function animate() {
     requestAnimationFrame( animate );
     TWEEN.update();

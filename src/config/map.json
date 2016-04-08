@@ -1,7 +1,12 @@
 [
   [{
-    "sounds": ["growl--distant.mp3"]
-  },{},{}],
+    "sounds": ["growl--distant.mp3"],
+    "deadly": true
+  },{
+
+  },{
+
+  }],
   [{},{},{}],
   [{},{},{}]
 ]

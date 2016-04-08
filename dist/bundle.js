@@ -1,4 +1,233 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/*
+
+  Javascript State Machine Library - https://github.com/jakesgordon/javascript-state-machine
+
+  Copyright (c) 2012, 2013, 2014, 2015, Jake Gordon and contributors
+  Released under the MIT license - https://github.com/jakesgordon/javascript-state-machine/blob/master/LICENSE
+
+*/
+
+(function () {
+
+  var StateMachine = {
+
+    //---------------------------------------------------------------------------
+
+    VERSION: "2.3.5",
+
+    //---------------------------------------------------------------------------
+
+    Result: {
+      SUCCEEDED:    1, // the event transitioned successfully from one state to another
+      NOTRANSITION: 2, // the event was successfull but no state transition was necessary
+      CANCELLED:    3, // the event was cancelled by the caller in a beforeEvent callback
+      PENDING:      4  // the event is asynchronous and the caller is in control of when the transition occurs
+    },
+
+    Error: {
+      INVALID_TRANSITION: 100, // caller tried to fire an event that was innapropriate in the current state
+      PENDING_TRANSITION: 200, // caller tried to fire an event while an async transition was still pending
+      INVALID_CALLBACK:   300 // caller provided callback function threw an exception
+    },
+
+    WILDCARD: '*',
+    ASYNC: 'async',
+
+    //---------------------------------------------------------------------------
+
+    create: function(cfg, target) {
+
+      var initial      = (typeof cfg.initial == 'string') ? { state: cfg.initial } : cfg.initial; // allow for a simple string, or an object with { state: 'foo', event: 'setup', defer: true|false }
+      var terminal     = cfg.terminal || cfg['final'];
+      var fsm          = target || cfg.target  || {};
+      var events       = cfg.events || [];
+      var callbacks    = cfg.callbacks || {};
+      var map          = {}; // track state transitions allowed for an event { event: { from: [ to ] } }
+      var transitions  = {}; // track events allowed from a state            { state: [ event ] }
+
+      var add = function(e) {
+        var from = (e.from instanceof Array) ? e.from : (e.from ? [e.from] : [StateMachine.WILDCARD]); // allow 'wildcard' transition if 'from' is not specified
+        map[e.name] = map[e.name] || {};
+        for (var n = 0 ; n < from.length ; n++) {
+          transitions[from[n]] = transitions[from[n]] || [];
+          transitions[from[n]].push(e.name);
+
+          map[e.name][from[n]] = e.to || from[n]; // allow no-op transition if 'to' is not specified
+        }
+      };
+
+      if (initial) {
+        initial.event = initial.event || 'startup';
+        add({ name: initial.event, from: 'none', to: initial.state });
+      }
+
+      for(var n = 0 ; n < events.length ; n++)
+        add(events[n]);
+
+      for(var name in map) {
+        if (map.hasOwnProperty(name))
+          fsm[name] = StateMachine.buildEvent(name, map[name]);
+      }
+
+      for(var name in callbacks) {
+        if (callbacks.hasOwnProperty(name))
+          fsm[name] = callbacks[name]
+      }
+
+      fsm.current     = 'none';
+      fsm.is          = function(state) { return (state instanceof Array) ? (state.indexOf(this.current) >= 0) : (this.current === state); };
+      fsm.can         = function(event) { return !this.transition && (map[event].hasOwnProperty(this.current) || map[event].hasOwnProperty(StateMachine.WILDCARD)); }
+      fsm.cannot      = function(event) { return !this.can(event); };
+      fsm.transitions = function()      { return transitions[this.current]; };
+      fsm.isFinished  = function()      { return this.is(terminal); };
+      fsm.error       = cfg.error || function(name, from, to, args, error, msg, e) { throw e || msg; }; // default behavior when something unexpected happens is to throw an exception, but caller can override this behavior if desired (see github issue #3 and #17)
+
+      if (initial && !initial.defer)
+        fsm[initial.event]();
+
+      return fsm;
+
+    },
+
+    //===========================================================================
+
+    doCallback: function(fsm, func, name, from, to, args) {
+      if (func) {
+        try {
+          return func.apply(fsm, [name, from, to].concat(args));
+        }
+        catch(e) {
+          return fsm.error(name, from, to, args, StateMachine.Error.INVALID_CALLBACK, "an exception occurred in a caller-provided callback function", e);
+        }
+      }
+    },
+
+    beforeAnyEvent:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onbeforeevent'],                       name, from, to, args); },
+    afterAnyEvent:   function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onafterevent'] || fsm['onevent'],      name, from, to, args); },
+    leaveAnyState:   function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onleavestate'],                        name, from, to, args); },
+    enterAnyState:   function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onenterstate'] || fsm['onstate'],      name, from, to, args); },
+    changeState:     function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onchangestate'],                       name, from, to, args); },
+
+    beforeThisEvent: function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onbefore' + name],                     name, from, to, args); },
+    afterThisEvent:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onafter'  + name] || fsm['on' + name], name, from, to, args); },
+    leaveThisState:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onleave'  + from],                     name, from, to, args); },
+    enterThisState:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onenter'  + to]   || fsm['on' + to],   name, from, to, args); },
+
+    beforeEvent: function(fsm, name, from, to, args) {
+      if ((false === StateMachine.beforeThisEvent(fsm, name, from, to, args)) ||
+          (false === StateMachine.beforeAnyEvent( fsm, name, from, to, args)))
+        return false;
+    },
+
+    afterEvent: function(fsm, name, from, to, args) {
+      StateMachine.afterThisEvent(fsm, name, from, to, args);
+      StateMachine.afterAnyEvent( fsm, name, from, to, args);
+    },
+
+    leaveState: function(fsm, name, from, to, args) {
+      var specific = StateMachine.leaveThisState(fsm, name, from, to, args),
+          general  = StateMachine.leaveAnyState( fsm, name, from, to, args);
+      if ((false === specific) || (false === general))
+        return false;
+      else if ((StateMachine.ASYNC === specific) || (StateMachine.ASYNC === general))
+        return StateMachine.ASYNC;
+    },
+
+    enterState: function(fsm, name, from, to, args) {
+      StateMachine.enterThisState(fsm, name, from, to, args);
+      StateMachine.enterAnyState( fsm, name, from, to, args);
+    },
+
+    //===========================================================================
+
+    buildEvent: function(name, map) {
+      return function() {
+
+        var from  = this.current;
+        var to    = map[from] || map[StateMachine.WILDCARD] || from;
+        var args  = Array.prototype.slice.call(arguments); // turn arguments into pure array
+
+        if (this.transition)
+          return this.error(name, from, to, args, StateMachine.Error.PENDING_TRANSITION, "event " + name + " inappropriate because previous transition did not complete");
+
+        if (this.cannot(name))
+          return this.error(name, from, to, args, StateMachine.Error.INVALID_TRANSITION, "event " + name + " inappropriate in current state " + this.current);
+
+        if (false === StateMachine.beforeEvent(this, name, from, to, args))
+          return StateMachine.Result.CANCELLED;
+
+        if (from === to) {
+          StateMachine.afterEvent(this, name, from, to, args);
+          return StateMachine.Result.NOTRANSITION;
+        }
+
+        // prepare a transition method for use EITHER lower down, or by caller if they want an async transition (indicated by an ASYNC return value from leaveState)
+        var fsm = this;
+        this.transition = function() {
+          fsm.transition = null; // this method should only ever be called once
+          fsm.current = to;
+          StateMachine.enterState( fsm, name, from, to, args);
+          StateMachine.changeState(fsm, name, from, to, args);
+          StateMachine.afterEvent( fsm, name, from, to, args);
+          return StateMachine.Result.SUCCEEDED;
+        };
+        this.transition.cancel = function() { // provide a way for caller to cancel async transition if desired (issue #22)
+          fsm.transition = null;
+          StateMachine.afterEvent(fsm, name, from, to, args);
+        }
+
+        var leave = StateMachine.leaveState(this, name, from, to, args);
+        if (false === leave) {
+          this.transition = null;
+          return StateMachine.Result.CANCELLED;
+        }
+        else if (StateMachine.ASYNC === leave) {
+          return StateMachine.Result.PENDING;
+        }
+        else {
+          if (this.transition) // need to check in case user manually called transition() but forgot to return StateMachine.ASYNC
+            return this.transition();
+        }
+
+      };
+    }
+
+  }; // StateMachine
+
+  //===========================================================================
+
+  //======
+  // NODE
+  //======
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = StateMachine;
+    }
+    exports.StateMachine = StateMachine;
+  }
+  //============
+  // AMD/REQUIRE
+  //============
+  else if (typeof define === 'function' && define.amd) {
+    define(function(require) { return StateMachine; });
+  }
+  //========
+  // BROWSER
+  //========
+  else if (typeof window !== 'undefined') {
+    window.StateMachine = StateMachine;
+  }
+  //===========
+  // WEB WORKER
+  //===========
+  else if (typeof self !== 'undefined') {
+    self.StateMachine = StateMachine;
+  }
+
+}());
+
+},{}],2:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.5.3 (Custom Build) <https://lodash.com/>
@@ -1646,7 +1875,7 @@ Stack.prototype.set = stackSet;
 module.exports = baseClone;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 /**
  * lodash 4.1.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -2173,7 +2402,7 @@ function keys(object) {
 
 module.exports = baseEach;
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.6.0 (Custom Build) <https://lodash.com/>
@@ -4144,7 +4373,7 @@ function property(path) {
 module.exports = baseIteratee;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash._stringtopath":4}],4:[function(require,module,exports){
+},{"lodash._stringtopath":5}],5:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.7.0 (Custom Build) <https://lodash.com/>
@@ -4860,7 +5089,7 @@ function toString(value) {
 module.exports = stringToPath;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 /**
  * lodash 4.3.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -4901,7 +5130,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"lodash._baseclone":1}],6:[function(require,module,exports){
+},{"lodash._baseclone":2}],7:[function(require,module,exports){
 /**
  * lodash 4.0.4 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -5288,7 +5517,7 @@ function toNumber(value) {
 
 module.exports = debounce;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 /**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -5385,14 +5614,14 @@ var isArray = Array.isArray;
 
 module.exports = forEach;
 
-},{"lodash._baseeach":2,"lodash._baseiteratee":3}],8:[function(require,module,exports){
+},{"lodash._baseeach":3,"lodash._baseiteratee":4}],9:[function(require,module,exports){
 (function (process){
 module.exports = process.env.MEDIATOR_JS_COV
   ? require('./lib-cov/mediator')
   : require('./lib/mediator');
 
 }).call(this,require('_process'))
-},{"./lib-cov/mediator":9,"./lib/mediator":10,"_process":11}],9:[function(require,module,exports){
+},{"./lib-cov/mediator":10,"./lib/mediator":11,"_process":12}],10:[function(require,module,exports){
 /* automatically generated by JSCoverage - do not edit */
 try {
   if (typeof top === 'object' && top !== null && typeof top.opener === 'object' && top.opener !== null) {
@@ -5878,7 +6107,7 @@ _$jscoverage['mediator.js'][16]++;
   return Mediator;
 }));
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*jslint bitwise: true, nomen: true, plusplus: true, white: true */
 
 /*!
@@ -6257,7 +6486,7 @@ _$jscoverage['mediator.js'][16]++;
   return Mediator;
 }));
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -6350,7 +6579,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -8402,7 +8631,7 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":11}],13:[function(require,module,exports){
+},{"_process":12}],14:[function(require,module,exports){
 var self = self || {};// File:src/Three.js
 
 /**
@@ -49084,7 +49313,7 @@ if (typeof exports !== 'undefined') {
   this['THREE'] = THREE;
 }
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 /**
  * Tween.js - Licensed under the MIT license
  * https://github.com/tweenjs/tween.js
@@ -49976,7 +50205,7 @@ TWEEN.Interpolation = {
 
 })(this);
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -50114,7 +50343,7 @@ for(i = 112; i < 136; ++i) {
   output[i] = 'F'+(i-111)
 }
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 // Textures
@@ -50144,7 +50373,7 @@ module.exports = function (opts) {
 
     return group;
 };
-},{"../const":24,"three":13}],17:[function(require,module,exports){
+},{"../const":25,"three":14}],18:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
@@ -50237,7 +50466,7 @@ module.exports = function (_mediator_, _listener_) {
         create: create
     };
 };
-},{"../const":24,"three":13,"tween.js":14}],18:[function(require,module,exports){
+},{"../const":25,"three":14,"tween.js":15}],19:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var wall = require('./wall');
@@ -50249,7 +50478,7 @@ module.exports = function(opts){
     group.rotation.y = opts.rotation;
     return group;
 };
-},{"../const":24,"./wall":21,"three":13}],19:[function(require,module,exports){
+},{"../const":25,"./wall":22,"three":14}],20:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
@@ -50265,7 +50494,7 @@ module.exports = function(){
     floor.rotateX(Math.PI / 2);
     return floor;
 };
-},{"../const":24,"three":13}],20:[function(require,module,exports){
+},{"../const":25,"three":14}],21:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var facet = require('./facet');
@@ -50326,7 +50555,7 @@ module.exports = function (_mediator_, _listener_) {
         create: create
     }
 };
-},{"../const":24,"./block":16,"./facet":18,"./floor":19,"lodash.foreach":7,"three":13}],21:[function(require,module,exports){
+},{"../const":25,"./block":17,"./facet":19,"./floor":20,"lodash.foreach":8,"three":14}],22:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -50363,15 +50592,20 @@ module.exports = function () {
     group.add(topMesh);
     return group;
 };
-},{"../const":24,"three":13}],22:[function(require,module,exports){
+},{"../const":25,"three":14}],23:[function(require,module,exports){
 module.exports=[
   [{
-    "sounds": ["growl--distant.mp3"]
-  },{},{}],
+    "sounds": ["growl--distant.mp3"],
+    "deadly": true
+  },{
+
+  },{
+
+  }],
   [{},{},{}],
   [{},{},{}]
 ]
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 module.exports=[
   "img/cobblestone.png",
   "img/cobblestone_mossy.png",
@@ -50379,7 +50613,7 @@ module.exports=[
   "img/door/door_wood_upper.png",
   "img/stonebrick.png"
 ]
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var CONST = {};
 CONST.texture = {
     widht: 32,
@@ -50403,7 +50637,7 @@ CONST.audio = {
 CONST.speed = 100;
 
 module.exports = CONST;
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var THREE = require('three');
 var vkey = require('vkey');
 var _ = {
@@ -50411,7 +50645,7 @@ var _ = {
 };
 
 module.exports = function (mediator) {
-    document.addEventListener('keydown', _.debounce(inputListner, 100), false);
+    document.addEventListener('keydown', inputListner, false);
 
     function inputListner (ev){
         var code = vkey[ev.keyCode];
@@ -50427,9 +50661,12 @@ module.exports = function (mediator) {
         if (code == '<down>') {
             mediator.publish('input', 'back');
         }
+        if (code == '<space>') {
+            mediator.publish('input', 'enter');
+        }
     }
 };
-},{"lodash.debounce":6,"three":13,"vkey":15}],26:[function(require,module,exports){
+},{"lodash.debounce":7,"three":14,"vkey":16}],27:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var Mediator = require("mediator-js").Mediator,
@@ -50453,7 +50690,6 @@ function init() {
     });
 }
 
-
 function animate() {
     requestAnimationFrame( animate );
     TWEEN.update();
@@ -50461,7 +50697,7 @@ function animate() {
 }
 
 window.app = init;
-},{"./controls/controls":25,"./services/camera":28,"./services/roomGenerator":29,"./services/scene":30,"./services/textures":31,"./services/user":32,"mediator-js":8,"q":12,"three":13,"tween.js":14}],27:[function(require,module,exports){
+},{"./controls/controls":26,"./services/camera":29,"./services/roomGenerator":30,"./services/scene":31,"./services/textures":32,"./services/user":33,"mediator-js":9,"q":13,"three":14,"tween.js":15}],28:[function(require,module,exports){
 var libs = {};
 
 libs.distanceVector = function (v1, v2) {
@@ -50473,7 +50709,7 @@ libs.distanceVector = function (v1, v2) {
 };
 
 module.exports = libs;
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var CONST = require('../const');
@@ -50591,7 +50827,7 @@ module.exports = function (mediator, listener) {
     return camera;
 };
 
-},{"../const":24,"../libs":27,"lodash.clone":5,"three":13,"tween.js":14}],29:[function(require,module,exports){
+},{"../const":25,"../libs":28,"lodash.clone":6,"three":14,"tween.js":15}],30:[function(require,module,exports){
 var map = require('../config/map.json');
 var CONST = require('../const');
 
@@ -50672,7 +50908,7 @@ module.exports = function (mediator, listener) {
         mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z]);
     });
 };
-},{"../components/door":17,"../components/room":20,"../config/map.json":22,"../const":24}],30:[function(require,module,exports){
+},{"../components/door":18,"../components/room":21,"../config/map.json":23,"../const":25}],31:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -50686,7 +50922,7 @@ module.exports = function(mediator){
     return scene;
 
 };
-},{"three":13}],31:[function(require,module,exports){
+},{"three":14}],32:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -50707,121 +50943,177 @@ module.exports = function(){
     });
     return defer.promise;
 };
-},{"../config/textures.json":23,"lodash.foreach":7,"q":12,"three":13}],32:[function(require,module,exports){
+},{"../config/textures.json":24,"lodash.foreach":8,"q":13,"three":14}],33:[function(require,module,exports){
 _ = {
     clone: require('lodash.clone')
 };
 var CONST = require('../const');
 var map = require('../config/map.json');
-
+var StateMachine = require('javascript-state-machine');
 module.exports = function (mediator) {
-    var direction = 0;
-    var moving = false;
-    var directions = ['N', 'E', 'S', 'W'];
-    var center = true;
+
+
     var position = {
         x: 2,
         z: 0
     };
-    mediator.publish('camera.center', position);
-    mediator.publish('room.add', position);
-    mediator.subscribe('input', function (type) {
-        if (!moving) {
-            if (center) {
-                if (type == 'left') {
-                    moving = true;
-                    if (direction == 0) {
-                        direction = directions.length - 1;
-                    } else {
-                        direction = direction - 1;
-                    }
-                    mediator.publish('camera.rotate', {
-                        'direction': 'left',
-                        'callback': function () {
-                            moving = false;
-                        }
+
+    var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
+    var directions = ['north', 'east', 'south', 'west'];
+    var direction = 0;
+
+
+    var state = StateMachine.create({
+        initial: 'center',
+        error: function (eventName, from, to, args, errorCode, errorMessage) {
+            console.log(from);
+            console.log(to);
+            console.log(eventName);
+            console.log(errorCode);
+            console.log(errorMessage);
+        },
+        events: [
+            {name: 'left', from: 'center', to: 'turning'},
+            {name: 'right', from: 'center', to: 'turning'},
+            {name: 'stopped', from: 'turning', to: 'center'},
+            {name: 'reset', from: 'turning', to: 'center'},
+            {name: 'forward', from: 'center', to: 'door'},
+            {name: 'forward', from: 'door.open', to: 'center'},
+            {name: 'back', from: 'door', to: 'center'},
+            {name: 'back', from: 'door.open', to: 'center'},
+            {name: 'enter', from: 'door', to: 'door.open'},
+            {name: 'enter', from: 'door.open', to: 'door'}
+        ],
+        callbacks: {
+            onbeforeforward: function (event, from, to) {
+                var coords = {
+                    x: position.x + directionMap[direction].x,
+                    z: position.z + directionMap[direction].z
+                };
+                return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined';
+            },
+            onforward: function (event, from, to) {
+                if(from == 'center'){
+                    mediator.publish('room.add', {
+                        x: position.x + directionMap[direction].x,
+                        z: position.z + directionMap[direction].z
                     });
-                } else if (type == 'right') {
-                    moving = true;
-                    if (direction == directions.length - 1) {
-                        direction = 0;
-                    } else {
-                        direction = direction + 1;
-                    }
-                    mediator.publish('camera.rotate', {
-                        'direction': 'right',
-                        'callback': function () {
-                            moving = false;
-                        }
-                    });
+                } else {
+
                 }
-                if (type == 'forward') {
-                    var coords = _.clone(position);
-                    if (direction == 0) {
-                        coords.z--;
-                    } else if (direction == 1) {
-                        coords.x++;
-                    } else if (direction == 2) {
-                        coords.z++;
-                    } else if (direction == 3) {
-                        coords.x--;
-                    }
-                    if (map[coords.z] && map[coords.z][coords.x]) {
-                        moving = true;
-                        mediator.publish('camera.move', {
-                            'direction': 'forward',
-                            'callback': function () {
-                                center = false;
-                                moving = false;
-                                mediator.publish('room.add', coords);
-                            }
-                        });
-                    }
-                }
-            } else {
+            },
+            onenter: function (event, from, to) {
+                var coords = {
+                    x: position.x + directionMap[direction].x,
+                    z: position.z + directionMap[direction].z
+                };
                 var id;
-                var coords = _.clone(position);
                 if (direction == 0) {
-                    coords.z--;
                     id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
                 } else if (direction == 1) {
-                    coords.x++;
                     id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
                 } else if (direction == 2) {
-                    coords.z++;
                     id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
                 } else if (direction == 3) {
-                    coords.x--;
                     id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
                 }
 
-                if (type == 'back') {
-                    moving = true;
+                if(to == 'door.open'){
+                    mediator.publish('door.open.' + id, position);
+                } else if(to == 'door'){
+                    mediator.publish('door.close.' + id, position);
+                }
+
+            },
+            onleft: function(){
+                if (direction == 0) {
+                    direction = directions.length - 1;
+                } else {
+                    direction = direction - 1;
+                }
+            },
+            onright: function(){
+                if (direction == directions.length - 1) {
+                    direction = 0;
+                } else {
+                    direction = direction + 1;
+                }
+            },
+            onback: function (event, from, to) {
+                if(from =='door.open'){
+                    var id;
+                    var coords = {
+                        x: position.x + directionMap[direction].x,
+                        z: position.z + directionMap[direction].z
+                    };
+                    var id;
+                    if (direction == 0) {
+                        id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
+                    } else if (direction == 1) {
+                        id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
+                    } else if (direction == 2) {
+                        id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
+                    } else if (direction == 3) {
+                        id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
+                    }
+                    mediator.publish('door.close.' + id, position);
+                }
+            },
+            onturning: function(){
+                state.stopped()
+            },
+            onleavestate: function (event, from, to) {
+                if (event == 'right' || event == 'left') {
+                    mediator.publish('camera.rotate', {
+                        'direction': event,
+                        'callback': function () {
+                            state.transition();
+                        }
+                    });
+                    return StateMachine.ASYNC;
+                }
+
+                else if (event == 'forward') {
+                    if(from == 'center'){
+                        mediator.publish('camera.move', {
+                            'direction': 'forward',
+                            'callback': function () {
+                                state.transition();
+                            }
+                        });
+                    } else  if(from == 'door.open'){
+                        var coords = {
+                            x: position.x + directionMap[direction].x,
+                            z: position.z + directionMap[direction].z
+                        };
+                        mediator.publish('camera.move.room', {
+                            'coords': coords,
+                            'callback': function () {
+                                position = coords;
+                                state.transition();
+                            }
+                        });
+                    }
+                    return StateMachine.ASYNC;
+                }
+                else if (event == 'back') {
+
                     mediator.publish('camera.move', {
                         'direction': 'back',
                         'callback': function () {
-                            center = true;
-                            moving = false;
-                            mediator.publish('room.remove', coords);
+                            state.transition();
                         }
                     });
-                }
-                if (type == 'forward') {
-                    moving = true;
-                    mediator.publish('door.open.' + id, position);
-                    mediator.publish('camera.move.room', {
-                        'coords': coords,
-                        'callback': function () {
-                            mediator.publish('room.remove', position);
-                            mediator.publish('door.close.' + id, position);
-                            position = coords;
-                            center = true;
-                            moving = false;
-                        }
-                    });
+                    return StateMachine.ASYNC;
                 }
             }
         }
     });
+    var center = true;
+    mediator.publish('camera.center', position);
+    mediator.publish('room.add', position);
+    mediator.subscribe('input', function (type) {
+        state[type]();
+    });
 };
-},{"../config/map.json":22,"../const":24,"lodash.clone":5}]},{},[26]);
+},{"../config/map.json":23,"../const":25,"javascript-state-machine":1,"lodash.clone":6}]},{},[27]);
