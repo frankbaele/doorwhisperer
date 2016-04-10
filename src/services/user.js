@@ -20,11 +20,13 @@ module.exports = function (mediator) {
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {
+            /*
             console.log(from);
             console.log(to);
             console.log(eventName);
             console.log(errorCode);
             console.log(errorMessage);
+            */
         },
         events: [
             {name: 'left', from: 'center', to: 'turning'},
@@ -40,18 +42,13 @@ module.exports = function (mediator) {
         ],
         callbacks: {
             onbeforeforward: function (event, from, to) {
-                var coords = {
-                    x: position.x + directionMap[direction].x,
-                    z: position.z + directionMap[direction].z
-                };
+                var coords = nextRoom(position, direction);
                 return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined';
             },
             onforward: function (event, from, to) {
                 if(from == 'center'){
-                    mediator.publish('room.add', {
-                        x: position.x + directionMap[direction].x,
-                        z: position.z + directionMap[direction].z
-                    });
+                    mediator.publish('room.add', nextRoom(position, direction));
+
                 }
             },
             onenter: function (event, from, to) {
@@ -105,10 +102,7 @@ module.exports = function (mediator) {
                             }
                         });
                     } else  if(from == 'door.open'){
-                        var coords = {
-                            x: position.x + directionMap[direction].x,
-                            z: position.z + directionMap[direction].z
-                        };
+                        var coords = nextRoom(position, direction);
                         mediator.publish('camera.move.room', {
                             'coords': coords,
                             'callback': function () {
@@ -126,6 +120,7 @@ module.exports = function (mediator) {
                         'direction': 'back',
                         'callback': function () {
                             state.transition();
+                            mediator.publish('room.remove', nextRoom(position, direction));
                         }
                     });
                     return StateMachine.ASYNC;
@@ -135,14 +130,14 @@ module.exports = function (mediator) {
     });
     var center = true;
     function nextRoom(position, direction){
-
-    }
-    function doorId(position, direction){
-        var id;
-        var coords = {
+        return {
             x: position.x + directionMap[direction].x,
             z: position.z + directionMap[direction].z
         };
+    }
+    function doorId(position, direction){
+        var id;
+        var coords = nextRoom(position, direction);
         if (direction == 0) {
             id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
         } else if (direction == 1) {

@@ -79,7 +79,9 @@ function create(opts) {
             .to({y: value}, 200)
             .start();
     });
-
+    mediator.subscribe('door.remove.' + opts.id, function(){
+        mediator.publish('scene.remove', group);
+    });
     return group;
 }
 

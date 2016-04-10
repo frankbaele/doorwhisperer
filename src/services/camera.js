@@ -47,7 +47,6 @@ module.exports = function (mediator, listener) {
         var time = Math.round(Math.abs(distance)/CONST.speed * 1000);
         steps.play();
         new TWEEN.Tween(camera.position)
-            .easing(TWEEN.Easing.Quadratic.InOut)
             .to({z: value.z, x: value.x},time)
             .onComplete(function () {
                 steps.stop();
@@ -80,7 +79,6 @@ module.exports = function (mediator, listener) {
         var time = Math.round(Math.abs(temp) /CONST.speed * 1000);
         steps.play();
         new TWEEN.Tween(camera.position)
-            .easing(TWEEN.Easing.Quadratic.InOut)
             .to({z: value.z, x: value.x}, time)
             .onComplete(function () {
                 steps.stop();
@@ -101,7 +99,6 @@ module.exports = function (mediator, listener) {
         var time = 400;
         steps.play();
         new TWEEN.Tween(camera.rotation)
-            .easing(TWEEN.Easing.Quadratic.InOut)
             .to({y: value}, time)
             .onComplete(function () {
                 steps.stop();
