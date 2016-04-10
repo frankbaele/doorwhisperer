@@ -50998,26 +50998,10 @@ module.exports = function (mediator) {
                         x: position.x + directionMap[direction].x,
                         z: position.z + directionMap[direction].z
                     });
-                } else {
-
                 }
             },
             onenter: function (event, from, to) {
-                var coords = {
-                    x: position.x + directionMap[direction].x,
-                    z: position.z + directionMap[direction].z
-                };
-                var id;
-                if (direction == 0) {
-                    id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
-                } else if (direction == 1) {
-                    id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
-                } else if (direction == 2) {
-                    id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
-                } else if (direction == 3) {
-                    id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
-                }
-
+                var id = doorId(position, direction);
                 if(to == 'door.open'){
                     mediator.publish('door.open.' + id, position);
                 } else if(to == 'door'){
@@ -51041,21 +51025,7 @@ module.exports = function (mediator) {
             },
             onback: function (event, from, to) {
                 if(from =='door.open'){
-                    var id;
-                    var coords = {
-                        x: position.x + directionMap[direction].x,
-                        z: position.z + directionMap[direction].z
-                    };
-                    var id;
-                    if (direction == 0) {
-                        id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
-                    } else if (direction == 1) {
-                        id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
-                    } else if (direction == 2) {
-                        id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
-                    } else if (direction == 3) {
-                        id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
-                    }
+                    var id = doorId(position, direction);
                     mediator.publish('door.close.' + id, position);
                 }
             },
@@ -51072,7 +51042,6 @@ module.exports = function (mediator) {
                     });
                     return StateMachine.ASYNC;
                 }
-
                 else if (event == 'forward') {
                     if(from == 'center'){
                         mediator.publish('camera.move', {
@@ -51089,6 +51058,8 @@ module.exports = function (mediator) {
                         mediator.publish('camera.move.room', {
                             'coords': coords,
                             'callback': function () {
+                                mediator.publish('room.remove', position);
+                                mediator.publish('door.close.' + doorId(position, direction), position);
                                 position = coords;
                                 state.transition();
                             }
@@ -51097,7 +51068,6 @@ module.exports = function (mediator) {
                     return StateMachine.ASYNC;
                 }
                 else if (event == 'back') {
-
                     mediator.publish('camera.move', {
                         'direction': 'back',
                         'callback': function () {
@@ -51110,6 +51080,26 @@ module.exports = function (mediator) {
         }
     });
     var center = true;
+    function nextRoom(position, direction){
+
+    }
+    function doorId(position, direction){
+        var id;
+        var coords = {
+            x: position.x + directionMap[direction].x,
+            z: position.z + directionMap[direction].z
+        };
+        if (direction == 0) {
+            id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
+        } else if (direction == 1) {
+            id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
+        } else if (direction == 2) {
+            id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
+        } else if (direction == 3) {
+            id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
+        }
+        return id;
+    }
     mediator.publish('camera.center', position);
     mediator.publish('room.add', position);
     mediator.subscribe('input', function (type) {
