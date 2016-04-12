@@ -9,7 +9,7 @@ wallTexture.repeat.set(CONST.room.width / CONST.texture.widht, CONST.room.height
 // Materials
 var wallMat = new THREE.MeshLambertMaterial({map: wallTexture});
 // Objects
-var wallGem = new THREE.BoxGeometry(CONST.room.width, CONST.room.height, 32);
+var wallGem = new THREE.BoxGeometry(CONST.room.width, CONST.room.height, 8);
 module.exports = function (opts) {
     var group = new THREE.Object3D();
     var wallMesh = new THREE.Mesh(wallGem, wallMat);

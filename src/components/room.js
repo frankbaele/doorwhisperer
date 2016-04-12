@@ -1,6 +1,6 @@
 var THREE = require('three');
 var CONST = require('../const');
-var facet = require('./facet');
+var wall = require('./facet');
 var floor = require('./floor');
 var block = require('./block');
 var _ = {
@@ -23,30 +23,30 @@ function create(opts){
         })
     }
     if (opts.walls.top) {
-        group.add(facet({x: 0, y: 0, z: 0, rotation: 0}));
+        group.add(wall({x: 0, y: 0, z: 8, rotation: 0}));
     } else {
-        group.add(block({x: 0, y: 0, z: 0, rotation: 0}));
+        group.add(block({x: 0, y: 0, z: 8, rotation: 0}));
     }
 
     if (opts.walls.left) {
-        group.add(facet({x: -CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
+        group.add(wall({x: -CONST.room.width / 2 + 8, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
     }else {
-        group.add(block({x: -CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
+        group.add(wall({x: -CONST.room.width / 2 + 8, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
     }
 
     if (opts.walls.right) {
-        group.add(facet({x: CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
+        group.add(wall({x: CONST.room.width / 2 - 8, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
     }else {
-        group.add(block({x: CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
+        group.add(block({x: CONST.room.width / 2 - 8 , y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
     }
 
     if (opts.walls.bottom) {
-        group.add(facet({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
+        group.add(wall({x: 0, y: 0, z: CONST.room.width - 8, rotation: -Math.PI}));
     }else {
-        group.add(block({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
+        group.add(block({x: 0, y: 0, z: CONST.room.width - 8, rotation: -Math.PI}));
     }
 
-    group.position.set(opts.x * CONST.room.width, opts.y + CONST.room.height/2, opts.z * CONST.room.width);
+    group.position.set(opts.x * (CONST.room.width), opts.y + CONST.room.height/2, opts.z * (CONST.room.width));
     mediator.publish('scene.add', group);
     return group;
 }

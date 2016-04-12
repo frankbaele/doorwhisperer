@@ -52089,7 +52089,7 @@ wallTexture.repeat.set(CONST.room.width / CONST.texture.widht, CONST.room.height
 // Materials
 var wallMat = new THREE.MeshLambertMaterial({map: wallTexture});
 // Objects
-var wallGem = new THREE.BoxGeometry(CONST.room.width, CONST.room.height, 32);
+var wallGem = new THREE.BoxGeometry(CONST.room.width, CONST.room.height, 8);
 module.exports = function (opts) {
     var group = new THREE.Object3D();
     var wallMesh = new THREE.Mesh(wallGem, wallMat);
@@ -52179,7 +52179,6 @@ function create(opts) {
     mediator.subscribe('door.close.' + opts.id, function(from){
         var value;
         openSound.stop();
-        closeSound.play();
         if(from.x == opts.from.x  && from.z == opts.from.z){
             value = '+' + Math.PI/2;
         } else {
@@ -52222,8 +52221,9 @@ floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
-var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
+var material = new THREE.MeshLambertMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 module.exports = function(){
+
     var floor = new THREE.Mesh( geometry, material );
     floor.position.y = - CONST.room.height/2;
     floor.position.z = CONST.room.width/2;
@@ -52233,7 +52233,7 @@ module.exports = function(){
 },{"../const":30,"three":19}],26:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
-var facet = require('./facet');
+var wall = require('./facet');
 var floor = require('./floor');
 var block = require('./block');
 var _ = {
@@ -52256,30 +52256,30 @@ function create(opts){
         })
     }
     if (opts.walls.top) {
-        group.add(facet({x: 0, y: 0, z: 0, rotation: 0}));
+        group.add(wall({x: 0, y: 0, z: 8, rotation: 0}));
     } else {
-        group.add(block({x: 0, y: 0, z: 0, rotation: 0}));
+        group.add(block({x: 0, y: 0, z: 8, rotation: 0}));
     }
 
     if (opts.walls.left) {
-        group.add(facet({x: -CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
+        group.add(wall({x: -CONST.room.width / 2 + 8, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
     }else {
-        group.add(block({x: -CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
+        group.add(wall({x: -CONST.room.width / 2 + 8, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
     }
 
     if (opts.walls.right) {
-        group.add(facet({x: CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
+        group.add(wall({x: CONST.room.width / 2 - 8, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
     }else {
-        group.add(block({x: CONST.room.width / 2, y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
+        group.add(block({x: CONST.room.width / 2 - 8 , y: 0, z: CONST.room.width / 2, rotation: -Math.PI / 2}));
     }
 
     if (opts.walls.bottom) {
-        group.add(facet({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
+        group.add(wall({x: 0, y: 0, z: CONST.room.width - 8, rotation: -Math.PI}));
     }else {
-        group.add(block({x: 0, y: 0, z: CONST.room.width, rotation: -Math.PI}));
+        group.add(block({x: 0, y: 0, z: CONST.room.width - 8, rotation: -Math.PI}));
     }
 
-    group.position.set(opts.x * CONST.room.width, opts.y + CONST.room.height/2, opts.z * CONST.room.width);
+    group.position.set(opts.x * (CONST.room.width), opts.y + CONST.room.height/2, opts.z * (CONST.room.width));
     mediator.publish('scene.add', group);
     return group;
 }
@@ -52676,9 +52676,8 @@ module.exports = function (mediator, listener) {
     }
 
     mediator.subscribe('room.remove', function (coords) {
-        mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z]);
+        mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z].instance);
         delete(rooms[coords.x + '_' + coords.z]);
-
         _.forEach(_.difference(roomDoors(coords), currentDoors()), function(id){
             mediator.publish('door.remove.' + id);
             delete(doorList[id]);

@@ -113,9 +113,8 @@ module.exports = function (mediator, listener) {
     }
 
     mediator.subscribe('room.remove', function (coords) {
-        mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z]);
+        mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z].instance);
         delete(rooms[coords.x + '_' + coords.z]);
-
         _.forEach(_.difference(roomDoors(coords), currentDoors()), function(id){
             mediator.publish('door.remove.' + id);
             delete(doorList[id]);

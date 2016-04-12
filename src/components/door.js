@@ -69,7 +69,6 @@ function create(opts) {
     mediator.subscribe('door.close.' + opts.id, function(from){
         var value;
         openSound.stop();
-        closeSound.play();
         if(from.x == opts.from.x  && from.z == opts.from.z){
             value = '+' + Math.PI/2;
         } else {
