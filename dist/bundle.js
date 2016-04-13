@@ -53122,7 +53122,7 @@ module.exports = function () {
 module.exports=[
   [{
     "sounds": ["growl--distant.mp3"],
-    "type": "death"
+    "type": "lose"
   },{
 
   },{
