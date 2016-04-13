@@ -109,6 +109,512 @@ module.exports = (function split(undef) {
 })();
 
 },{}],3:[function(require,module,exports){
+/**
+ * cuid.js
+ * Collision-resistant UID generator for browsers and node.
+ * Sequential for fast db lookups and recency sorting.
+ * Safe for element IDs and server-side lookups.
+ *
+ * Extracted from CLCTR
+ *
+ * Copyright (c) Eric Elliott 2012
+ * MIT License
+ */
+
+/*global window, navigator, document, require, process, module */
+(function (app) {
+  'use strict';
+  var namespace = 'cuid',
+    c = 0,
+    blockSize = 4,
+    base = 36,
+    discreteValues = Math.pow(base, blockSize),
+
+    pad = function pad(num, size) {
+      var s = "000000000" + num;
+      return s.substr(s.length-size);
+    },
+
+    randomBlock = function randomBlock() {
+      return pad((Math.random() *
+            discreteValues << 0)
+            .toString(base), blockSize);
+    },
+
+    safeCounter = function () {
+      c = (c < discreteValues) ? c : 0;
+      c++; // this is not subliminal
+      return c - 1;
+    },
+
+    api = function cuid() {
+      // Starting with a lowercase letter makes
+      // it HTML element ID friendly.
+      var letter = 'c', // hard-coded allows for sequential access
+
+        // timestamp
+        // warning: this exposes the exact date and time
+        // that the uid was created.
+        timestamp = (new Date().getTime()).toString(base),
+
+        // Prevent same-machine collisions.
+        counter,
+
+        // A few chars to generate distinct ids for different
+        // clients (so different computers are far less
+        // likely to generate the same id)
+        fingerprint = api.fingerprint(),
+
+        // Grab some more chars from Math.random()
+        random = randomBlock() + randomBlock();
+
+        counter = pad(safeCounter().toString(base), blockSize);
+
+      return  (letter + timestamp + counter + fingerprint + random);
+    };
+
+  api.slug = function slug() {
+    var date = new Date().getTime().toString(36),
+      counter,
+      print = api.fingerprint().slice(0,1) +
+        api.fingerprint().slice(-1),
+      random = randomBlock().slice(-2);
+
+      counter = safeCounter().toString(36).slice(-4);
+
+    return date.slice(-2) +
+      counter + print + random;
+  };
+
+  api.globalCount = function globalCount() {
+    // We want to cache the results of this
+    var cache = (function calc() {
+        var i,
+          count = 0;
+
+        for (i in window) {
+          count++;
+        }
+
+        return count;
+      }());
+
+    api.globalCount = function () { return cache; };
+    return cache;
+  };
+
+  api.fingerprint = function browserPrint() {
+    return pad((navigator.mimeTypes.length +
+      navigator.userAgent.length).toString(36) +
+      api.globalCount().toString(36), 4);
+  };
+
+  // don't change anything from here down.
+  if (app.register) {
+    app.register(namespace, api);
+  } else if (typeof module !== 'undefined') {
+    module.exports = api;
+  } else {
+    app[namespace] = api;
+  }
+
+}(this.applitude || this));
+
+},{}],4:[function(require,module,exports){
+var EvStore = require("ev-store")
+
+module.exports = addEvent
+
+function addEvent(target, type, handler) {
+    var events = EvStore(target)
+    var event = events[type]
+
+    if (!event) {
+        events[type] = handler
+    } else if (Array.isArray(event)) {
+        if (event.indexOf(handler) === -1) {
+            event.push(handler)
+        }
+    } else if (event !== handler) {
+        events[type] = [event, handler]
+    }
+}
+
+},{"ev-store":10}],5:[function(require,module,exports){
+var globalDocument = require("global/document")
+var EvStore = require("ev-store")
+var createStore = require("weakmap-shim/create-store")
+
+var addEvent = require("./add-event.js")
+var removeEvent = require("./remove-event.js")
+var ProxyEvent = require("./proxy-event.js")
+
+var HANDLER_STORE = createStore()
+
+module.exports = DOMDelegator
+
+function DOMDelegator(document) {
+    if (!(this instanceof DOMDelegator)) {
+        return new DOMDelegator(document);
+    }
+
+    document = document || globalDocument
+
+    this.target = document.documentElement
+    this.events = {}
+    this.rawEventListeners = {}
+    this.globalListeners = {}
+}
+
+DOMDelegator.prototype.addEventListener = addEvent
+DOMDelegator.prototype.removeEventListener = removeEvent
+
+DOMDelegator.allocateHandle =
+    function allocateHandle(func) {
+        var handle = new Handle()
+
+        HANDLER_STORE(handle).func = func;
+
+        return handle
+    }
+
+DOMDelegator.transformHandle =
+    function transformHandle(handle, broadcast) {
+        var func = HANDLER_STORE(handle).func
+
+        return this.allocateHandle(function (ev) {
+            broadcast(ev, func);
+        })
+    }
+
+DOMDelegator.prototype.addGlobalEventListener =
+    function addGlobalEventListener(eventName, fn) {
+        var listeners = this.globalListeners[eventName] || [];
+        if (listeners.indexOf(fn) === -1) {
+            listeners.push(fn)
+        }
+
+        this.globalListeners[eventName] = listeners;
+    }
+
+DOMDelegator.prototype.removeGlobalEventListener =
+    function removeGlobalEventListener(eventName, fn) {
+        var listeners = this.globalListeners[eventName] || [];
+
+        var index = listeners.indexOf(fn)
+        if (index !== -1) {
+            listeners.splice(index, 1)
+        }
+    }
+
+DOMDelegator.prototype.listenTo = function listenTo(eventName) {
+    if (!(eventName in this.events)) {
+        this.events[eventName] = 0;
+    }
+
+    this.events[eventName]++;
+
+    if (this.events[eventName] !== 1) {
+        return
+    }
+
+    var listener = this.rawEventListeners[eventName]
+    if (!listener) {
+        listener = this.rawEventListeners[eventName] =
+            createHandler(eventName, this)
+    }
+
+    this.target.addEventListener(eventName, listener, true)
+}
+
+DOMDelegator.prototype.unlistenTo = function unlistenTo(eventName) {
+    if (!(eventName in this.events)) {
+        this.events[eventName] = 0;
+    }
+
+    if (this.events[eventName] === 0) {
+        throw new Error("already unlistened to event.");
+    }
+
+    this.events[eventName]--;
+
+    if (this.events[eventName] !== 0) {
+        return
+    }
+
+    var listener = this.rawEventListeners[eventName]
+
+    if (!listener) {
+        throw new Error("dom-delegator#unlistenTo: cannot " +
+            "unlisten to " + eventName)
+    }
+
+    this.target.removeEventListener(eventName, listener, true)
+}
+
+function createHandler(eventName, delegator) {
+    var globalListeners = delegator.globalListeners;
+    var delegatorTarget = delegator.target;
+
+    return handler
+
+    function handler(ev) {
+        var globalHandlers = globalListeners[eventName] || []
+
+        if (globalHandlers.length > 0) {
+            var globalEvent = new ProxyEvent(ev);
+            globalEvent.currentTarget = delegatorTarget;
+            callListeners(globalHandlers, globalEvent)
+        }
+
+        findAndInvokeListeners(ev.target, ev, eventName)
+    }
+}
+
+function findAndInvokeListeners(elem, ev, eventName) {
+    var listener = getListener(elem, eventName)
+
+    if (listener && listener.handlers.length > 0) {
+        var listenerEvent = new ProxyEvent(ev);
+        listenerEvent.currentTarget = listener.currentTarget
+        callListeners(listener.handlers, listenerEvent)
+
+        if (listenerEvent._bubbles) {
+            var nextTarget = listener.currentTarget.parentNode
+            findAndInvokeListeners(nextTarget, ev, eventName)
+        }
+    }
+}
+
+function getListener(target, type) {
+    // terminate recursion if parent is `null`
+    if (target === null || typeof target === "undefined") {
+        return null
+    }
+
+    var events = EvStore(target)
+    // fetch list of handler fns for this event
+    var handler = events[type]
+    var allHandler = events.event
+
+    if (!handler && !allHandler) {
+        return getListener(target.parentNode, type)
+    }
+
+    var handlers = [].concat(handler || [], allHandler || [])
+    return new Listener(target, handlers)
+}
+
+function callListeners(handlers, ev) {
+    handlers.forEach(function (handler) {
+        if (typeof handler === "function") {
+            handler(ev)
+        } else if (typeof handler.handleEvent === "function") {
+            handler.handleEvent(ev)
+        } else if (handler.type === "dom-delegator-handle") {
+            HANDLER_STORE(handler).func(ev)
+        } else {
+            throw new Error("dom-delegator: unknown handler " +
+                "found: " + JSON.stringify(handlers));
+        }
+    })
+}
+
+function Listener(target, handlers) {
+    this.currentTarget = target
+    this.handlers = handlers
+}
+
+function Handle() {
+    this.type = "dom-delegator-handle"
+}
+
+},{"./add-event.js":4,"./proxy-event.js":8,"./remove-event.js":9,"ev-store":10,"global/document":11,"weakmap-shim/create-store":54}],6:[function(require,module,exports){
+var Individual = require("individual")
+var cuid = require("cuid")
+var globalDocument = require("global/document")
+
+var DOMDelegator = require("./dom-delegator.js")
+
+var versionKey = "13"
+var cacheKey = "__DOM_DELEGATOR_CACHE@" + versionKey
+var cacheTokenKey = "__DOM_DELEGATOR_CACHE_TOKEN@" + versionKey
+var delegatorCache = Individual(cacheKey, {
+    delegators: {}
+})
+var commonEvents = [
+    "blur", "change", "click",  "contextmenu", "dblclick",
+    "error","focus", "focusin", "focusout", "input", "keydown",
+    "keypress", "keyup", "load", "mousedown", "mouseup",
+    "resize", "select", "submit", "touchcancel",
+    "touchend", "touchstart", "unload"
+]
+
+/*  Delegator is a thin wrapper around a singleton `DOMDelegator`
+        instance.
+
+    Only one DOMDelegator should exist because we do not want
+        duplicate event listeners bound to the DOM.
+
+    `Delegator` will also `listenTo()` all events unless
+        every caller opts out of it
+*/
+module.exports = Delegator
+
+function Delegator(opts) {
+    opts = opts || {}
+    var document = opts.document || globalDocument
+
+    var cacheKey = document[cacheTokenKey]
+
+    if (!cacheKey) {
+        cacheKey =
+            document[cacheTokenKey] = cuid()
+    }
+
+    var delegator = delegatorCache.delegators[cacheKey]
+
+    if (!delegator) {
+        delegator = delegatorCache.delegators[cacheKey] =
+            new DOMDelegator(document)
+    }
+
+    if (opts.defaultEvents !== false) {
+        for (var i = 0; i < commonEvents.length; i++) {
+            delegator.listenTo(commonEvents[i])
+        }
+    }
+
+    return delegator
+}
+
+Delegator.allocateHandle = DOMDelegator.allocateHandle;
+Delegator.transformHandle = DOMDelegator.transformHandle;
+
+},{"./dom-delegator.js":5,"cuid":3,"global/document":11,"individual":7}],7:[function(require,module,exports){
+(function (global){
+var root = typeof window !== 'undefined' ?
+    window : typeof global !== 'undefined' ?
+    global : {};
+
+module.exports = Individual
+
+function Individual(key, value) {
+    if (root[key]) {
+        return root[key]
+    }
+
+    Object.defineProperty(root, key, {
+        value: value
+        , configurable: true
+    })
+
+    return value
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],8:[function(require,module,exports){
+var inherits = require("inherits")
+
+var ALL_PROPS = [
+    "altKey", "bubbles", "cancelable", "ctrlKey",
+    "eventPhase", "metaKey", "relatedTarget", "shiftKey",
+    "target", "timeStamp", "type", "view", "which"
+]
+var KEY_PROPS = ["char", "charCode", "key", "keyCode"]
+var MOUSE_PROPS = [
+    "button", "buttons", "clientX", "clientY", "layerX",
+    "layerY", "offsetX", "offsetY", "pageX", "pageY",
+    "screenX", "screenY", "toElement"
+]
+
+var rkeyEvent = /^key|input/
+var rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/
+
+module.exports = ProxyEvent
+
+function ProxyEvent(ev) {
+    if (!(this instanceof ProxyEvent)) {
+        return new ProxyEvent(ev)
+    }
+
+    if (rkeyEvent.test(ev.type)) {
+        return new KeyEvent(ev)
+    } else if (rmouseEvent.test(ev.type)) {
+        return new MouseEvent(ev)
+    }
+
+    for (var i = 0; i < ALL_PROPS.length; i++) {
+        var propKey = ALL_PROPS[i]
+        this[propKey] = ev[propKey]
+    }
+
+    this._rawEvent = ev
+    this._bubbles = false;
+}
+
+ProxyEvent.prototype.preventDefault = function () {
+    this._rawEvent.preventDefault()
+}
+
+ProxyEvent.prototype.startPropagation = function () {
+    this._bubbles = true;
+}
+
+function MouseEvent(ev) {
+    for (var i = 0; i < ALL_PROPS.length; i++) {
+        var propKey = ALL_PROPS[i]
+        this[propKey] = ev[propKey]
+    }
+
+    for (var j = 0; j < MOUSE_PROPS.length; j++) {
+        var mousePropKey = MOUSE_PROPS[j]
+        this[mousePropKey] = ev[mousePropKey]
+    }
+
+    this._rawEvent = ev
+}
+
+inherits(MouseEvent, ProxyEvent)
+
+function KeyEvent(ev) {
+    for (var i = 0; i < ALL_PROPS.length; i++) {
+        var propKey = ALL_PROPS[i]
+        this[propKey] = ev[propKey]
+    }
+
+    for (var j = 0; j < KEY_PROPS.length; j++) {
+        var keyPropKey = KEY_PROPS[j]
+        this[keyPropKey] = ev[keyPropKey]
+    }
+
+    this._rawEvent = ev
+}
+
+inherits(KeyEvent, ProxyEvent)
+
+},{"inherits":14}],9:[function(require,module,exports){
+var EvStore = require("ev-store")
+
+module.exports = removeEvent
+
+function removeEvent(target, type, handler) {
+    var events = EvStore(target)
+    var event = events[type]
+
+    if (!event) {
+        return
+    } else if (Array.isArray(event)) {
+        var index = event.indexOf(handler)
+        if (index !== -1) {
+            event.splice(index, 1)
+        }
+    } else if (event === handler) {
+        events[type] = null
+    }
+}
+
+},{"ev-store":10}],10:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -130,7 +636,7 @@ function EvStore(elem) {
     return hash;
 }
 
-},{"individual/one-version":6}],4:[function(require,module,exports){
+},{"individual/one-version":13}],11:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -149,7 +655,7 @@ if (typeof document !== 'undefined') {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":1}],5:[function(require,module,exports){
+},{"min-document":1}],12:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -172,7 +678,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],6:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var Individual = require('./index.js');
@@ -196,7 +702,32 @@ function OneVersion(moduleName, version, defaultValue) {
     return Individual(key, defaultValue);
 }
 
-},{"./index.js":5}],7:[function(require,module,exports){
+},{"./index.js":12}],14:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],15:[function(require,module,exports){
 /*
 
   Javascript State Machine Library - https://github.com/jakesgordon/javascript-state-machine
@@ -425,7 +956,7 @@ function OneVersion(moduleName, version, defaultValue) {
 
 }());
 
-},{}],8:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.5.3 (Custom Build) <https://lodash.com/>
@@ -2073,7 +2604,7 @@ Stack.prototype.set = stackSet;
 module.exports = baseClone;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],9:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /**
  * lodash 4.4.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -2292,7 +2823,7 @@ function isKeyable(value) {
 
 module.exports = baseDifference;
 
-},{"lodash._setcache":13}],10:[function(require,module,exports){
+},{"lodash._setcache":21}],18:[function(require,module,exports){
 /**
  * lodash 4.1.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -2819,7 +3350,7 @@ function keys(object) {
 
 module.exports = baseEach;
 
-},{}],11:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -3170,7 +3701,7 @@ function isObjectLike(value) {
 
 module.exports = baseFlatten;
 
-},{}],12:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.6.0 (Custom Build) <https://lodash.com/>
@@ -5141,7 +5672,7 @@ function property(path) {
 module.exports = baseIteratee;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash._stringtopath":14}],13:[function(require,module,exports){
+},{"lodash._stringtopath":22}],21:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.1.3 (Custom Build) <https://lodash.com/>
@@ -5733,7 +6264,7 @@ function isNative(value) {
 module.exports = SetCache;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],14:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.7.0 (Custom Build) <https://lodash.com/>
@@ -6449,7 +6980,7 @@ function toString(value) {
 module.exports = stringToPath;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],15:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /**
  * lodash 4.3.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -6490,7 +7021,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"lodash._baseclone":8}],16:[function(require,module,exports){
+},{"lodash._baseclone":16}],24:[function(require,module,exports){
 /**
  * lodash 4.0.4 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -6877,7 +7408,7 @@ function toNumber(value) {
 
 module.exports = debounce;
 
-},{}],17:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -7133,7 +7664,7 @@ function isObjectLike(value) {
 
 module.exports = difference;
 
-},{"lodash._basedifference":9,"lodash._baseflatten":11,"lodash.rest":19}],18:[function(require,module,exports){
+},{"lodash._basedifference":17,"lodash._baseflatten":19,"lodash.rest":27}],26:[function(require,module,exports){
 /**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -7230,7 +7761,7 @@ var isArray = Array.isArray;
 
 module.exports = forEach;
 
-},{"lodash._baseeach":10,"lodash._baseiteratee":12}],19:[function(require,module,exports){
+},{"lodash._baseeach":18,"lodash._baseiteratee":20}],27:[function(require,module,exports){
 /**
  * lodash 4.0.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -7546,14 +8077,14 @@ function toNumber(value) {
 
 module.exports = rest;
 
-},{}],20:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 (function (process){
 module.exports = process.env.MEDIATOR_JS_COV
   ? require('./lib-cov/mediator')
   : require('./lib/mediator');
 
 }).call(this,require('_process'))
-},{"./lib-cov/mediator":21,"./lib/mediator":22,"_process":23}],21:[function(require,module,exports){
+},{"./lib-cov/mediator":29,"./lib/mediator":30,"_process":31}],29:[function(require,module,exports){
 /* automatically generated by JSCoverage - do not edit */
 try {
   if (typeof top === 'object' && top !== null && typeof top.opener === 'object' && top.opener !== null) {
@@ -8039,7 +8570,7 @@ _$jscoverage['mediator.js'][16]++;
   return Mediator;
 }));
 
-},{}],22:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /*jslint bitwise: true, nomen: true, plusplus: true, white: true */
 
 /*!
@@ -8418,7 +8949,7 @@ _$jscoverage['mediator.js'][16]++;
   return Mediator;
 }));
 
-},{}],23:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -8511,7 +9042,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],24:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -10563,7 +11094,7 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":23}],25:[function(require,module,exports){
+},{"_process":31}],33:[function(require,module,exports){
 var self = self || {};// File:src/Three.js
 
 /**
@@ -51245,7 +51776,7 @@ if (typeof exports !== 'undefined') {
   this['THREE'] = THREE;
 }
 
-},{}],26:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /**
  * Tween.js - Licensed under the MIT license
  * https://github.com/tweenjs/tween.js
@@ -52137,24 +52668,24 @@ TWEEN.Interpolation = {
 
 })(this);
 
-},{}],27:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":31}],28:[function(require,module,exports){
+},{"./vdom/create-element.js":39}],36:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":34}],29:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":42}],37:[function(require,module,exports){
 "use strict";
 
 module.exports = function isObject(x) {
 	return typeof x === "object" && x !== null;
 };
 
-},{}],30:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -52253,7 +52784,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":38,"is-object":29}],31:[function(require,module,exports){
+},{"../vnode/is-vhook.js":46,"is-object":37}],39:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -52301,7 +52832,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":36,"../vnode/is-vnode.js":39,"../vnode/is-vtext.js":40,"../vnode/is-widget.js":41,"./apply-properties":30,"global/document":4}],32:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":44,"../vnode/is-vnode.js":47,"../vnode/is-vtext.js":48,"../vnode/is-widget.js":49,"./apply-properties":38,"global/document":11}],40:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -52330,7 +52861,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":3}],33:[function(require,module,exports){
+},{"ev-store":10}],41:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -52349,7 +52880,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],34:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -52488,7 +53019,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":37,"../vnode/is-vhook":38,"../vnode/is-vnode":39,"../vnode/is-vtext":40,"../vnode/is-widget":41,"../vnode/vnode.js":43,"../vnode/vtext.js":44,"./hooks/ev-hook.js":32,"./hooks/soft-set-hook.js":33,"./parse-tag.js":35,"x-is-array":46}],35:[function(require,module,exports){
+},{"../vnode/is-thunk":45,"../vnode/is-vhook":46,"../vnode/is-vnode":47,"../vnode/is-vtext":48,"../vnode/is-widget":49,"../vnode/vnode.js":51,"../vnode/vtext.js":52,"./hooks/ev-hook.js":40,"./hooks/soft-set-hook.js":41,"./parse-tag.js":43,"x-is-array":56}],43:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -52544,7 +53075,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":2}],36:[function(require,module,exports){
+},{"browser-split":2}],44:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -52586,14 +53117,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":37,"./is-vnode":39,"./is-vtext":40,"./is-widget":41}],37:[function(require,module,exports){
+},{"./is-thunk":45,"./is-vnode":47,"./is-vtext":48,"./is-widget":49}],45:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],38:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -52602,7 +53133,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],39:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -52611,7 +53142,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":42}],40:[function(require,module,exports){
+},{"./version":50}],48:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -52620,17 +53151,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":42}],41:[function(require,module,exports){
+},{"./version":50}],49:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],42:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports = "2"
 
-},{}],43:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -52704,7 +53235,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":37,"./is-vhook":38,"./is-vnode":39,"./is-widget":41,"./version":42}],44:[function(require,module,exports){
+},{"./is-thunk":45,"./is-vhook":46,"./is-vnode":47,"./is-widget":49,"./version":50}],52:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -52716,7 +53247,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":42}],45:[function(require,module,exports){
+},{"./version":50}],53:[function(require,module,exports){
 var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -52854,7 +53385,46 @@ for(i = 112; i < 136; ++i) {
   output[i] = 'F'+(i-111)
 }
 
-},{}],46:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
+var hiddenStore = require('./hidden-store.js');
+
+module.exports = createStore;
+
+function createStore() {
+    var key = {};
+
+    return function (obj) {
+        if ((typeof obj !== 'object' || obj === null) &&
+            typeof obj !== 'function'
+        ) {
+            throw new Error('Weakmap-shim: Key must be object')
+        }
+
+        var store = obj.valueOf(key);
+        return store && store.identity === key ?
+            store : hiddenStore(obj, key);
+    };
+}
+
+},{"./hidden-store.js":55}],55:[function(require,module,exports){
+module.exports = hiddenStore;
+
+function hiddenStore(obj, key) {
+    var store = { identity: key };
+    var valueOf = obj.valueOf;
+
+    Object.defineProperty(obj, "valueOf", {
+        value: function (value) {
+            return value !== key ?
+                valueOf.apply(this, arguments) : store;
+        },
+        writable: true
+    });
+
+    return store;
+}
+
+},{}],56:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -52864,7 +53434,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],47:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 // Textures
@@ -52894,7 +53464,7 @@ module.exports = function (opts) {
 
     return group;
 };
-},{"../const":56,"three":25}],48:[function(require,module,exports){
+},{"../const":66,"three":33}],58:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
@@ -52908,11 +53478,11 @@ var listener;
 function create(opts) {
     var x = 0;
     var z = 0;
-    var light = new THREE.PointLight( 0xE25822, 0.5, 100);
+    var light = new THREE.PointLight( 0xE25822, 0.60, 100);
     light.position.z = 32;
     light.position.x = 16;
     light.position.y = -10;
-    var light2 = new THREE.PointLight( 0xE25822, 0.5, 100);
+    var light2 = new THREE.PointLight( 0xE25822, 0.60, 100);
     light2.position.z = -32;
     light2.position.x = 16;
     light2.position.y = -10;
@@ -52968,7 +53538,10 @@ function create(opts) {
 
     mediator.subscribe('door.close.' + opts.id, function(from){
         var value;
-        closeSound.play();
+
+        setTimeout(function(){
+            closeSound.play();
+        }, 150);
         if(from.x == opts.from.x  && from.z == opts.from.z){
             value = '+' + Math.PI/2;
         } else {
@@ -52991,7 +53564,7 @@ module.exports = function (_mediator_, _listener_) {
         create: create
     };
 };
-},{"../const":56,"three":25,"tween.js":26}],49:[function(require,module,exports){
+},{"../const":66,"three":33,"tween.js":34}],59:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var wall = require('./wall');
@@ -53003,7 +53576,7 @@ module.exports = function(opts){
     group.rotation.y = opts.rotation;
     return group;
 };
-},{"../const":56,"./wall":52,"three":25}],50:[function(require,module,exports){
+},{"../const":66,"./wall":62,"three":33}],60:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
@@ -53011,7 +53584,7 @@ floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);
 var geometry = new THREE.PlaneGeometry( CONST.room.width, CONST.room.width, CONST.room.width);
-var material = new THREE.MeshLambertMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
+var material = new THREE.MeshPhongMaterial( {map: floorTexture,  side: THREE.DoubleSide} );
 module.exports = function(){
 
     var floor = new THREE.Mesh( geometry, material );
@@ -53020,7 +53593,7 @@ module.exports = function(){
     floor.rotateX(Math.PI / 2);
     return floor;
 };
-},{"../const":56,"three":25}],51:[function(require,module,exports){
+},{"../const":66,"three":33}],61:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var wall = require('./facet');
@@ -53070,6 +53643,17 @@ function create(opts){
     }
 
     group.position.set(opts.x * (CONST.room.width), opts.y + CONST.room.height/2, opts.z * (CONST.room.width));
+    // small performance optimisation, since we are not moving it anymore, no need for updates.
+    setTimeout(function(){
+        group.matrixAutoUpdate = false;
+    });
+
+    mediator.subscribe('room.enter.' + opts.z + '_' + opts.x, function(){
+        if(opts.data.type){
+            mediator.publish('message.show', opts.data.type);
+        }
+    });
+
     mediator.publish('scene.add', group);
     return group;
 }
@@ -53081,7 +53665,7 @@ module.exports = function (_mediator_, _listener_) {
         create: create
     }
 };
-},{"../const":56,"./block":47,"./facet":49,"./floor":50,"lodash.foreach":18,"three":25}],52:[function(require,module,exports){
+},{"../const":66,"./block":57,"./facet":59,"./floor":60,"lodash.foreach":26,"three":33}],62:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -53118,7 +53702,7 @@ module.exports = function () {
     group.add(topMesh);
     return group;
 };
-},{"../const":56,"three":25}],53:[function(require,module,exports){
+},{"../const":66,"three":33}],63:[function(require,module,exports){
 module.exports=[
   [{
     "sounds": ["growl--distant.mp3"],
@@ -53133,19 +53717,22 @@ module.exports=[
     "type": "win"
   }]
 ]
-},{}],54:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 module.exports={
-  "start" : {
-    "text" : "You wake up in a dark unknown place"
+  "start": {
+    "title": "Welcome",
+    "text": "You wake up in a dark unknown place"
   },
-  "win" : {
-    "text" : "congratulation you have escaped the dungeon"
+  "win": {
+    "title": "Congratulation",
+    "text": "you have escaped the dungeon"
   },
   "lose": {
-    "text" : "You are death"
+    "title": "Game over",
+    "text": "You are death"
   }
 }
-},{}],55:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 module.exports=[
   "img/cobblestone.png",
   "img/cobblestone_mossy.png",
@@ -53153,7 +53740,7 @@ module.exports=[
   "img/door/door_wood_upper.png",
   "img/stonebrick.png"
 ]
-},{}],56:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 var CONST = {};
 CONST.texture = {
     widht: 32,
@@ -53177,7 +53764,7 @@ CONST.audio = {
 CONST.speed = 100;
 
 module.exports = CONST;
-},{}],57:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 var THREE = require('three');
 var vkey = require('vkey');
 var _ = {
@@ -53206,13 +53793,14 @@ module.exports = function (mediator) {
         }
     }
 };
-},{"lodash.debounce":16,"three":25,"vkey":45}],58:[function(require,module,exports){
+},{"lodash.debounce":24,"three":33,"vkey":53}],68:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var Mediator = require("mediator-js").Mediator,
     mediator = new Mediator();
 var scene = require('./services/scene')(mediator);
 var $q = require('q');
+require("dom-delegator")();
 var listener = new THREE.AudioListener();
 var controls = require('./controls/controls')(mediator);
 var camera = require('./services/camera')(mediator, listener);
@@ -53233,14 +53821,19 @@ function init(container) {
     });
 }
 
+
 function animate() {
-    requestAnimationFrame( animate );
+    setTimeout( function() {
+
+        requestAnimationFrame( animate );
+
+    }, 1000 / 60 );
     TWEEN.update();
     renderer.render( scene, camera);
 }
 
 window.app = init;
-},{"./controls/controls":57,"./services/camera":60,"./services/roomGenerator":61,"./services/scene":62,"./services/textures":63,"./services/user":64,"./ui/popup":65,"mediator-js":20,"q":24,"three":25,"tween.js":26}],59:[function(require,module,exports){
+},{"./controls/controls":67,"./services/camera":70,"./services/roomGenerator":71,"./services/scene":72,"./services/textures":73,"./services/user":74,"./ui/popup":75,"dom-delegator":6,"mediator-js":28,"q":32,"three":33,"tween.js":34}],69:[function(require,module,exports){
 var libs = {};
 
 libs.distanceVector = function (v1, v2) {
@@ -53252,7 +53845,7 @@ libs.distanceVector = function (v1, v2) {
 };
 
 module.exports = libs;
-},{}],60:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var CONST = require('../const');
@@ -53367,7 +53960,7 @@ module.exports = function (mediator, listener) {
     return camera;
 };
 
-},{"../const":56,"../libs":59,"lodash.clone":15,"three":25,"tween.js":26}],61:[function(require,module,exports){
+},{"../const":66,"../libs":69,"lodash.clone":23,"three":33,"tween.js":34}],71:[function(require,module,exports){
 var map = require('../config/map.json');
 var CONST = require('../const');
 var _ = {
@@ -53439,7 +54032,7 @@ module.exports = function (mediator, listener) {
         }
 
 
-        rooms[coords.x + '_' + coords.z] = {
+        rooms[coords.z + '_' + coords.x] = {
             instance: room.create({
                 x: coords.x,
                 y: 0,
@@ -53449,7 +54042,8 @@ module.exports = function (mediator, listener) {
             }),
             x: coords.x,
             z: coords.z
-        }
+        };
+        //
     });
 
     function currentDoors() {
@@ -53457,7 +54051,6 @@ module.exports = function (mediator, listener) {
         _.forEach(rooms, function (room) {
             doors = doors.concat(roomDoors({x: room.x, z: room.z}));
         });
-
         return doors;
     }
 
@@ -53483,8 +54076,8 @@ module.exports = function (mediator, listener) {
     }
 
     mediator.subscribe('room.remove', function (coords) {
-        mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z].instance);
-        delete(rooms[coords.x + '_' + coords.z]);
+        mediator.publish('scene.remove', rooms[coords.z + '_' + coords.x].instance);
+        delete(rooms[coords.z + '_' + coords.x]);
         _.forEach(_.difference(roomDoors(coords), currentDoors()), function(id){
             mediator.publish('door.remove.' + id);
             delete(doorList[id]);
@@ -53492,7 +54085,7 @@ module.exports = function (mediator, listener) {
 
     });
 };
-},{"../components/door":48,"../components/room":51,"../config/map.json":53,"../const":56,"lodash.difference":17,"lodash.foreach":18}],62:[function(require,module,exports){
+},{"../components/door":58,"../components/room":61,"../config/map.json":63,"../const":66,"lodash.difference":25,"lodash.foreach":26}],72:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -53506,7 +54099,7 @@ module.exports = function(mediator){
     return scene;
 
 };
-},{"three":25}],63:[function(require,module,exports){
+},{"three":33}],73:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -53527,26 +54120,22 @@ module.exports = function(){
     });
     return defer.promise;
 };
-},{"../config/textures.json":55,"lodash.foreach":18,"q":24,"three":25}],64:[function(require,module,exports){
+},{"../config/textures.json":65,"lodash.foreach":26,"q":32,"three":33}],74:[function(require,module,exports){
 _ = {
     clone: require('lodash.clone')
 };
 var CONST = require('../const');
 var map = require('../config/map.json');
 var StateMachine = require('javascript-state-machine');
+var libs = require('../libs');
 module.exports = function (mediator) {
-
-
     var position = {
         x: 2,
         z: 0
     };
-
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
     var directions = ['north', 'east', 'south', 'west'];
     var direction = 0;
-
-
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {
@@ -53578,7 +54167,6 @@ module.exports = function (mediator) {
             onforward: function (event, from, to) {
                 if(from == 'center'){
                     mediator.publish('room.add', nextRoom(position, direction));
-
                 }
             },
             onenter: function (event, from, to) {
@@ -53633,6 +54221,7 @@ module.exports = function (mediator) {
                         });
                     } else  if(from == 'door.open'){
                         var coords = nextRoom(position, direction);
+                        mediator.publish('room.enter.' +  coords.z + '_' + coords.x);
                         mediator.publish('camera.move.room', {
                             'coords': coords,
                             'callback': function () {
@@ -53659,12 +54248,14 @@ module.exports = function (mediator) {
         }
     });
     var center = true;
+
     function nextRoom(position, direction){
         return {
             x: position.x + directionMap[direction].x,
             z: position.z + directionMap[direction].z
         };
     }
+
     function doorId(position, direction){
         var id;
         var coords = nextRoom(position, direction);
@@ -53685,18 +54276,61 @@ module.exports = function (mediator) {
         state[type]();
     });
 };
-},{"../config/map.json":53,"../const":56,"javascript-state-machine":7,"lodash.clone":15}],65:[function(require,module,exports){
+},{"../config/map.json":63,"../const":66,"../libs":69,"javascript-state-machine":15,"lodash.clone":23}],75:[function(require,module,exports){
 var messages = require('../config/messages.json');
 var vDom = {
     h: require('virtual-dom/h'),
     create: require('virtual-dom/create-element')
 };
+var StateMachine = require('javascript-state-machine');
+module.exports = function (mediator, container) {
 
-module.exports = function(mediator, container){
-    var popup = vDom.h('div.popup');
-    mediator.subscribe('message.show',function(type){
 
+    var text;
+    var title;
+    function close(){
+        text.innerHTML = '';
+        title.innerHTML = '';
+        popup.style.display = 'none';
+    }
+
+    function open(opts){
+        text.innerHTML = opts.text;
+        title.innerHTML = opts.title;
+        popup.style.display = 'block';
+    }
+
+    var AfterRenderText = function () {};
+    AfterRenderText.prototype.hook = function (node) {
+        text = node;
+    };
+    var AfterRenderTitle = function () {};
+    AfterRenderTitle.prototype.hook = function (node) {
+        title = node;
+    };
+
+    var popup = vDom.create(
+        vDom.h('div.popup', [
+            vDom.h('h2.title', {
+                afterRender: new AfterRenderTitle()
+            }),
+            vDom.h('p.text', {
+                afterRender: new AfterRenderText()
+            }),
+            vDom.h('button', {
+                "ev-click" : function(){
+                    close();
+                }
+            }, 'close')
+        ])
+    );
+
+
+    mediator.subscribe('message.show', function (type) {
+        open(messages[type]);
     });
-    container.appendChild(vDom.create(popup))
+
+
+    container.appendChild(popup)
 };
-},{"../config/messages.json":54,"virtual-dom/create-element":27,"virtual-dom/h":28}]},{},[58]);
+},{"../config/messages.json":64,"javascript-state-machine":15,"virtual-dom/create-element":35,"virtual-dom/h":36}]},{},[68]);

@@ -4,6 +4,7 @@ var Mediator = require("mediator-js").Mediator,
     mediator = new Mediator();
 var scene = require('./services/scene')(mediator);
 var $q = require('q');
+require("dom-delegator")();
 var listener = new THREE.AudioListener();
 var controls = require('./controls/controls')(mediator);
 var camera = require('./services/camera')(mediator, listener);
@@ -24,8 +25,13 @@ function init(container) {
     });
 }
 
+
 function animate() {
-    requestAnimationFrame( animate );
+    setTimeout( function() {
+
+        requestAnimationFrame( animate );
+
+    }, 1000 / 60 );
     TWEEN.update();
     renderer.render( scene, camera);
 }

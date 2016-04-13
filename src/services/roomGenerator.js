@@ -69,7 +69,7 @@ module.exports = function (mediator, listener) {
         }
 
 
-        rooms[coords.x + '_' + coords.z] = {
+        rooms[coords.z + '_' + coords.x] = {
             instance: room.create({
                 x: coords.x,
                 y: 0,
@@ -79,7 +79,8 @@ module.exports = function (mediator, listener) {
             }),
             x: coords.x,
             z: coords.z
-        }
+        };
+        //
     });
 
     function currentDoors() {
@@ -87,7 +88,6 @@ module.exports = function (mediator, listener) {
         _.forEach(rooms, function (room) {
             doors = doors.concat(roomDoors({x: room.x, z: room.z}));
         });
-
         return doors;
     }
 
@@ -113,8 +113,8 @@ module.exports = function (mediator, listener) {
     }
 
     mediator.subscribe('room.remove', function (coords) {
-        mediator.publish('scene.remove', rooms[coords.x + '_' + coords.z].instance);
-        delete(rooms[coords.x + '_' + coords.z]);
+        mediator.publish('scene.remove', rooms[coords.z + '_' + coords.x].instance);
+        delete(rooms[coords.z + '_' + coords.x]);
         _.forEach(_.difference(roomDoors(coords), currentDoors()), function(id){
             mediator.publish('door.remove.' + id);
             delete(doorList[id]);

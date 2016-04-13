@@ -4,19 +4,15 @@ _ = {
 var CONST = require('../const');
 var map = require('../config/map.json');
 var StateMachine = require('javascript-state-machine');
+var libs = require('../libs');
 module.exports = function (mediator) {
-
-
     var position = {
         x: 2,
         z: 0
     };
-
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
     var directions = ['north', 'east', 'south', 'west'];
     var direction = 0;
-
-
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {
@@ -48,7 +44,6 @@ module.exports = function (mediator) {
             onforward: function (event, from, to) {
                 if(from == 'center'){
                     mediator.publish('room.add', nextRoom(position, direction));
-
                 }
             },
             onenter: function (event, from, to) {
@@ -103,6 +98,7 @@ module.exports = function (mediator) {
                         });
                     } else  if(from == 'door.open'){
                         var coords = nextRoom(position, direction);
+                        mediator.publish('room.enter.' +  coords.z + '_' + coords.x);
                         mediator.publish('camera.move.room', {
                             'coords': coords,
                             'callback': function () {
@@ -129,12 +125,14 @@ module.exports = function (mediator) {
         }
     });
     var center = true;
+
     function nextRoom(position, direction){
         return {
             x: position.x + directionMap[direction].x,
             z: position.z + directionMap[direction].z
         };
     }
+
     function doorId(position, direction){
         var id;
         var coords = nextRoom(position, direction);

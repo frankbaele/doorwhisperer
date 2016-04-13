@@ -11,11 +11,11 @@ var listener;
 function create(opts) {
     var x = 0;
     var z = 0;
-    var light = new THREE.PointLight( 0xE25822, 0.5, 100);
+    var light = new THREE.PointLight( 0xE25822, 0.60, 100);
     light.position.z = 32;
     light.position.x = 16;
     light.position.y = -10;
-    var light2 = new THREE.PointLight( 0xE25822, 0.5, 100);
+    var light2 = new THREE.PointLight( 0xE25822, 0.60, 100);
     light2.position.z = -32;
     light2.position.x = 16;
     light2.position.y = -10;
@@ -71,7 +71,10 @@ function create(opts) {
 
     mediator.subscribe('door.close.' + opts.id, function(from){
         var value;
-        closeSound.play();
+
+        setTimeout(function(){
+            closeSound.play();
+        }, 150);
         if(from.x == opts.from.x  && from.z == opts.from.z){
             value = '+' + Math.PI/2;
         } else {

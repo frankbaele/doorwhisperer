@@ -47,6 +47,17 @@ function create(opts){
     }
 
     group.position.set(opts.x * (CONST.room.width), opts.y + CONST.room.height/2, opts.z * (CONST.room.width));
+    // small performance optimisation, since we are not moving it anymore, no need for updates.
+    setTimeout(function(){
+        group.matrixAutoUpdate = false;
+    });
+
+    mediator.subscribe('room.enter.' + opts.z + '_' + opts.x, function(){
+        if(opts.data.type){
+            mediator.publish('message.show', opts.data.type);
+        }
+    });
+
     mediator.publish('scene.add', group);
     return group;
 }
