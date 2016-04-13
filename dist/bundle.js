@@ -53181,8 +53181,8 @@ module.exports=[
 },{}],64:[function(require,module,exports){
 module.exports={
   "start": {
-    "title": "Welcome",
-    "text": "You wake up in a dark unknown place"
+    "title": "Wake up",
+    "text": "You find yourself a dark unknown place"
   },
   "win": {
     "title": "Congratulation",

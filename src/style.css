@@ -7,6 +7,11 @@
     background: white;
     min-height: 300px;
     display: none;
+    background: url('../img/ui/popup.png');
+    background-size:cover;
+    color: white;
+    font-family: sans-serif;
+    padding: 30px;
 }
 body{
     margin: 0;
