@@ -9,14 +9,17 @@ var controls = require('./controls/controls')(mediator);
 var camera = require('./services/camera')(mediator, listener);
 var roomGen = require('./services/roomGenerator')(mediator, listener);
 var textures = require('./services/textures');
-function init() {
+var popup = require('./ui/popup');
+function init(container) {
     var defers = [];
     defers.push(textures());
+    popup(mediator, container);
     $q.all(defers).then(function(){
         var user = require('./services/user')(mediator, listener);
         renderer = new THREE.WebGLRenderer();
         renderer.setSize( window.innerWidth - 10, window.innerHeight -10);
-        document.body.appendChild( renderer.domElement );
+        container.appendChild( renderer.domElement );
+        mediator.publish('message.show', 'start');
         animate();
     });
 }

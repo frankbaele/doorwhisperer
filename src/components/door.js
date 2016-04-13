@@ -56,26 +56,29 @@ function create(opts) {
     mediator.subscribe('door.open.' + opts.id, function(from){
         var value;
         openSound.play();
+        setTimeout(function(){
+            openSound.stop();
+        }, 500);
         if(from.x == opts.from.x  && from.z == opts.from.z){
             value = '-' + Math.PI/2;
         } else {
             value = '+' + Math.PI/2;
         }
         new TWEEN.Tween(group.rotation)
-            .to({y: value}, 200)
+            .to({y: value}, 300)
             .start();
     });
 
     mediator.subscribe('door.close.' + opts.id, function(from){
         var value;
-        openSound.stop();
+        closeSound.play();
         if(from.x == opts.from.x  && from.z == opts.from.z){
             value = '+' + Math.PI/2;
         } else {
             value = '-' + Math.PI/2;
         }
         new TWEEN.Tween(group.rotation)
-            .to({y: value}, 200)
+            .to({y: value}, 300)
             .start();
     });
     mediator.subscribe('door.remove.' + opts.id, function(){

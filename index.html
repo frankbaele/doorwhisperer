@@ -6,17 +6,13 @@
     <script src="dist/bundle.js"></script>
     <script >
         document.addEventListener("DOMContentLoaded", function () {
-            app();
+            var container = document.getElementById('container');
+            app(container);
         })
     </script>
-    <style>
-        body{
-            margin: 0;
-            padding: 0;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css"href="src/style.css">
 </head>
 <body>
-
+    <div id="container"></div>
 </body>
 </html>

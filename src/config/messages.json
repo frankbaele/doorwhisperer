@@ -1,0 +1,11 @@
+{
+  "start" : {
+    "text" : "You wake up in a dark unknown place"
+  },
+  "win" : {
+    "text" : "congratulation you have escaped the dungeon"
+  },
+  "lose": {
+    "text" : "You are death"
+  }
+}

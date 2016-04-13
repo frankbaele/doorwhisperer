@@ -1,0 +1,14 @@
+.popup{
+    position: absolute;
+    width: 300px;
+    left: 50%;
+    top: 35%;
+    margin-left: -150px;
+    background: white;
+    min-height: 300px;
+    display: none;
+}
+body{
+    margin: 0;
+    padding: 0;
+}
