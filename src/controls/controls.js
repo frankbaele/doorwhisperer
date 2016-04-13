@@ -10,19 +10,19 @@ module.exports = function (mediator) {
     function inputListner (ev){
         var code = vkey[ev.keyCode];
         if (code == '<left>') {
-            mediator.publish('input', 'left');
+            mediator.trigger('input', 'left');
         }
         if (code == '<right>') {
-            mediator.publish('input', 'right');
+            mediator.trigger('input', 'right');
         }
         if (code == '<up>') {
-            mediator.publish('input', 'forward');
+            mediator.trigger('input', 'forward');
         }
         if (code == '<down>') {
-            mediator.publish('input', 'back');
+            mediator.trigger('input', 'back');
         }
         if (code == '<space>') {
-            mediator.publish('input', 'enter');
+            mediator.trigger('input', 'enter');
         }
     }
 };

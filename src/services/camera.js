@@ -28,16 +28,17 @@ module.exports = function (mediator, listener) {
     camera.add(steps);
     camera.add(torch);
     camera.add(ambient);
-    mediator.subscribe('camera.rotate', rotate);
-    mediator.subscribe('camera.move', move);
-    mediator.subscribe('camera.move.room', moveRoom);
-    mediator.subscribe('camera.center', function (coords) {
+    mediator.on('camera.rotate', rotate);
+    mediator.on('camera.move', move);
+    mediator.on('camera.move.room', moveRoom);
+    mediator.on('camera.center', function (coords) {
+        camera.rotation.y = 0;
         camera.position.z = coords.z * CONST.room.width + CONST.room.width / 2;
         camera.position.y = height;
         camera.position.x = coords.x * CONST.room.width;
     });
 
-    mediator.publish('scene.add', camera);
+    mediator.trigger('scene.add', camera);
     function moveRoom(opts) {
         var value = {};
         value.x = opts.coords.x * CONST.room.width;

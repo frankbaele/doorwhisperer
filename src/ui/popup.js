@@ -47,7 +47,7 @@ module.exports = function (mediator, container) {
     );
 
 
-    mediator.subscribe('message.show', function (type) {
+    mediator.on('message.show', function (type) {
         open(messages[type]);
     });
 

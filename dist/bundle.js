@@ -1,6 +1,287 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/**
+ * Standalone extraction of Backbone.Events, no external dependency required.
+ * Degrades nicely when Backone/underscore are already available in the current
+ * global context.
+ *
+ * Note that docs suggest to use underscore's `_.extend()` method to add Events
+ * support to some given object. A `mixin()` method has been added to the Events
+ * prototype to avoid using underscore for that sole purpose:
+ *
+ *     var myEventEmitter = BackboneEvents.mixin({});
+ *
+ * Or for a function constructor:
+ *
+ *     function MyConstructor(){}
+ *     MyConstructor.prototype.foo = function(){}
+ *     BackboneEvents.mixin(MyConstructor.prototype);
+ *
+ * (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
+ * (c) 2013 Nicolas Perriault
+ */
+/* global exports:true, define, module */
+(function() {
+  var root = this,
+      nativeForEach = Array.prototype.forEach,
+      hasOwnProperty = Object.prototype.hasOwnProperty,
+      slice = Array.prototype.slice,
+      idCounter = 0;
+
+  // Returns a partial implementation matching the minimal API subset required
+  // by Backbone.Events
+  function miniscore() {
+    return {
+      keys: Object.keys || function (obj) {
+        if (typeof obj !== "object" && typeof obj !== "function" || obj === null) {
+          throw new TypeError("keys() called on a non-object");
+        }
+        var key, keys = [];
+        for (key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            keys[keys.length] = key;
+          }
+        }
+        return keys;
+      },
+
+      uniqueId: function(prefix) {
+        var id = ++idCounter + '';
+        return prefix ? prefix + id : id;
+      },
+
+      has: function(obj, key) {
+        return hasOwnProperty.call(obj, key);
+      },
+
+      each: function(obj, iterator, context) {
+        if (obj == null) return;
+        if (nativeForEach && obj.forEach === nativeForEach) {
+          obj.forEach(iterator, context);
+        } else if (obj.length === +obj.length) {
+          for (var i = 0, l = obj.length; i < l; i++) {
+            iterator.call(context, obj[i], i, obj);
+          }
+        } else {
+          for (var key in obj) {
+            if (this.has(obj, key)) {
+              iterator.call(context, obj[key], key, obj);
+            }
+          }
+        }
+      },
+
+      once: function(func) {
+        var ran = false, memo;
+        return function() {
+          if (ran) return memo;
+          ran = true;
+          memo = func.apply(this, arguments);
+          func = null;
+          return memo;
+        };
+      }
+    };
+  }
+
+  var _ = miniscore(), Events;
+
+  // Backbone.Events
+  // ---------------
+
+  // A module that can be mixed in to *any object* in order to provide it with
+  // custom events. You may bind with `on` or remove with `off` callback
+  // functions to an event; `trigger`-ing an event fires all callbacks in
+  // succession.
+  //
+  //     var object = {};
+  //     _.extend(object, Backbone.Events);
+  //     object.on('expand', function(){ alert('expanded'); });
+  //     object.trigger('expand');
+  //
+  Events = {
+
+    // Bind an event to a `callback` function. Passing `"all"` will bind
+    // the callback to all events fired.
+    on: function(name, callback, context) {
+      if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;
+      this._events || (this._events = {});
+      var events = this._events[name] || (this._events[name] = []);
+      events.push({callback: callback, context: context, ctx: context || this});
+      return this;
+    },
+
+    // Bind an event to only be triggered a single time. After the first time
+    // the callback is invoked, it will be removed.
+    once: function(name, callback, context) {
+      if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
+      var self = this;
+      var once = _.once(function() {
+        self.off(name, once);
+        callback.apply(this, arguments);
+      });
+      once._callback = callback;
+      return this.on(name, once, context);
+    },
+
+    // Remove one or many callbacks. If `context` is null, removes all
+    // callbacks with that function. If `callback` is null, removes all
+    // callbacks for the event. If `name` is null, removes all bound
+    // callbacks for all events.
+    off: function(name, callback, context) {
+      var retain, ev, events, names, i, l, j, k;
+      if (!this._events || !eventsApi(this, 'off', name, [callback, context])) return this;
+      if (!name && !callback && !context) {
+        this._events = {};
+        return this;
+      }
+
+      names = name ? [name] : _.keys(this._events);
+      for (i = 0, l = names.length; i < l; i++) {
+        name = names[i];
+        if (events = this._events[name]) {
+          this._events[name] = retain = [];
+          if (callback || context) {
+            for (j = 0, k = events.length; j < k; j++) {
+              ev = events[j];
+              if ((callback && callback !== ev.callback && callback !== ev.callback._callback) ||
+                  (context && context !== ev.context)) {
+                retain.push(ev);
+              }
+            }
+          }
+          if (!retain.length) delete this._events[name];
+        }
+      }
+
+      return this;
+    },
+
+    // Trigger one or many events, firing all bound callbacks. Callbacks are
+    // passed the same arguments as `trigger` is, apart from the event name
+    // (unless you're listening on `"all"`, which will cause your callback to
+    // receive the true name of the event as the first argument).
+    trigger: function(name) {
+      if (!this._events) return this;
+      var args = slice.call(arguments, 1);
+      if (!eventsApi(this, 'trigger', name, args)) return this;
+      var events = this._events[name];
+      var allEvents = this._events.all;
+      if (events) triggerEvents(events, args);
+      if (allEvents) triggerEvents(allEvents, arguments);
+      return this;
+    },
+
+    // Tell this object to stop listening to either specific events ... or
+    // to every object it's currently listening to.
+    stopListening: function(obj, name, callback) {
+      var listeners = this._listeners;
+      if (!listeners) return this;
+      var deleteListener = !name && !callback;
+      if (typeof name === 'object') callback = this;
+      if (obj) (listeners = {})[obj._listenerId] = obj;
+      for (var id in listeners) {
+        listeners[id].off(name, callback, this);
+        if (deleteListener) delete this._listeners[id];
+      }
+      return this;
+    }
+
+  };
+
+  // Regular expression used to split event strings.
+  var eventSplitter = /\s+/;
+
+  // Implement fancy features of the Events API such as multiple event
+  // names `"change blur"` and jQuery-style event maps `{change: action}`
+  // in terms of the existing API.
+  var eventsApi = function(obj, action, name, rest) {
+    if (!name) return true;
+
+    // Handle event maps.
+    if (typeof name === 'object') {
+      for (var key in name) {
+        obj[action].apply(obj, [key, name[key]].concat(rest));
+      }
+      return false;
+    }
+
+    // Handle space separated event names.
+    if (eventSplitter.test(name)) {
+      var names = name.split(eventSplitter);
+      for (var i = 0, l = names.length; i < l; i++) {
+        obj[action].apply(obj, [names[i]].concat(rest));
+      }
+      return false;
+    }
+
+    return true;
+  };
+
+  // A difficult-to-believe, but optimized internal dispatch function for
+  // triggering events. Tries to keep the usual cases speedy (most internal
+  // Backbone events have 3 arguments).
+  var triggerEvents = function(events, args) {
+    var ev, i = -1, l = events.length, a1 = args[0], a2 = args[1], a3 = args[2];
+    switch (args.length) {
+      case 0: while (++i < l) (ev = events[i]).callback.call(ev.ctx); return;
+      case 1: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1); return;
+      case 2: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2); return;
+      case 3: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2, a3); return;
+      default: while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args);
+    }
+  };
+
+  var listenMethods = {listenTo: 'on', listenToOnce: 'once'};
+
+  // Inversion-of-control versions of `on` and `once`. Tell *this* object to
+  // listen to an event in another object ... keeping track of what it's
+  // listening to.
+  _.each(listenMethods, function(implementation, method) {
+    Events[method] = function(obj, name, callback) {
+      var listeners = this._listeners || (this._listeners = {});
+      var id = obj._listenerId || (obj._listenerId = _.uniqueId('l'));
+      listeners[id] = obj;
+      if (typeof name === 'object') callback = this;
+      obj[implementation](name, callback, this);
+      return this;
+    };
+  });
+
+  // Aliases for backwards compatibility.
+  Events.bind   = Events.on;
+  Events.unbind = Events.off;
+
+  // Mixin utility
+  Events.mixin = function(proto) {
+    var exports = ['on', 'once', 'off', 'trigger', 'stopListening', 'listenTo',
+                   'listenToOnce', 'bind', 'unbind'];
+    _.each(exports, function(name) {
+      proto[name] = this[name];
+    }, this);
+    return proto;
+  };
+
+  // Export Events as BackboneEvents depending on current context
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Events;
+    }
+    exports.BackboneEvents = Events;
+  }else if (typeof define === "function"  && typeof define.amd == "object") {
+    define(function() {
+      return Events;
+    });
+  } else {
+    root.BackboneEvents = Events;
+  }
+})(this);
 
 },{}],2:[function(require,module,exports){
+module.exports = require('./backbone-events-standalone');
+
+},{"./backbone-events-standalone":1}],3:[function(require,module,exports){
+
+},{}],4:[function(require,module,exports){
 /*!
  * Cross-Browser Split 1.1.1
  * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
@@ -108,7 +389,7 @@ module.exports = (function split(undef) {
   return self;
 })();
 
-},{}],3:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /**
  * cuid.js
  * Collision-resistant UID generator for browsers and node.
@@ -220,7 +501,7 @@ module.exports = (function split(undef) {
 
 }(this.applitude || this));
 
-},{}],4:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var EvStore = require("ev-store")
 
 module.exports = addEvent
@@ -240,7 +521,7 @@ function addEvent(target, type, handler) {
     }
 }
 
-},{"ev-store":10}],5:[function(require,module,exports){
+},{"ev-store":12}],7:[function(require,module,exports){
 var globalDocument = require("global/document")
 var EvStore = require("ev-store")
 var createStore = require("weakmap-shim/create-store")
@@ -429,7 +710,7 @@ function Handle() {
     this.type = "dom-delegator-handle"
 }
 
-},{"./add-event.js":4,"./proxy-event.js":8,"./remove-event.js":9,"ev-store":10,"global/document":11,"weakmap-shim/create-store":54}],6:[function(require,module,exports){
+},{"./add-event.js":6,"./proxy-event.js":10,"./remove-event.js":11,"ev-store":12,"global/document":13,"weakmap-shim/create-store":54}],8:[function(require,module,exports){
 var Individual = require("individual")
 var cuid = require("cuid")
 var globalDocument = require("global/document")
@@ -491,7 +772,7 @@ function Delegator(opts) {
 Delegator.allocateHandle = DOMDelegator.allocateHandle;
 Delegator.transformHandle = DOMDelegator.transformHandle;
 
-},{"./dom-delegator.js":5,"cuid":3,"global/document":11,"individual":7}],7:[function(require,module,exports){
+},{"./dom-delegator.js":7,"cuid":5,"global/document":13,"individual":9}],9:[function(require,module,exports){
 (function (global){
 var root = typeof window !== 'undefined' ?
     window : typeof global !== 'undefined' ?
@@ -513,7 +794,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var inherits = require("inherits")
 
 var ALL_PROPS = [
@@ -593,7 +874,7 @@ function KeyEvent(ev) {
 
 inherits(KeyEvent, ProxyEvent)
 
-},{"inherits":14}],9:[function(require,module,exports){
+},{"inherits":16}],11:[function(require,module,exports){
 var EvStore = require("ev-store")
 
 module.exports = removeEvent
@@ -614,7 +895,7 @@ function removeEvent(target, type, handler) {
     }
 }
 
-},{"ev-store":10}],10:[function(require,module,exports){
+},{"ev-store":12}],12:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -636,7 +917,7 @@ function EvStore(elem) {
     return hash;
 }
 
-},{"individual/one-version":13}],11:[function(require,module,exports){
+},{"individual/one-version":15}],13:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -655,7 +936,7 @@ if (typeof document !== 'undefined') {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":1}],12:[function(require,module,exports){
+},{"min-document":3}],14:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -678,7 +959,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var Individual = require('./index.js');
@@ -702,7 +983,7 @@ function OneVersion(moduleName, version, defaultValue) {
     return Individual(key, defaultValue);
 }
 
-},{"./index.js":12}],14:[function(require,module,exports){
+},{"./index.js":14}],16:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -727,7 +1008,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /*
 
   Javascript State Machine Library - https://github.com/jakesgordon/javascript-state-machine
@@ -956,7 +1237,7 @@ if (typeof Object.create === 'function') {
 
 }());
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.5.3 (Custom Build) <https://lodash.com/>
@@ -2604,7 +2885,7 @@ Stack.prototype.set = stackSet;
 module.exports = baseClone;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /**
  * lodash 4.4.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -2823,7 +3104,7 @@ function isKeyable(value) {
 
 module.exports = baseDifference;
 
-},{"lodash._setcache":21}],18:[function(require,module,exports){
+},{"lodash._setcache":23}],20:[function(require,module,exports){
 /**
  * lodash 4.1.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -3350,7 +3631,7 @@ function keys(object) {
 
 module.exports = baseEach;
 
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -3701,7 +3982,7 @@ function isObjectLike(value) {
 
 module.exports = baseFlatten;
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.6.0 (Custom Build) <https://lodash.com/>
@@ -5672,7 +5953,7 @@ function property(path) {
 module.exports = baseIteratee;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash._stringtopath":22}],21:[function(require,module,exports){
+},{"lodash._stringtopath":24}],23:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.1.3 (Custom Build) <https://lodash.com/>
@@ -6264,7 +6545,7 @@ function isNative(value) {
 module.exports = SetCache;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.7.0 (Custom Build) <https://lodash.com/>
@@ -6980,7 +7261,7 @@ function toString(value) {
 module.exports = stringToPath;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /**
  * lodash 4.3.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -7021,7 +7302,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"lodash._baseclone":16}],24:[function(require,module,exports){
+},{"lodash._baseclone":18}],26:[function(require,module,exports){
 /**
  * lodash 4.0.4 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -7408,7 +7689,7 @@ function toNumber(value) {
 
 module.exports = debounce;
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -7664,7 +7945,7 @@ function isObjectLike(value) {
 
 module.exports = difference;
 
-},{"lodash._basedifference":17,"lodash._baseflatten":19,"lodash.rest":27}],26:[function(require,module,exports){
+},{"lodash._basedifference":19,"lodash._baseflatten":21,"lodash.rest":29}],28:[function(require,module,exports){
 /**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -7761,7 +8042,7 @@ var isArray = Array.isArray;
 
 module.exports = forEach;
 
-},{"lodash._baseeach":18,"lodash._baseiteratee":20}],27:[function(require,module,exports){
+},{"lodash._baseeach":20,"lodash._baseiteratee":22}],29:[function(require,module,exports){
 /**
  * lodash 4.0.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -8077,879 +8358,41 @@ function toNumber(value) {
 
 module.exports = rest;
 
-},{}],28:[function(require,module,exports){
-(function (process){
-module.exports = process.env.MEDIATOR_JS_COV
-  ? require('./lib-cov/mediator')
-  : require('./lib/mediator');
-
-}).call(this,require('_process'))
-},{"./lib-cov/mediator":29,"./lib/mediator":30,"_process":31}],29:[function(require,module,exports){
-/* automatically generated by JSCoverage - do not edit */
-try {
-  if (typeof top === 'object' && top !== null && typeof top.opener === 'object' && top.opener !== null) {
-    // this is a browser window that was opened from another window
-
-    if (! top.opener._$jscoverage) {
-      top.opener._$jscoverage = {};
-    }
-  }
-}
-catch (e) {}
-
-try {
-  if (typeof top === 'object' && top !== null) {
-    // this is a browser window
-
-    try {
-      if (typeof top.opener === 'object' && top.opener !== null && top.opener._$jscoverage) {
-        top._$jscoverage = top.opener._$jscoverage;
-      }
-    }
-    catch (e) {}
-
-    if (! top._$jscoverage) {
-      top._$jscoverage = {};
-    }
-  }
-}
-catch (e) {}
-
-try {
-  if (typeof top === 'object' && top !== null && top._$jscoverage) {
-    _$jscoverage = top._$jscoverage;
-  }
-}
-catch (e) {}
-if (typeof _$jscoverage !== 'object') {
-  _$jscoverage = {};
-}
-if (! _$jscoverage['mediator.js']) {
-  _$jscoverage['mediator.js'] = [];
-  _$jscoverage['mediator.js'][16] = 0;
-  _$jscoverage['mediator.js'][17] = 0;
-  _$jscoverage['mediator.js'][19] = 0;
-  _$jscoverage['mediator.js'][21] = 0;
-  _$jscoverage['mediator.js'][22] = 0;
-  _$jscoverage['mediator.js'][24] = 0;
-  _$jscoverage['mediator.js'][26] = 0;
-  _$jscoverage['mediator.js'][30] = 0;
-  _$jscoverage['mediator.js'][33] = 0;
-  _$jscoverage['mediator.js'][39] = 0;
-  _$jscoverage['mediator.js'][40] = 0;
-  _$jscoverage['mediator.js'][41] = 0;
-  _$jscoverage['mediator.js'][44] = 0;
-  _$jscoverage['mediator.js'][52] = 0;
-  _$jscoverage['mediator.js'][53] = 0;
-  _$jscoverage['mediator.js'][54] = 0;
-  _$jscoverage['mediator.js'][57] = 0;
-  _$jscoverage['mediator.js'][58] = 0;
-  _$jscoverage['mediator.js'][59] = 0;
-  _$jscoverage['mediator.js'][60] = 0;
-  _$jscoverage['mediator.js'][61] = 0;
-  _$jscoverage['mediator.js'][64] = 0;
-  _$jscoverage['mediator.js'][70] = 0;
-  _$jscoverage['mediator.js'][71] = 0;
-  _$jscoverage['mediator.js'][72] = 0;
-  _$jscoverage['mediator.js'][73] = 0;
-  _$jscoverage['mediator.js'][74] = 0;
-  _$jscoverage['mediator.js'][75] = 0;
-  _$jscoverage['mediator.js'][82] = 0;
-  _$jscoverage['mediator.js'][83] = 0;
-  _$jscoverage['mediator.js'][84] = 0;
-  _$jscoverage['mediator.js'][87] = 0;
-  _$jscoverage['mediator.js'][88] = 0;
-  _$jscoverage['mediator.js'][89] = 0;
-  _$jscoverage['mediator.js'][90] = 0;
-  _$jscoverage['mediator.js'][91] = 0;
-  _$jscoverage['mediator.js'][100] = 0;
-  _$jscoverage['mediator.js'][102] = 0;
-  _$jscoverage['mediator.js'][104] = 0;
-  _$jscoverage['mediator.js'][108] = 0;
-  _$jscoverage['mediator.js'][110] = 0;
-  _$jscoverage['mediator.js'][111] = 0;
-  _$jscoverage['mediator.js'][113] = 0;
-  _$jscoverage['mediator.js'][115] = 0;
-  _$jscoverage['mediator.js'][118] = 0;
-  _$jscoverage['mediator.js'][120] = 0;
-  _$jscoverage['mediator.js'][127] = 0;
-  _$jscoverage['mediator.js'][131] = 0;
-  _$jscoverage['mediator.js'][134] = 0;
-  _$jscoverage['mediator.js'][135] = 0;
-  _$jscoverage['mediator.js'][136] = 0;
-  _$jscoverage['mediator.js'][146] = 0;
-  _$jscoverage['mediator.js'][150] = 0;
-  _$jscoverage['mediator.js'][151] = 0;
-  _$jscoverage['mediator.js'][152] = 0;
-  _$jscoverage['mediator.js'][154] = 0;
-  _$jscoverage['mediator.js'][157] = 0;
-  _$jscoverage['mediator.js'][158] = 0;
-  _$jscoverage['mediator.js'][159] = 0;
-  _$jscoverage['mediator.js'][161] = 0;
-  _$jscoverage['mediator.js'][162] = 0;
-  _$jscoverage['mediator.js'][166] = 0;
-  _$jscoverage['mediator.js'][170] = 0;
-  _$jscoverage['mediator.js'][174] = 0;
-  _$jscoverage['mediator.js'][178] = 0;
-  _$jscoverage['mediator.js'][180] = 0;
-  _$jscoverage['mediator.js'][183] = 0;
-  _$jscoverage['mediator.js'][184] = 0;
-  _$jscoverage['mediator.js'][185] = 0;
-  _$jscoverage['mediator.js'][189] = 0;
-  _$jscoverage['mediator.js'][190] = 0;
-  _$jscoverage['mediator.js'][191] = 0;
-  _$jscoverage['mediator.js'][192] = 0;
-  _$jscoverage['mediator.js'][201] = 0;
-  _$jscoverage['mediator.js'][207] = 0;
-  _$jscoverage['mediator.js'][208] = 0;
-  _$jscoverage['mediator.js'][209] = 0;
-  _$jscoverage['mediator.js'][210] = 0;
-  _$jscoverage['mediator.js'][211] = 0;
-  _$jscoverage['mediator.js'][212] = 0;
-  _$jscoverage['mediator.js'][213] = 0;
-  _$jscoverage['mediator.js'][216] = 0;
-  _$jscoverage['mediator.js'][217] = 0;
-  _$jscoverage['mediator.js'][221] = 0;
-  _$jscoverage['mediator.js'][222] = 0;
-  _$jscoverage['mediator.js'][224] = 0;
-  _$jscoverage['mediator.js'][225] = 0;
-  _$jscoverage['mediator.js'][227] = 0;
-  _$jscoverage['mediator.js'][232] = 0;
-  _$jscoverage['mediator.js'][233] = 0;
-  _$jscoverage['mediator.js'][236] = 0;
-  _$jscoverage['mediator.js'][240] = 0;
-  _$jscoverage['mediator.js'][241] = 0;
-  _$jscoverage['mediator.js'][242] = 0;
-  _$jscoverage['mediator.js'][245] = 0;
-  _$jscoverage['mediator.js'][251] = 0;
-  _$jscoverage['mediator.js'][257] = 0;
-  _$jscoverage['mediator.js'][262] = 0;
-  _$jscoverage['mediator.js'][263] = 0;
-  _$jscoverage['mediator.js'][266] = 0;
-  _$jscoverage['mediator.js'][267] = 0;
-  _$jscoverage['mediator.js'][269] = 0;
-  _$jscoverage['mediator.js'][270] = 0;
-  _$jscoverage['mediator.js'][273] = 0;
-  _$jscoverage['mediator.js'][277] = 0;
-  _$jscoverage['mediator.js'][287] = 0;
-  _$jscoverage['mediator.js'][289] = 0;
-  _$jscoverage['mediator.js'][290] = 0;
-  _$jscoverage['mediator.js'][292] = 0;
-  _$jscoverage['mediator.js'][302] = 0;
-  _$jscoverage['mediator.js'][303] = 0;
-  _$jscoverage['mediator.js'][305] = 0;
-  _$jscoverage['mediator.js'][312] = 0;
-  _$jscoverage['mediator.js'][319] = 0;
-  _$jscoverage['mediator.js'][328] = 0;
-  _$jscoverage['mediator.js'][331] = 0;
-  _$jscoverage['mediator.js'][333] = 0;
-  _$jscoverage['mediator.js'][338] = 0;
-  _$jscoverage['mediator.js'][339] = 0;
-  _$jscoverage['mediator.js'][340] = 0;
-  _$jscoverage['mediator.js'][341] = 0;
-  _$jscoverage['mediator.js'][342] = 0;
-  _$jscoverage['mediator.js'][346] = 0;
-  _$jscoverage['mediator.js'][347] = 0;
-  _$jscoverage['mediator.js'][348] = 0;
-}
-_$jscoverage['mediator.js'].source = ["/*jslint bitwise: true, nomen: true, plusplus: true, white: true */","","/*!","* Mediator.js Library v0.9.0","* https://github.com/ajacksified/Mediator.js","*","* Copyright 2013, Jack Lawson","* MIT Licensed (http://www.opensource.org/licenses/mit-license.php)","*","* For more information: http://thejacklawson.com/2011/06/mediators-for-modularized-asynchronous-programming-in-javascript/index.html","* Project on GitHub: https://github.com/ajacksified/Mediator.js","*","* Last update: Jan 04 2013","*/","","(function(root, factory) {","  'use strict';","","  if(typeof root.exports === 'function') {","    // Node/CommonJS","    root.exports.Mediator = factory();","  } else if(typeof root.define === 'function' &amp;&amp; root.define.amd) {","    // AMD","    root.define([], function() {","      // Export to global too, for backward compatiblity","      root.Mediator = factory();","    });","  } else {","    // Browser global","    root.Mediator = factory();","  }","}(this, function() {","  'use strict';","","  // We'll generate guids for class instances for easy referencing later on.","  // Subscriber instances will have an id that can be refernced for quick","  // lookups.","","  function guidGenerator() {","    var S4 = function() {","       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);","    };","","    return (S4()+S4()+\"-\"+S4()+\"-\"+S4()+\"-\"+S4()+\"-\"+S4()+S4()+S4());","  }","","  // Subscribers are instances of Mediator Channel registrations. We generate","  // an object instance so that it can be updated later on without having to","  // unregister and re-register. Subscribers are constructed with a function","  // to be called, options object, and context.","","  function Subscriber(fn, options, context){","    if(!(this instanceof Subscriber)) {","      return new Subscriber(fn, options, context);","    }","","    this.id = guidGenerator();","    this.fn = fn;","    this.options = options;","    this.context = context;","    this.channel = null;","  }","","  Subscriber.prototype = {","    // Mediator.update on a subscriber instance can update its function,context,","    // or options object. It takes in an object and looks for fn, context, or","    // options keys.","","    update: function(options){","      if(options){","        this.fn = options.fn || this.fn;","        this.context = options.context || this.context;","        this.options = options.options || this.options;","        if(this.channel &amp;&amp; this.options &amp;&amp; this.options.priority !== undefined) {","            this.channel.setPriority(this.id, this.options.priority);","        }","      }","    }","  };","","","  function Channel(namespace, parent){","    if(!(this instanceof Channel)) {","      return new Channel(namespace);","    }","","    this.namespace = namespace || \"\";","    this._subscribers = [];","    this._channels = [];","    this._parent = parent;","    this.stopped = false;","  }","","  // A Mediator channel holds a list of sub-channels and subscribers to be fired","  // when Mediator.publish is called on the Mediator instance. It also contains","  // some methods to manipulate its lists of data; only setPriority and","  // StopPropagation are meant to be used. The other methods should be accessed","  // through the Mediator instance.","","  Channel.prototype = {","    addSubscriber: function(fn, options, context){","      var subscriber = new Subscriber(fn, options, context);","","      if(options &amp;&amp; options.priority !== undefined){","        // Cheap hack to either parse as an int or turn it into 0. Runs faster","        // in many browsers than parseInt with the benefit that it won't","        // return a NaN.","        options.priority = options.priority &gt;&gt; 0;","","        if(options.priority &lt; 0){ options.priority = 0; }","        if(options.priority &gt;= this._subscribers.length){ options.priority = this._subscribers.length-1; }","","        this._subscribers.splice(options.priority, 0, subscriber);","      }else{","        this._subscribers.push(subscriber);","      }","","      subscriber.channel = this;","","      return subscriber;","    },","","    // The channel instance is passed as an argument to the mediator subscriber,","    // and further subscriber propagation can be called with","    // channel.StopPropagation().","    stopPropagation: function(){","      this.stopped = true;","    },","","    getSubscriber: function(identifier){","      var x = 0,","          y = this._subscribers.length;","","      for(x, y; x &lt; y; x++){","        if(this._subscribers[x].id === identifier || this._subscribers[x].fn === identifier){","          return this._subscribers[x];","        }","      }","    },","","    // Channel.setPriority is useful in updating the order in which Subscribers","    // are called, and takes an identifier (subscriber id or named function) and","    // an array index. It will not search recursively through subchannels.","","    setPriority: function(identifier, priority){","      var oldIndex = 0,","          x = 0,","          sub, firstHalf, lastHalf, y;","","      for(x = 0, y = this._subscribers.length; x &lt; y; x++){","        if(this._subscribers[x].id === identifier || this._subscribers[x].fn === identifier){","          break;","        }","        oldIndex ++;","      }","","      sub = this._subscribers[oldIndex];","      firstHalf = this._subscribers.slice(0, oldIndex);","      lastHalf = this._subscribers.slice(oldIndex+1);","","      this._subscribers = firstHalf.concat(lastHalf);","      this._subscribers.splice(priority, 0, sub);","    },","","    addChannel: function(channel){","      this._channels[channel] = new Channel((this.namespace ? this.namespace + ':' : '') + channel, this);","    },","","    hasChannel: function(channel){","      return this._channels.hasOwnProperty(channel);","    },","","    returnChannel: function(channel){","      return this._channels[channel];","    },","","    removeSubscriber: function(identifier){","      var x = 0,","          y;","          y = this._subscribers.length;","","      // If we don't pass in an id, we're clearing all","      if(!identifier){","        this._subscribers = [];","        return;","      }","","      // Going backwards makes splicing a whole lot easier.","      for(x, y; y &gt; x; y--) {","        if(this._subscribers[x].fn === identifier || this._subscribers[x].id === identifier){","          this._subscribers[x].channel = null;","          this._subscribers.splice(x,1);","        }","      }","    },","","    // This will publish arbitrary arguments to a subscriber and then to parent","    // channels.","","    publish: function(data){","      var x = 0,","          y = this._subscribers.length,","          called = false,","          subscriber, l;","","      // Priority is preserved in the _subscribers index.","      for(x, y; x &lt; y; x++) {","        if(!this.stopped){","          subscriber = this._subscribers[x];","          if(subscriber.options !== undefined &amp;&amp; typeof subscriber.options.predicate === \"function\"){","            if(subscriber.options.predicate.apply(subscriber.context, data)){","              subscriber.fn.apply(subscriber.context, data);","              called = true;","            }","          }else{","            subscriber.fn.apply(subscriber.context, data);","            called = true;","          }","        }","","        if(called &amp;&amp; subscriber.options &amp;&amp; subscriber.options !== undefined){","          subscriber.options.calls--;","","          if(subscriber.options.calls &lt; 1){","            this.removeSubscriber(subscriber.id);","          }else{","            subscriber.update(subscriber.options);","          }","        }","      }","","      if(this._parent){","        this._parent.publish(data);","      }","","      this.stopped = false;","    }","  };","","  function Mediator() {","    if(!(this instanceof Mediator)) {","      return new Mediator();","    }","","    this._channels = new Channel('');","  }","","  // A Mediator instance is the interface through which events are registered","  // and removed from publish channels.","","  Mediator.prototype = {","","    // Returns a channel instance based on namespace, for example","    // application:chat:message:received","","    getChannel: function(namespace){","      var channel = this._channels,","          namespaceHierarchy = namespace.split(':'),","          x = 0, ","          y = namespaceHierarchy.length;","","      if(namespace === ''){","        return channel;","      }","","      if(namespaceHierarchy.length &gt; 0){","        for(x, y; x &lt; y; x++){","","          if(!channel.hasChannel(namespaceHierarchy[x])){","            channel.addChannel(namespaceHierarchy[x]);","          }","","          channel = channel.returnChannel(namespaceHierarchy[x]);","        }","      }","","      return channel;","    },","","    // Pass in a channel namespace, function to be called, options, and context","    // to call the function in to Subscribe. It will create a channel if one","    // does not exist. Options can include a predicate to determine if it","    // should be called (based on the data published to it) and a priority","    // index.","","    subscribe: function(channelName, fn, options, context){","      var channel = this.getChannel(channelName);","","      options = options || {};","      context = context || {};","","      return channel.addSubscriber(fn, options, context);","    },","","    // Pass in a channel namespace, function to be called, options, and context","    // to call the function in to Subscribe. It will create a channel if one","    // does not exist. Options can include a predicate to determine if it","    // should be called (based on the data published to it) and a priority","    // index.","","    once: function(channelName, fn, options, context){","      options = options || {};","      options.calls = 1;","","      return this.subscribe(channelName, fn, options, context);","    },","","    // Returns a subscriber for a given subscriber id / named function and","    // channel namespace","","    getSubscriber: function(identifier, channel){","      return this.getChannel(channel || \"\").getSubscriber(identifier);","    },","","    // Remove a subscriber from a given channel namespace recursively based on","    // a passed-in subscriber id or named function.","","    remove: function(channelName, identifier){","      this.getChannel(channelName).removeSubscriber(identifier);","    },","","    // Publishes arbitrary data to a given channel namespace. Channels are","    // called recursively downwards; a post to application:chat will post to","    // application:chat:receive and application:chat:derp:test:beta:bananas.","    // Called using Mediator.publish(\"application:chat\", [ args ]);","","    publish: function(channelName){","      var args = Array.prototype.slice.call(arguments, 1),","          channel = this.getChannel(channelName);","","      args.push(channel);","","      this.getChannel(channelName).publish(args);","    }","  };","","  // Alias some common names for easy interop","  Mediator.prototype.on = Mediator.prototype.subscribe;","  Mediator.prototype.bind = Mediator.prototype.subscribe;","  Mediator.prototype.emit = Mediator.prototype.publish;","  Mediator.prototype.trigger = Mediator.prototype.publish;","  Mediator.prototype.off = Mediator.prototype.remove;","","  // Finally, expose it all.","","  Mediator.Channel = Channel;","  Mediator.Subscriber = Subscriber;","  return Mediator;","}));"];
-_$jscoverage['mediator.js'][16]++;
-(function (root, factory) {
-  _$jscoverage['mediator.js'][17]++;
-  "use strict";
-  _$jscoverage['mediator.js'][19]++;
-  if (((typeof root.exports) === "function")) {
-    _$jscoverage['mediator.js'][21]++;
-    root.exports.Mediator = factory();
-  }
-  else {
-    _$jscoverage['mediator.js'][22]++;
-    if ((((typeof root.define) === "function") && root.define.amd)) {
-      _$jscoverage['mediator.js'][24]++;
-      root.define([], (function () {
-  _$jscoverage['mediator.js'][26]++;
-  root.Mediator = factory();
-}));
-    }
-    else {
-      _$jscoverage['mediator.js'][30]++;
-      root.Mediator = factory();
-    }
-  }
-})(this, (function () {
-  _$jscoverage['mediator.js'][33]++;
-  "use strict";
-  _$jscoverage['mediator.js'][39]++;
-  function guidGenerator() {
-    _$jscoverage['mediator.js'][40]++;
-    var S4 = (function () {
-  _$jscoverage['mediator.js'][41]++;
-  return (((1 + Math.random()) * 65536) | 0).toString(16).substring(1);
-});
-    _$jscoverage['mediator.js'][44]++;
-    return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
-}
-  _$jscoverage['mediator.js'][52]++;
-  function Subscriber(fn, options, context) {
-    _$jscoverage['mediator.js'][53]++;
-    if ((! (this instanceof Subscriber))) {
-      _$jscoverage['mediator.js'][54]++;
-      return new Subscriber(fn, options, context);
-    }
-    _$jscoverage['mediator.js'][57]++;
-    this.id = guidGenerator();
-    _$jscoverage['mediator.js'][58]++;
-    this.fn = fn;
-    _$jscoverage['mediator.js'][59]++;
-    this.options = options;
-    _$jscoverage['mediator.js'][60]++;
-    this.context = context;
-    _$jscoverage['mediator.js'][61]++;
-    this.channel = null;
-}
-  _$jscoverage['mediator.js'][64]++;
-  Subscriber.prototype = {update: (function (options) {
-  _$jscoverage['mediator.js'][70]++;
-  if (options) {
-    _$jscoverage['mediator.js'][71]++;
-    this.fn = (options.fn || this.fn);
-    _$jscoverage['mediator.js'][72]++;
-    this.context = (options.context || this.context);
-    _$jscoverage['mediator.js'][73]++;
-    this.options = (options.options || this.options);
-    _$jscoverage['mediator.js'][74]++;
-    if ((this.channel && this.options && (this.options.priority !== undefined))) {
-      _$jscoverage['mediator.js'][75]++;
-      this.channel.setPriority(this.id, this.options.priority);
-    }
-  }
-})};
-  _$jscoverage['mediator.js'][82]++;
-  function Channel(namespace, parent) {
-    _$jscoverage['mediator.js'][83]++;
-    if ((! (this instanceof Channel))) {
-      _$jscoverage['mediator.js'][84]++;
-      return new Channel(namespace);
-    }
-    _$jscoverage['mediator.js'][87]++;
-    this.namespace = (namespace || "");
-    _$jscoverage['mediator.js'][88]++;
-    this._subscribers = [];
-    _$jscoverage['mediator.js'][89]++;
-    this._channels = [];
-    _$jscoverage['mediator.js'][90]++;
-    this._parent = parent;
-    _$jscoverage['mediator.js'][91]++;
-    this.stopped = false;
-}
-  _$jscoverage['mediator.js'][100]++;
-  Channel.prototype = {addSubscriber: (function (fn, options, context) {
-  _$jscoverage['mediator.js'][102]++;
-  var subscriber = new Subscriber(fn, options, context);
-  _$jscoverage['mediator.js'][104]++;
-  if ((options && (options.priority !== undefined))) {
-    _$jscoverage['mediator.js'][108]++;
-    options.priority = (options.priority >> 0);
-    _$jscoverage['mediator.js'][110]++;
-    if ((options.priority < 0)) {
-      _$jscoverage['mediator.js'][110]++;
-      options.priority = 0;
-    }
-    _$jscoverage['mediator.js'][111]++;
-    if ((options.priority >= this._subscribers.length)) {
-      _$jscoverage['mediator.js'][111]++;
-      options.priority = (this._subscribers.length - 1);
-    }
-    _$jscoverage['mediator.js'][113]++;
-    this._subscribers.splice(options.priority, 0, subscriber);
-  }
-  else {
-    _$jscoverage['mediator.js'][115]++;
-    this._subscribers.push(subscriber);
-  }
-  _$jscoverage['mediator.js'][118]++;
-  subscriber.channel = this;
-  _$jscoverage['mediator.js'][120]++;
-  return subscriber;
-}), stopPropagation: (function () {
-  _$jscoverage['mediator.js'][127]++;
-  this.stopped = true;
-}), getSubscriber: (function (identifier) {
-  _$jscoverage['mediator.js'][131]++;
-  var x = 0, y = this._subscribers.length;
-  _$jscoverage['mediator.js'][134]++;
-  for ((x, y); (x < y); (x++)) {
-    _$jscoverage['mediator.js'][135]++;
-    if (((this._subscribers[x].id === identifier) || (this._subscribers[x].fn === identifier))) {
-      _$jscoverage['mediator.js'][136]++;
-      return this._subscribers[x];
-    }
-}
-}), setPriority: (function (identifier, priority) {
-  _$jscoverage['mediator.js'][146]++;
-  var oldIndex = 0, x = 0, sub, firstHalf, lastHalf, y;
-  _$jscoverage['mediator.js'][150]++;
-  for (((x = 0), (y = this._subscribers.length)); (x < y); (x++)) {
-    _$jscoverage['mediator.js'][151]++;
-    if (((this._subscribers[x].id === identifier) || (this._subscribers[x].fn === identifier))) {
-      _$jscoverage['mediator.js'][152]++;
-      break;
-    }
-    _$jscoverage['mediator.js'][154]++;
-    (oldIndex++);
-}
-  _$jscoverage['mediator.js'][157]++;
-  sub = this._subscribers[oldIndex];
-  _$jscoverage['mediator.js'][158]++;
-  firstHalf = this._subscribers.slice(0, oldIndex);
-  _$jscoverage['mediator.js'][159]++;
-  lastHalf = this._subscribers.slice((oldIndex + 1));
-  _$jscoverage['mediator.js'][161]++;
-  this._subscribers = firstHalf.concat(lastHalf);
-  _$jscoverage['mediator.js'][162]++;
-  this._subscribers.splice(priority, 0, sub);
-}), addChannel: (function (channel) {
-  _$jscoverage['mediator.js'][166]++;
-  this._channels[channel] = new Channel(((this.namespace? (this.namespace + ":"): "") + channel), this);
-}), hasChannel: (function (channel) {
-  _$jscoverage['mediator.js'][170]++;
-  return this._channels.hasOwnProperty(channel);
-}), returnChannel: (function (channel) {
-  _$jscoverage['mediator.js'][174]++;
-  return this._channels[channel];
-}), removeSubscriber: (function (identifier) {
-  _$jscoverage['mediator.js'][178]++;
-  var x = 0, y;
-  _$jscoverage['mediator.js'][180]++;
-  y = this._subscribers.length;
-  _$jscoverage['mediator.js'][183]++;
-  if ((! identifier)) {
-    _$jscoverage['mediator.js'][184]++;
-    this._subscribers = [];
-    _$jscoverage['mediator.js'][185]++;
-    return;
-  }
-  _$jscoverage['mediator.js'][189]++;
-  for ((x, y); (y > x); (y--)) {
-    _$jscoverage['mediator.js'][190]++;
-    if (((this._subscribers[x].fn === identifier) || (this._subscribers[x].id === identifier))) {
-      _$jscoverage['mediator.js'][191]++;
-      this._subscribers[x].channel = null;
-      _$jscoverage['mediator.js'][192]++;
-      this._subscribers.splice(x, 1);
-    }
-}
-}), publish: (function (data) {
-  _$jscoverage['mediator.js'][201]++;
-  var x = 0, y = this._subscribers.length, called = false, subscriber, l;
-  _$jscoverage['mediator.js'][207]++;
-  for ((x, y); (x < y); (x++)) {
-    _$jscoverage['mediator.js'][208]++;
-    if ((! this.stopped)) {
-      _$jscoverage['mediator.js'][209]++;
-      subscriber = this._subscribers[x];
-      _$jscoverage['mediator.js'][210]++;
-      if (((subscriber.options !== undefined) && ((typeof subscriber.options.predicate) === "function"))) {
-        _$jscoverage['mediator.js'][211]++;
-        if (subscriber.options.predicate.apply(subscriber.context, data)) {
-          _$jscoverage['mediator.js'][212]++;
-          subscriber.fn.apply(subscriber.context, data);
-          _$jscoverage['mediator.js'][213]++;
-          called = true;
-        }
-      }
-      else {
-        _$jscoverage['mediator.js'][216]++;
-        subscriber.fn.apply(subscriber.context, data);
-        _$jscoverage['mediator.js'][217]++;
-        called = true;
-      }
-    }
-    _$jscoverage['mediator.js'][221]++;
-    if ((called && subscriber.options && (subscriber.options !== undefined))) {
-      _$jscoverage['mediator.js'][222]++;
-      (subscriber.options.calls--);
-      _$jscoverage['mediator.js'][224]++;
-      if ((subscriber.options.calls < 1)) {
-        _$jscoverage['mediator.js'][225]++;
-        this.removeSubscriber(subscriber.id);
-      }
-      else {
-        _$jscoverage['mediator.js'][227]++;
-        subscriber.update(subscriber.options);
-      }
-    }
-}
-  _$jscoverage['mediator.js'][232]++;
-  if (this._parent) {
-    _$jscoverage['mediator.js'][233]++;
-    this._parent.publish(data);
-  }
-  _$jscoverage['mediator.js'][236]++;
-  this.stopped = false;
-})};
-  _$jscoverage['mediator.js'][240]++;
-  function Mediator() {
-    _$jscoverage['mediator.js'][241]++;
-    if ((! (this instanceof Mediator))) {
-      _$jscoverage['mediator.js'][242]++;
-      return new Mediator();
-    }
-    _$jscoverage['mediator.js'][245]++;
-    this._channels = new Channel("");
-}
-  _$jscoverage['mediator.js'][251]++;
-  Mediator.prototype = {getChannel: (function (namespace) {
-  _$jscoverage['mediator.js'][257]++;
-  var channel = this._channels, namespaceHierarchy = namespace.split(":"), x = 0, y = namespaceHierarchy.length;
-  _$jscoverage['mediator.js'][262]++;
-  if ((namespace === "")) {
-    _$jscoverage['mediator.js'][263]++;
-    return channel;
-  }
-  _$jscoverage['mediator.js'][266]++;
-  if ((namespaceHierarchy.length > 0)) {
-    _$jscoverage['mediator.js'][267]++;
-    for ((x, y); (x < y); (x++)) {
-      _$jscoverage['mediator.js'][269]++;
-      if ((! channel.hasChannel(namespaceHierarchy[x]))) {
-        _$jscoverage['mediator.js'][270]++;
-        channel.addChannel(namespaceHierarchy[x]);
-      }
-      _$jscoverage['mediator.js'][273]++;
-      channel = channel.returnChannel(namespaceHierarchy[x]);
-}
-  }
-  _$jscoverage['mediator.js'][277]++;
-  return channel;
-}), subscribe: (function (channelName, fn, options, context) {
-  _$jscoverage['mediator.js'][287]++;
-  var channel = this.getChannel(channelName);
-  _$jscoverage['mediator.js'][289]++;
-  options = (options || {});
-  _$jscoverage['mediator.js'][290]++;
-  context = (context || {});
-  _$jscoverage['mediator.js'][292]++;
-  return channel.addSubscriber(fn, options, context);
-}), once: (function (channelName, fn, options, context) {
-  _$jscoverage['mediator.js'][302]++;
-  options = (options || {});
-  _$jscoverage['mediator.js'][303]++;
-  options.calls = 1;
-  _$jscoverage['mediator.js'][305]++;
-  return this.subscribe(channelName, fn, options, context);
-}), getSubscriber: (function (identifier, channel) {
-  _$jscoverage['mediator.js'][312]++;
-  return this.getChannel((channel || "")).getSubscriber(identifier);
-}), remove: (function (channelName, identifier) {
-  _$jscoverage['mediator.js'][319]++;
-  this.getChannel(channelName).removeSubscriber(identifier);
-}), publish: (function (channelName) {
-  _$jscoverage['mediator.js'][328]++;
-  var args = Array.prototype.slice.call(arguments, 1), channel = this.getChannel(channelName);
-  _$jscoverage['mediator.js'][331]++;
-  args.push(channel);
-  _$jscoverage['mediator.js'][333]++;
-  this.getChannel(channelName).publish(args);
-})};
-  _$jscoverage['mediator.js'][338]++;
-  Mediator.prototype.on = Mediator.prototype.subscribe;
-  _$jscoverage['mediator.js'][339]++;
-  Mediator.prototype.bind = Mediator.prototype.subscribe;
-  _$jscoverage['mediator.js'][340]++;
-  Mediator.prototype.emit = Mediator.prototype.publish;
-  _$jscoverage['mediator.js'][341]++;
-  Mediator.prototype.trigger = Mediator.prototype.publish;
-  _$jscoverage['mediator.js'][342]++;
-  Mediator.prototype.off = Mediator.prototype.remove;
-  _$jscoverage['mediator.js'][346]++;
-  Mediator.Channel = Channel;
-  _$jscoverage['mediator.js'][347]++;
-  Mediator.Subscriber = Subscriber;
-  _$jscoverage['mediator.js'][348]++;
-  return Mediator;
-}));
-
 },{}],30:[function(require,module,exports){
-/*jslint bitwise: true, nomen: true, plusplus: true, white: true */
+// Generated by CoffeeScript 1.8.0
+(function() {
+  var Events, Mediator, mediator;
 
-/*!
-* Mediator.js Library v0.9.8
-* https://github.com/ajacksified/Mediator.js
-*
-* Copyright 2013, Jack Lawson
-* MIT Licensed (http://www.opensource.org/licenses/mit-license.php)
-*
-* For more information: http://thejacklawson.com/2011/06/mediators-for-modularized-asynchronous-programming-in-javascript/index.html
-* Project on GitHub: https://github.com/ajacksified/Mediator.js
-*
-* Last update: October 19 2013
-*/
+  Events = require('backbone-events-standalone');
 
-(function(global, factory) {
-  'use strict';
+  Mediator = (function() {
+    Mediator.prototype.attributes = {};
 
-  if (typeof define === 'function' && define.amd) {
-    // AMD
-    define('mediator-js', [], function() {
-      global.Mediator = factory();
-      return global.Mediator;
-    });
-  } else if (typeof exports !== 'undefined') {
-    // Node/CommonJS
-    exports.Mediator = factory();
-  } else {
-    // Browser global
-    global.Mediator = factory();
-  }
-}(this, function() {
-  'use strict';
+    function Mediator() {}
 
-  // We'll generate guids for class instances for easy referencing later on.
-  // Subscriber instances will have an id that can be refernced for quick
-  // lookups.
-
-  function guidGenerator() {
-    var S4 = function() {
-       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    Mediator.prototype.set = function(key, data) {
+      return this.attributes[key] = data;
     };
 
-    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
-  }
+    Mediator.prototype.get = function(key) {
+      return this.attributes[key];
+    };
 
-  // Subscribers are instances of Mediator Channel registrations. We generate
-  // an object instance so that it can be updated later on without having to
-  // unregister and re-register. Subscribers are constructed with a function
-  // to be called, options object, and context.
+    return Mediator;
 
-  function Subscriber(fn, options, context) {
-    if (!(this instanceof Subscriber)) {
-      return new Subscriber(fn, options, context);
-    }
+  })();
 
-    this.id = guidGenerator();
-    this.fn = fn;
-    this.options = options;
-    this.context = context;
-    this.channel = null;
-  }
+  Events.mixin(Mediator.prototype);
 
-  // Mediator.update on a subscriber instance can update its function,context,
-  // or options object. It takes in an object and looks for fn, context, or
-  // options keys.
-  Subscriber.prototype.update = function(options) {
-    if (options) {
-      this.fn = options.fn || this.fn;
-      this.context = options.context || this.context;
-      this.options = options.options || this.options;
-      if (this.channel && this.options && this.options.priority !== undefined) {
-          this.channel.setPriority(this.id, this.options.priority);
-      }
-    }
-  }
+  mediator = new Mediator;
 
+  mediator.Mediator = Mediator;
 
-  function Channel(namespace, parent) {
-    if (!(this instanceof Channel)) {
-      return new Channel(namespace);
-    }
+  module.exports = mediator;
 
-    this.namespace = namespace || "";
-    this._subscribers = [];
-    this._channels = {};
-    this._parent = parent;
-    this.stopped = false;
-  }
+}).call(this);
 
-  // A Mediator channel holds a list of sub-channels and subscribers to be fired
-  // when Mediator.publish is called on the Mediator instance. It also contains
-  // some methods to manipulate its lists of data; only setPriority and
-  // StopPropagation are meant to be used. The other methods should be accessed
-  // through the Mediator instance.
-  Channel.prototype.addSubscriber = function(fn, options, context) {
-    var subscriber = new Subscriber(fn, options, context);
-
-    if (options && options.priority !== undefined) {
-      // Cheap hack to either parse as an int or turn it into 0. Runs faster
-      // in many browsers than parseInt with the benefit that it won't
-      // return a NaN.
-      options.priority = options.priority >> 0;
-
-      if (options.priority < 0) { options.priority = 0; }
-      if (options.priority >= this._subscribers.length) { options.priority = this._subscribers.length-1; }
-
-      this._subscribers.splice(options.priority, 0, subscriber);
-    }else{
-      this._subscribers.push(subscriber);
-    }
-
-    subscriber.channel = this;
-
-    return subscriber;
-  }
-
-  // The channel instance is passed as an argument to the mediator subscriber,
-  // and further subscriber propagation can be called with
-  // channel.StopPropagation().
-  Channel.prototype.stopPropagation = function() {
-    this.stopped = true;
-  }
-
-  Channel.prototype.getSubscriber = function(identifier) {
-    var x = 0,
-        y = this._subscribers.length;
-
-    for(x, y; x < y; x++) {
-      if (this._subscribers[x].id === identifier || this._subscribers[x].fn === identifier) {
-        return this._subscribers[x];
-      }
-    }
-  }
-
-  // Channel.setPriority is useful in updating the order in which Subscribers
-  // are called, and takes an identifier (subscriber id or named function) and
-  // an array index. It will not search recursively through subchannels.
-
-  Channel.prototype.setPriority = function(identifier, priority) {
-    var oldIndex = 0,
-        x = 0,
-        sub, firstHalf, lastHalf, y;
-
-    for(x = 0, y = this._subscribers.length; x < y; x++) {
-      if (this._subscribers[x].id === identifier || this._subscribers[x].fn === identifier) {
-        break;
-      }
-      oldIndex ++;
-    }
-
-    sub = this._subscribers[oldIndex];
-    firstHalf = this._subscribers.slice(0, oldIndex);
-    lastHalf = this._subscribers.slice(oldIndex+1);
-
-    this._subscribers = firstHalf.concat(lastHalf);
-    this._subscribers.splice(priority, 0, sub);
-  }
-
-  Channel.prototype.addChannel = function(channel) {
-    this._channels[channel] = new Channel((this.namespace ? this.namespace + ':' : '') + channel, this);
-  }
-
-  Channel.prototype.hasChannel = function(channel) {
-    return this._channels.hasOwnProperty(channel);
-  }
-
-  Channel.prototype.returnChannel = function(channel) {
-    return this._channels[channel];
-  }
-
-  Channel.prototype.removeSubscriber = function(identifier) {
-    var x = this._subscribers.length - 1;
-
-    // If we don't pass in an id, we're clearing all
-    if (!identifier) {
-      this._subscribers = [];
-      return;
-    }
-
-    // Going backwards makes splicing a whole lot easier.
-    for(x; x >= 0; x--) {
-      if (this._subscribers[x].fn === identifier || this._subscribers[x].id === identifier) {
-        this._subscribers[x].channel = null;
-        this._subscribers.splice(x,1);
-      }
-    }
-  }
-
-    // This will publish arbitrary arguments to a subscriber and then to parent
-    // channels.
-
-  Channel.prototype.publish = function(data) {
-    var x = 0,
-        y = this._subscribers.length,
-        shouldCall = false,
-        subscriber, l,
-        subsBefore,subsAfter;
-
-    // Priority is preserved in the _subscribers index.
-    for(x, y; x < y; x++) {
-      // By default set the flag to false
-      shouldCall = false;
-      subscriber = this._subscribers[x];
-
-      if (!this.stopped) {
-        subsBefore = this._subscribers.length;
-        if (subscriber.options !== undefined && typeof subscriber.options.predicate === "function") {
-          if (subscriber.options.predicate.apply(subscriber.context, data)) {
-            // The predicate matches, the callback function should be called
-            shouldCall = true;
-          }
-        }else{
-          // There is no predicate to match, the callback should always be called
-          shouldCall = true;
-        }
-      }
-
-      // Check if the callback should be called
-      if (shouldCall) {
-        // Check if the subscriber has options and if this include the calls options
-        if (subscriber.options && subscriber.options.calls !== undefined) {
-          // Decrease the number of calls left by one
-          subscriber.options.calls--;
-          // Once the number of calls left reaches zero or less we need to remove the subscriber
-          if (subscriber.options.calls < 1) {
-            this.removeSubscriber(subscriber.id);
-          }
-        }
-        // Now we call the callback, if this in turns publishes to the same channel it will no longer
-        // cause the callback to be called as we just removed it as a subscriber
-        subscriber.fn.apply(subscriber.context, data);
-
-        subsAfter = this._subscribers.length;
-        y = subsAfter;
-        if (subsAfter === subsBefore - 1) {
-          x--;
-        }
-      }
-    }
-
-    if (this._parent) {
-      this._parent.publish(data);
-    }
-
-    this.stopped = false;
-  }
-
-  function Mediator() {
-    if (!(this instanceof Mediator)) {
-      return new Mediator();
-    }
-
-    this._channels = new Channel('');
-  }
-
-  // A Mediator instance is the interface through which events are registered
-  // and removed from publish channels.
-
-  // Returns a channel instance based on namespace, for example
-  // application:chat:message:received. If readOnly is true we
-  // will refrain from creating non existing channels.
-  Mediator.prototype.getChannel = function(namespace, readOnly) {
-    var channel = this._channels,
-        namespaceHierarchy = namespace.split(':'),
-        x = 0,
-        y = namespaceHierarchy.length;
-
-    if (namespace === '') {
-      return channel;
-    }
-
-    if (namespaceHierarchy.length > 0) {
-      for(x, y; x < y; x++) {
-
-        if (!channel.hasChannel(namespaceHierarchy[x])) {
-          if (readOnly) {
-            break;
-          } else {
-            channel.addChannel(namespaceHierarchy[x]);
-          }
-        }
-
-        channel = channel.returnChannel(namespaceHierarchy[x]);
-      }
-    }
-
-    return channel;
-  }
-
-  // Pass in a channel namespace, function to be called, options, and context
-  // to call the function in to Subscribe. It will create a channel if one
-  // does not exist. Options can include a predicate to determine if it
-  // should be called (based on the data published to it) and a priority
-  // index.
-
-  Mediator.prototype.subscribe = function(channelName, fn, options, context) {
-    var channel = this.getChannel(channelName || "", false);
-
-    options = options || {};
-    context = context || {};
-
-    return channel.addSubscriber(fn, options, context);
-  }
-
-  // Pass in a channel namespace, function to be called, options, and context
-  // to call the function in to Subscribe. It will create a channel if one
-  // does not exist. Options can include a predicate to determine if it
-  // should be called (based on the data published to it) and a priority
-  // index.
-
-  Mediator.prototype.once = function(channelName, fn, options, context) {
-    options = options || {};
-    options.calls = 1;
-
-    return this.subscribe(channelName, fn, options, context);
-  }
-
-  // Returns a subscriber for a given subscriber id / named function and
-  // channel namespace
-
-  Mediator.prototype.getSubscriber = function(identifier, channelName) {
-    var channel = this.getChannel(channelName || "", true);
-    // We have to check if channel within the hierarchy exists and if it is
-    // an exact match for the requested channel
-    if (channel.namespace !== channelName) {
-      return null;
-    }
-
-    return channel.getSubscriber(identifier);
-  }
-
-  // Remove a subscriber from a given channel namespace recursively based on
-  // a passed-in subscriber id or named function.
-
-  Mediator.prototype.remove = function(channelName, identifier) {
-    var channel = this.getChannel(channelName || "", true);
-    if (channel.namespace !== channelName) {
-      return false;
-    }
-
-    channel.removeSubscriber(identifier);
-  }
-
-  // Publishes arbitrary data to a given channel namespace. Channels are
-  // called recursively downwards; a post to application:chat will post to
-  // application:chat:receive and application:chat:derp:test:beta:bananas.
-  // Called using Mediator.publish("application:chat", [ args ]);
-
-  Mediator.prototype.publish = function(channelName) {
-    var channel = this.getChannel(channelName || "", true);
-    if (channel.namespace !== channelName) {
-      return null;
-    }
-
-    var args = Array.prototype.slice.call(arguments, 1);
-
-    args.push(channel);
-
-    channel.publish(args);
-  }
-
-  // Alias some common names for easy interop
-  Mediator.prototype.on = Mediator.prototype.subscribe;
-  Mediator.prototype.bind = Mediator.prototype.subscribe;
-  Mediator.prototype.emit = Mediator.prototype.publish;
-  Mediator.prototype.trigger = Mediator.prototype.publish;
-  Mediator.prototype.off = Mediator.prototype.remove;
-
-  // Finally, expose it all.
-
-  Mediator.Channel = Channel;
-  Mediator.Subscriber = Subscriber;
-  Mediator.version = "0.9.8";
-
-  return Mediator;
-}));
-
-},{}],31:[function(require,module,exports){
+},{"backbone-events-standalone":2}],31:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -52832,7 +52275,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":44,"../vnode/is-vnode.js":47,"../vnode/is-vtext.js":48,"../vnode/is-widget.js":49,"./apply-properties":38,"global/document":11}],40:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":44,"../vnode/is-vnode.js":47,"../vnode/is-vtext.js":48,"../vnode/is-widget.js":49,"./apply-properties":38,"global/document":13}],40:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -52861,7 +52304,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":10}],41:[function(require,module,exports){
+},{"ev-store":12}],41:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -53075,7 +52518,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":2}],44:[function(require,module,exports){
+},{"browser-split":4}],44:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -53519,8 +52962,8 @@ function create(opts) {
     group.add(light);
     group.add(light2);
     group.add(openSound);
-    mediator.publish('scene.add', group);
-    mediator.subscribe('door.open.' + opts.id, function(from){
+    mediator.trigger('scene.add', group);
+    mediator.on('door.open.' + opts.id, function(from){
         var value;
         openSound.play();
         setTimeout(function(){
@@ -53536,7 +52979,7 @@ function create(opts) {
             .start();
     });
 
-    mediator.subscribe('door.close.' + opts.id, function(from){
+    mediator.on('door.close.' + opts.id, function(from){
         var value;
 
         setTimeout(function(){
@@ -53551,8 +52994,8 @@ function create(opts) {
             .to({y: value}, 300)
             .start();
     });
-    mediator.subscribe('door.remove.' + opts.id, function(){
-        mediator.publish('scene.remove', group);
+    mediator.on('door.remove.' + opts.id, function(){
+        mediator.trigger('scene.remove', group);
     });
     return group;
 }
@@ -53604,10 +53047,11 @@ var _ = {
 };
 var mediator;
 var listener;
-
 function create(opts){
+    var context;
     var sounds = {};
     var group = new THREE.Object3D();
+    context = opts.z + '_' + opts.x;
     group.add(floor());
     if(opts.data){
         _.forEach(opts.data.sounds, function(sound){
@@ -53643,18 +53087,35 @@ function create(opts){
     }
 
     group.position.set(opts.x * (CONST.room.width), opts.y + CONST.room.height/2, opts.z * (CONST.room.width));
-    // small performance optimisation, since we are not moving it anymore, no need for updates.
-    setTimeout(function(){
-        group.matrixAutoUpdate = false;
-    });
 
-    mediator.subscribe('room.enter.' + opts.z + '_' + opts.x, function(){
-        if(opts.data.type){
-            mediator.publish('message.show', opts.data.type);
+    mediator.on('room.enter.' + context, function(callbacks){
+        if(opts.data  && opts.data.type){
+            mediator.trigger('message.show', opts.data.type);
+            if( opts.data.type == 'lose'){
+                mediator.trigger('game.reset');
+                if(callbacks.condition){
+                    callbacks.condition();
+                }
+            } else if(opts.data.type == 'win'){
+                mediator.trigger('game.reset');
+                if(callbacks.condition){
+                    callbacks.condition();
+                }
+            }
         }
+        else {
+            if(callbacks.success){
+                callbacks.success();
+            }
+        }
+    }, context);
+
+    mediator.on('room.remove.' + context , function(){
+        mediator.off(null, null, context);
+        mediator.trigger('scene.remove', group);
     });
 
-    mediator.publish('scene.add', group);
+    mediator.trigger('scene.add', group);
     return group;
 }
 
@@ -53665,7 +53126,7 @@ module.exports = function (_mediator_, _listener_) {
         create: create
     }
 };
-},{"../const":66,"./block":57,"./facet":59,"./floor":60,"lodash.foreach":26,"three":33}],62:[function(require,module,exports){
+},{"../const":66,"./block":57,"./facet":59,"./floor":60,"lodash.foreach":28,"three":33}],62:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -53777,26 +53238,29 @@ module.exports = function (mediator) {
     function inputListner (ev){
         var code = vkey[ev.keyCode];
         if (code == '<left>') {
-            mediator.publish('input', 'left');
+            mediator.trigger('input', 'left');
         }
         if (code == '<right>') {
-            mediator.publish('input', 'right');
+            mediator.trigger('input', 'right');
         }
         if (code == '<up>') {
-            mediator.publish('input', 'forward');
+            mediator.trigger('input', 'forward');
         }
         if (code == '<down>') {
-            mediator.publish('input', 'back');
+            mediator.trigger('input', 'back');
         }
         if (code == '<space>') {
-            mediator.publish('input', 'enter');
+            mediator.trigger('input', 'enter');
         }
     }
 };
-},{"lodash.debounce":24,"three":33,"vkey":53}],68:[function(require,module,exports){
+},{"lodash.debounce":26,"three":33,"vkey":53}],68:[function(require,module,exports){
+console.log = null;
+delete console.log;
+
 var THREE = require('three');
 var TWEEN = require('tween.js');
-var Mediator = require("mediator-js").Mediator,
+var Mediator = require("mediatorjs").Mediator,
     mediator = new Mediator();
 var scene = require('./services/scene')(mediator);
 var $q = require('q');
@@ -53816,7 +53280,7 @@ function init(container) {
         renderer = new THREE.WebGLRenderer();
         renderer.setSize( window.innerWidth - 10, window.innerHeight -10);
         container.appendChild( renderer.domElement );
-        mediator.publish('message.show', 'start');
+        mediator.trigger('message.show', 'start');
         animate();
     });
 }
@@ -53833,7 +53297,7 @@ function animate() {
 }
 
 window.app = init;
-},{"./controls/controls":67,"./services/camera":70,"./services/roomGenerator":71,"./services/scene":72,"./services/textures":73,"./services/user":74,"./ui/popup":75,"dom-delegator":6,"mediator-js":28,"q":32,"three":33,"tween.js":34}],69:[function(require,module,exports){
+},{"./controls/controls":67,"./services/camera":70,"./services/roomGenerator":71,"./services/scene":72,"./services/textures":73,"./services/user":74,"./ui/popup":75,"dom-delegator":8,"mediatorjs":30,"q":32,"three":33,"tween.js":34}],69:[function(require,module,exports){
 var libs = {};
 
 libs.distanceVector = function (v1, v2) {
@@ -53876,16 +53340,17 @@ module.exports = function (mediator, listener) {
     camera.add(steps);
     camera.add(torch);
     camera.add(ambient);
-    mediator.subscribe('camera.rotate', rotate);
-    mediator.subscribe('camera.move', move);
-    mediator.subscribe('camera.move.room', moveRoom);
-    mediator.subscribe('camera.center', function (coords) {
+    mediator.on('camera.rotate', rotate);
+    mediator.on('camera.move', move);
+    mediator.on('camera.move.room', moveRoom);
+    mediator.on('camera.center', function (coords) {
+        camera.rotation.y = 0;
         camera.position.z = coords.z * CONST.room.width + CONST.room.width / 2;
         camera.position.y = height;
         camera.position.x = coords.x * CONST.room.width;
     });
 
-    mediator.publish('scene.add', camera);
+    mediator.trigger('scene.add', camera);
     function moveRoom(opts) {
         var value = {};
         value.x = opts.coords.x * CONST.room.width;
@@ -53960,7 +53425,7 @@ module.exports = function (mediator, listener) {
     return camera;
 };
 
-},{"../const":66,"../libs":69,"lodash.clone":23,"three":33,"tween.js":34}],71:[function(require,module,exports){
+},{"../const":66,"../libs":69,"lodash.clone":25,"three":33,"tween.js":34}],71:[function(require,module,exports){
 var map = require('../config/map.json');
 var CONST = require('../const');
 var _ = {
@@ -53973,7 +53438,7 @@ module.exports = function (mediator, listener) {
     var door = require('../components/door')(mediator, listener);
     var rooms = {};
     var doorList = {};
-    mediator.subscribe('room.add', function (coords) {
+    function addRoom(coords){
         var walls = {};
         if (map[coords.z - 1] && map[coords.z - 1][coords.x]) {
             walls.top = true;
@@ -54043,9 +53508,34 @@ module.exports = function (mediator, listener) {
             x: coords.x,
             z: coords.z
         };
-        //
+    }
+    function removeRoom(coords){
+        mediator.trigger('room.remove.' + coords.z + '_' + coords.x);
+        delete(rooms[coords.z + '_' + coords.x]);
+        _.forEach(_.difference(roomDoors(coords), currentDoors()), function (id) {
+            mediator.trigger('door.remove.' + id);
+            delete(doorList[id]);
+        });
+    }
+    function reset(){
+        _.forEach(rooms, function(room){
+            removeRoom(room);
+        });
+    }
+    mediator.on('room.add',function(coords){
+        addRoom(coords);
     });
 
+    mediator.on('room.center', function (coords) {
+        reset();
+        setTimeout(function(){
+            addRoom(coords);
+        }, 200);
+    });
+
+    mediator.on('room.remove', function(coords){
+        removeRoom(coords);
+    });
     function currentDoors() {
         var doors = [];
         _.forEach(rooms, function (room) {
@@ -54074,26 +53564,16 @@ module.exports = function (mediator, listener) {
         }
         return doors;
     }
-
-    mediator.subscribe('room.remove', function (coords) {
-        mediator.publish('scene.remove', rooms[coords.z + '_' + coords.x].instance);
-        delete(rooms[coords.z + '_' + coords.x]);
-        _.forEach(_.difference(roomDoors(coords), currentDoors()), function(id){
-            mediator.publish('door.remove.' + id);
-            delete(doorList[id]);
-        });
-
-    });
 };
-},{"../components/door":58,"../components/room":61,"../config/map.json":63,"../const":66,"lodash.difference":25,"lodash.foreach":26}],72:[function(require,module,exports){
+},{"../components/door":58,"../components/room":61,"../config/map.json":63,"../const":66,"lodash.difference":27,"lodash.foreach":28}],72:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
     var scene = new THREE.Scene();
-    mediator.subscribe('scene.add',function(object){
+    mediator.on('scene.add',function(object){
         scene.add(object);
     });
-    mediator.subscribe('scene.remove',function(object){
+    mediator.on('scene.remove',function(object){
         scene.remove(object);
     });
     return scene;
@@ -54120,7 +53600,7 @@ module.exports = function(){
     });
     return defer.promise;
 };
-},{"../config/textures.json":65,"lodash.foreach":26,"q":32,"three":33}],74:[function(require,module,exports){
+},{"../config/textures.json":65,"lodash.foreach":28,"q":32,"three":33}],74:[function(require,module,exports){
 _ = {
     clone: require('lodash.clone')
 };
@@ -54129,13 +53609,10 @@ var map = require('../config/map.json');
 var StateMachine = require('javascript-state-machine');
 var libs = require('../libs');
 module.exports = function (mediator) {
-    var position = {
-        x: 2,
-        z: 0
-    };
+    var position;
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
     var directions = ['north', 'east', 'south', 'west'];
-    var direction = 0;
+    var direction;
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {
@@ -54166,15 +53643,15 @@ module.exports = function (mediator) {
             },
             onforward: function (event, from, to) {
                 if(from == 'center'){
-                    mediator.publish('room.add', nextRoom(position, direction));
+                    mediator.trigger('room.add', nextRoom(position, direction));
                 }
             },
             onenter: function (event, from, to) {
                 var id = doorId(position, direction);
                 if(to == 'door.open'){
-                    mediator.publish('door.open.' + id, position);
+                    mediator.trigger('door.open.' + id, position);
                 } else if(to == 'door'){
-                    mediator.publish('door.close.' + id, position);
+                    mediator.trigger('door.close.' + id, position);
                 }
 
             },
@@ -54195,7 +53672,7 @@ module.exports = function (mediator) {
             onback: function (event, from, to) {
                 if(from =='door.open'){
                     var id = doorId(position, direction);
-                    mediator.publish('door.close.' + id, position);
+                    mediator.trigger('door.close.' + id, position);
                 }
             },
             onturning: function(){
@@ -54203,7 +53680,7 @@ module.exports = function (mediator) {
             },
             onleavestate: function (event, from, to) {
                 if (event == 'right' || event == 'left') {
-                    mediator.publish('camera.rotate', {
+                    mediator.trigger('camera.rotate', {
                         'direction': event,
                         'callback': function () {
                             state.transition();
@@ -54213,7 +53690,7 @@ module.exports = function (mediator) {
                 }
                 else if (event == 'forward') {
                     if(from == 'center'){
-                        mediator.publish('camera.move', {
+                        mediator.trigger('camera.move', {
                             'direction': 'forward',
                             'callback': function () {
                                 state.transition();
@@ -54221,13 +53698,19 @@ module.exports = function (mediator) {
                         });
                     } else  if(from == 'door.open'){
                         var coords = nextRoom(position, direction);
-                        mediator.publish('room.enter.' +  coords.z + '_' + coords.x);
-                        mediator.publish('camera.move.room', {
-                            'coords': coords,
-                            'callback': function () {
-                                mediator.publish('room.remove', position);
-                                mediator.publish('door.close.' + doorId(position, direction), position);
-                                position = coords;
+                        mediator.trigger('room.enter.' +  coords.z + '_' + coords.x, {
+                            success: function(){
+                                mediator.trigger('camera.move.room', {
+                                    'coords': coords,
+                                    'callback': function () {
+                                        mediator.trigger('room.remove', position);
+                                        mediator.trigger('door.close.' + doorId(position, direction), position);
+                                        position = coords;
+                                        state.transition();
+                                    }
+                                });
+                            },
+                            condition: function(){
                                 state.transition();
                             }
                         });
@@ -54235,11 +53718,11 @@ module.exports = function (mediator) {
                     return StateMachine.ASYNC;
                 }
                 else if (event == 'back') {
-                    mediator.publish('camera.move', {
+                    mediator.trigger('camera.move', {
                         'direction': 'back',
                         'callback': function () {
                             state.transition();
-                            mediator.publish('room.remove', nextRoom(position, direction));
+                            mediator.trigger('room.remove', nextRoom(position, direction));
                         }
                     });
                     return StateMachine.ASYNC;
@@ -54247,7 +53730,6 @@ module.exports = function (mediator) {
             }
         }
     });
-    var center = true;
 
     function nextRoom(position, direction){
         return {
@@ -54270,13 +53752,25 @@ module.exports = function (mediator) {
         }
         return id;
     }
-    mediator.publish('camera.center', position);
-    mediator.publish('room.add', position);
-    mediator.subscribe('input', function (type) {
+
+    function init(coords){
+        position = {
+            x: 2,
+            z: 0
+        };
+        direction =  0;
+        mediator.trigger('camera.center', position);
+        mediator.trigger('room.center', position);
+    }
+
+
+    mediator.on('input', function (type) {
         state[type]();
     });
+    mediator.on('game.reset', init);
+    init();
 };
-},{"../config/map.json":63,"../const":66,"../libs":69,"javascript-state-machine":15,"lodash.clone":23}],75:[function(require,module,exports){
+},{"../config/map.json":63,"../const":66,"../libs":69,"javascript-state-machine":17,"lodash.clone":25}],75:[function(require,module,exports){
 var messages = require('../config/messages.json');
 var vDom = {
     h: require('virtual-dom/h'),
@@ -54326,11 +53820,11 @@ module.exports = function (mediator, container) {
     );
 
 
-    mediator.subscribe('message.show', function (type) {
+    mediator.on('message.show', function (type) {
         open(messages[type]);
     });
 
 
     container.appendChild(popup)
 };
-},{"../config/messages.json":64,"javascript-state-machine":15,"virtual-dom/create-element":35,"virtual-dom/h":36}]},{},[68]);
+},{"../config/messages.json":64,"javascript-state-machine":17,"virtual-dom/create-element":35,"virtual-dom/h":36}]},{},[68]);

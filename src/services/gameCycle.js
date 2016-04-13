@@ -3,7 +3,7 @@ var mediator;
 
 function gameCycle(){
     cycle++;
-    mediator.publish('new.gamecycle', cycle);
+    mediator.trigger('new.gamecycle', cycle);
 }
 
 module.exports = function(_mediator_){

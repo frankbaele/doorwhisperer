@@ -1,6 +1,9 @@
+console.log = null;
+delete console.log;
+
 var THREE = require('three');
 var TWEEN = require('tween.js');
-var Mediator = require("mediator-js").Mediator,
+var Mediator = require("mediatorjs").Mediator,
     mediator = new Mediator();
 var scene = require('./services/scene')(mediator);
 var $q = require('q');
@@ -20,7 +23,7 @@ function init(container) {
         renderer = new THREE.WebGLRenderer();
         renderer.setSize( window.innerWidth - 10, window.innerHeight -10);
         container.appendChild( renderer.domElement );
-        mediator.publish('message.show', 'start');
+        mediator.trigger('message.show', 'start');
         animate();
     });
 }

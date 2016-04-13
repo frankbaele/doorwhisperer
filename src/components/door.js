@@ -52,8 +52,8 @@ function create(opts) {
     group.add(light);
     group.add(light2);
     group.add(openSound);
-    mediator.publish('scene.add', group);
-    mediator.subscribe('door.open.' + opts.id, function(from){
+    mediator.trigger('scene.add', group);
+    mediator.on('door.open.' + opts.id, function(from){
         var value;
         openSound.play();
         setTimeout(function(){
@@ -69,7 +69,7 @@ function create(opts) {
             .start();
     });
 
-    mediator.subscribe('door.close.' + opts.id, function(from){
+    mediator.on('door.close.' + opts.id, function(from){
         var value;
 
         setTimeout(function(){
@@ -84,8 +84,8 @@ function create(opts) {
             .to({y: value}, 300)
             .start();
     });
-    mediator.subscribe('door.remove.' + opts.id, function(){
-        mediator.publish('scene.remove', group);
+    mediator.on('door.remove.' + opts.id, function(){
+        mediator.trigger('scene.remove', group);
     });
     return group;
 }

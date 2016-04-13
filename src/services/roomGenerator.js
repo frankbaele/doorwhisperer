@@ -10,7 +10,7 @@ module.exports = function (mediator, listener) {
     var door = require('../components/door')(mediator, listener);
     var rooms = {};
     var doorList = {};
-    mediator.subscribe('room.add', function (coords) {
+    function addRoom(coords){
         var walls = {};
         if (map[coords.z - 1] && map[coords.z - 1][coords.x]) {
             walls.top = true;
@@ -80,9 +80,34 @@ module.exports = function (mediator, listener) {
             x: coords.x,
             z: coords.z
         };
-        //
+    }
+    function removeRoom(coords){
+        mediator.trigger('room.remove.' + coords.z + '_' + coords.x);
+        delete(rooms[coords.z + '_' + coords.x]);
+        _.forEach(_.difference(roomDoors(coords), currentDoors()), function (id) {
+            mediator.trigger('door.remove.' + id);
+            delete(doorList[id]);
+        });
+    }
+    function reset(){
+        _.forEach(rooms, function(room){
+            removeRoom(room);
+        });
+    }
+    mediator.on('room.add',function(coords){
+        addRoom(coords);
     });
 
+    mediator.on('room.center', function (coords) {
+        reset();
+        setTimeout(function(){
+            addRoom(coords);
+        }, 200);
+    });
+
+    mediator.on('room.remove', function(coords){
+        removeRoom(coords);
+    });
     function currentDoors() {
         var doors = [];
         _.forEach(rooms, function (room) {
@@ -111,14 +136,4 @@ module.exports = function (mediator, listener) {
         }
         return doors;
     }
-
-    mediator.subscribe('room.remove', function (coords) {
-        mediator.publish('scene.remove', rooms[coords.z + '_' + coords.x].instance);
-        delete(rooms[coords.z + '_' + coords.x]);
-        _.forEach(_.difference(roomDoors(coords), currentDoors()), function(id){
-            mediator.publish('door.remove.' + id);
-            delete(doorList[id]);
-        });
-
-    });
 };

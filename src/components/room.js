@@ -8,10 +8,11 @@ var _ = {
 };
 var mediator;
 var listener;
-
 function create(opts){
+    var context;
     var sounds = {};
     var group = new THREE.Object3D();
+    context = opts.z + '_' + opts.x;
     group.add(floor());
     if(opts.data){
         _.forEach(opts.data.sounds, function(sound){
@@ -47,18 +48,35 @@ function create(opts){
     }
 
     group.position.set(opts.x * (CONST.room.width), opts.y + CONST.room.height/2, opts.z * (CONST.room.width));
-    // small performance optimisation, since we are not moving it anymore, no need for updates.
-    setTimeout(function(){
-        group.matrixAutoUpdate = false;
-    });
 
-    mediator.subscribe('room.enter.' + opts.z + '_' + opts.x, function(){
-        if(opts.data.type){
-            mediator.publish('message.show', opts.data.type);
+    mediator.on('room.enter.' + context, function(callbacks){
+        if(opts.data  && opts.data.type){
+            mediator.trigger('message.show', opts.data.type);
+            if( opts.data.type == 'lose'){
+                mediator.trigger('game.reset');
+                if(callbacks.condition){
+                    callbacks.condition();
+                }
+            } else if(opts.data.type == 'win'){
+                mediator.trigger('game.reset');
+                if(callbacks.condition){
+                    callbacks.condition();
+                }
+            }
         }
+        else {
+            if(callbacks.success){
+                callbacks.success();
+            }
+        }
+    }, context);
+
+    mediator.on('room.remove.' + context , function(){
+        mediator.off(null, null, context);
+        mediator.trigger('scene.remove', group);
     });
 
-    mediator.publish('scene.add', group);
+    mediator.trigger('scene.add', group);
     return group;
 }
 

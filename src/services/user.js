@@ -6,13 +6,10 @@ var map = require('../config/map.json');
 var StateMachine = require('javascript-state-machine');
 var libs = require('../libs');
 module.exports = function (mediator) {
-    var position = {
-        x: 2,
-        z: 0
-    };
+    var position;
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
     var directions = ['north', 'east', 'south', 'west'];
-    var direction = 0;
+    var direction;
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {
@@ -43,15 +40,15 @@ module.exports = function (mediator) {
             },
             onforward: function (event, from, to) {
                 if(from == 'center'){
-                    mediator.publish('room.add', nextRoom(position, direction));
+                    mediator.trigger('room.add', nextRoom(position, direction));
                 }
             },
             onenter: function (event, from, to) {
                 var id = doorId(position, direction);
                 if(to == 'door.open'){
-                    mediator.publish('door.open.' + id, position);
+                    mediator.trigger('door.open.' + id, position);
                 } else if(to == 'door'){
-                    mediator.publish('door.close.' + id, position);
+                    mediator.trigger('door.close.' + id, position);
                 }
 
             },
@@ -72,7 +69,7 @@ module.exports = function (mediator) {
             onback: function (event, from, to) {
                 if(from =='door.open'){
                     var id = doorId(position, direction);
-                    mediator.publish('door.close.' + id, position);
+                    mediator.trigger('door.close.' + id, position);
                 }
             },
             onturning: function(){
@@ -80,7 +77,7 @@ module.exports = function (mediator) {
             },
             onleavestate: function (event, from, to) {
                 if (event == 'right' || event == 'left') {
-                    mediator.publish('camera.rotate', {
+                    mediator.trigger('camera.rotate', {
                         'direction': event,
                         'callback': function () {
                             state.transition();
@@ -90,7 +87,7 @@ module.exports = function (mediator) {
                 }
                 else if (event == 'forward') {
                     if(from == 'center'){
-                        mediator.publish('camera.move', {
+                        mediator.trigger('camera.move', {
                             'direction': 'forward',
                             'callback': function () {
                                 state.transition();
@@ -98,13 +95,19 @@ module.exports = function (mediator) {
                         });
                     } else  if(from == 'door.open'){
                         var coords = nextRoom(position, direction);
-                        mediator.publish('room.enter.' +  coords.z + '_' + coords.x);
-                        mediator.publish('camera.move.room', {
-                            'coords': coords,
-                            'callback': function () {
-                                mediator.publish('room.remove', position);
-                                mediator.publish('door.close.' + doorId(position, direction), position);
-                                position = coords;
+                        mediator.trigger('room.enter.' +  coords.z + '_' + coords.x, {
+                            success: function(){
+                                mediator.trigger('camera.move.room', {
+                                    'coords': coords,
+                                    'callback': function () {
+                                        mediator.trigger('room.remove', position);
+                                        mediator.trigger('door.close.' + doorId(position, direction), position);
+                                        position = coords;
+                                        state.transition();
+                                    }
+                                });
+                            },
+                            condition: function(){
                                 state.transition();
                             }
                         });
@@ -112,11 +115,11 @@ module.exports = function (mediator) {
                     return StateMachine.ASYNC;
                 }
                 else if (event == 'back') {
-                    mediator.publish('camera.move', {
+                    mediator.trigger('camera.move', {
                         'direction': 'back',
                         'callback': function () {
                             state.transition();
-                            mediator.publish('room.remove', nextRoom(position, direction));
+                            mediator.trigger('room.remove', nextRoom(position, direction));
                         }
                     });
                     return StateMachine.ASYNC;
@@ -124,7 +127,6 @@ module.exports = function (mediator) {
             }
         }
     });
-    var center = true;
 
     function nextRoom(position, direction){
         return {
@@ -147,9 +149,21 @@ module.exports = function (mediator) {
         }
         return id;
     }
-    mediator.publish('camera.center', position);
-    mediator.publish('room.add', position);
-    mediator.subscribe('input', function (type) {
+
+    function init(coords){
+        position = {
+            x: 2,
+            z: 0
+        };
+        direction =  0;
+        mediator.trigger('camera.center', position);
+        mediator.trigger('room.center', position);
+    }
+
+
+    mediator.on('input', function (type) {
         state[type]();
     });
+    mediator.on('game.reset', init);
+    init();
 };
