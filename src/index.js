@@ -12,6 +12,7 @@ var listener = new THREE.AudioListener();
 var controls = require('./controls/controls')(mediator);
 var camera = require('./services/camera')(mediator, listener);
 var roomGen = require('./services/roomGenerator')(mediator, listener);
+var gameCycle = require('./services/gameCycle')(mediator);
 var textures = require('./services/textures');
 var popup = require('./ui/popup');
 function init(container) {
@@ -20,6 +21,7 @@ function init(container) {
     popup(mediator, container);
     $q.all(defers).then(function(){
         var user = require('./services/user')(mediator, listener);
+        //var wanderer = require('./services/wanderer')(mediator, listener);
         renderer = new THREE.WebGLRenderer();
         renderer.setSize( window.innerWidth - 10, window.innerHeight -10);
         container.appendChild( renderer.domElement );

@@ -39,6 +39,7 @@ module.exports = function (mediator, listener) {
     });
 
     mediator.trigger('scene.add', camera);
+
     function moveRoom(opts) {
         var value = {};
         value.x = opts.coords.x * CONST.room.width;
