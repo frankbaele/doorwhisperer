@@ -53143,7 +53143,7 @@ module.exports = function(mediator, listener){
             var intensity = 4;
             intensity += adjuster * 4;
             light.intensity = intensity;
-            light.distance = adjuster * 50 + 200;
+            light.distance = adjuster * 50 + 150;
             light.decay = adjuster * 5 + 3;
             lastAdjuster = adjuster;
         }
@@ -53319,11 +53319,7 @@ function init(container) {
 
 
 function animate() {
-    setTimeout( function() {
-
-        requestAnimationFrame( animate );
-
-    }, 1000 / 60 );
+    requestAnimationFrame( animate );
     TWEEN.update();
     mediator.trigger('animate');
     renderer.render( scene, camera);

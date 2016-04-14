@@ -32,11 +32,7 @@ function init(container) {
 
 
 function animate() {
-    setTimeout( function() {
-
-        requestAnimationFrame( animate );
-
-    }, 1000 / 60 );
+    requestAnimationFrame( animate );
     TWEEN.update();
     mediator.trigger('animate');
     renderer.render( scene, camera);
