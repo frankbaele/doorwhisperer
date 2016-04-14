@@ -39,7 +39,7 @@ module.exports = function(mediator, listener){
             },
             onforward: function (event, from, to) {
                 if(from == 'center'){
-                    mediator.trigger('room.add', nextRoom(position, direction));
+                    mediator.trigger('room.add.doors', nextRoom(position, direction));
                 }
             },
             onleft: function(){
@@ -83,7 +83,7 @@ module.exports = function(mediator, listener){
                         'direction': 'back',
                         'callback': function () {
                             state.transition();
-                            mediator.trigger('room.remove', nextRoom(position, direction));
+                            mediator.trigger('room.remove.doors', nextRoom(position, direction));
                         }
                     });
                     return StateMachine.ASYNC;
@@ -95,7 +95,7 @@ module.exports = function(mediator, listener){
                     moveRoom({
                         'coords': coords,
                         'callback': function () {
-                            mediator.trigger('room.remove', position);
+                            mediator.trigger('room.remove.doors', position);
                             mediator.trigger('door.close.' + doorId(position, direction), position);
                             position = coords;
                             state.transition();
@@ -220,7 +220,6 @@ module.exports = function(mediator, listener){
         var index = getRandomInt(0, availableStates.length -1);
         if(state.can(availableStates[index])){
             state[availableStates[index]]();
-            console.log(availableStates[index])
         }
     });
 
