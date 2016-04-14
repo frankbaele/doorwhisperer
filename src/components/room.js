@@ -14,6 +14,7 @@ function create(opts){
     var group = new THREE.Object3D();
     context = opts.z + '_' + opts.x;
     group.add(floor());
+    
     if(opts.data){
         _.forEach(opts.data.sounds, function(sound){
             sounds[sound] = new THREE.PositionalAudio(listener);

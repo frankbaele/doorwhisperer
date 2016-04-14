@@ -7,7 +7,7 @@ wallTexture.wrapT = THREE.RepeatWrapping;
 wallTexture.repeat.set(CONST.room.width / CONST.texture.widht, CONST.room.height / CONST.texture.height);
 
 // Materials
-var wallMat = new THREE.MeshLambertMaterial({map: wallTexture});
+var wallMat = new THREE.MeshPhongMaterial({map: wallTexture});
 // Objects
 var wallGem = new THREE.BoxGeometry(CONST.room.width, CONST.room.height, 8);
 module.exports = function (opts) {

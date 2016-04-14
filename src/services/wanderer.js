@@ -38,9 +38,7 @@ module.exports = function(mediator, listener){
                 return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined';
             },
             onforward: function (event, from, to) {
-                if(from == 'center'){
-                    mediator.trigger('room.add.doors', nextRoom(position, direction));
-                }
+                mediator.trigger('room.add.doors', nextRoom(position, direction));
             },
             onleft: function(){
                 if (direction == 0) {
@@ -137,13 +135,13 @@ module.exports = function(mediator, listener){
         var value = _.clone(group.position);
 
         if (worldDirection.x == 1) {
-            value.x = value.x - temp;
-        } else if (worldDirection.x == -1) {
             value.x = value.x + temp;
+        } else if (worldDirection.x == -1) {
+            value.x = value.x - temp;
         } else if (worldDirection.z == 1) {
-            value.z = value.z - temp;
-        } else if (worldDirection.z == -1) {
             value.z = value.z + temp;
+        } else if (worldDirection.z == -1) {
+            value.z = value.z - temp;
         }
         var time = Math.round(Math.abs(temp) /CONST.speed * 1000);
         steps.play();
