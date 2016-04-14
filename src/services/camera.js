@@ -2,31 +2,25 @@ var THREE = require('three');
 var TWEEN = require('tween.js');
 var CONST = require('../const');
 var libs = require('../libs');
+var torch = require('../components/torch');
 var _ = {
     clone: require('lodash.clone')
 };
 var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator, listener) {
-    var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-    var light = new THREE.PointLight( 0xE25822 , 1, 125);
-    light.position.set(0,0,0);
-    camera.add(light);
+    var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 250);
     camera.add(listener);
     var steps = new THREE.PositionalAudio(listener);
-    var torch = new THREE.PositionalAudio(listener);
     var ambient = new THREE.PositionalAudio(listener);
+    var torchInst = torch(mediator, listener);
     steps.load('audio/character__steps--cement.mp3');
-    torch.load('audio/torch__burning.mp3');
     ambient.load('audio/ambient.mp3');
-    torch.autoplay = true;
     ambient.autoplay = true;
-    torch.setLoop(true);
     ambient.setLoop(true);
     ambient.setVolume(0.6);
-    torch.setVolume(0.15);
     steps.position.y = -5;
     camera.add(steps);
-    camera.add(torch);
+    camera.add(torchInst);
     camera.add(ambient);
     mediator.on('camera.rotate', rotate);
     mediator.on('camera.move', move);

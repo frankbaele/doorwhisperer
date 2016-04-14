@@ -38,6 +38,7 @@ function animate() {
 
     }, 1000 / 60 );
     TWEEN.update();
+    mediator.trigger('animate');
     renderer.render( scene, camera);
 }
 

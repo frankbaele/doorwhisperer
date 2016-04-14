@@ -52907,7 +52907,7 @@ module.exports = function (opts) {
 
     return group;
 };
-},{"../const":66,"three":33}],58:[function(require,module,exports){
+},{"../const":67,"three":33}],58:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
@@ -52998,7 +52998,7 @@ module.exports = function (_mediator_, _listener_) {
         create: create
     };
 };
-},{"../const":66,"three":33,"tween.js":34}],59:[function(require,module,exports){
+},{"../const":67,"three":33,"tween.js":34}],59:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var wall = require('./wall');
@@ -53010,7 +53010,7 @@ module.exports = function(opts){
     group.rotation.y = opts.rotation;
     return group;
 };
-},{"../const":66,"./wall":62,"three":33}],60:[function(require,module,exports){
+},{"../const":67,"./wall":63,"three":33}],60:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
@@ -53027,7 +53027,7 @@ module.exports = function(){
     floor.rotateX(Math.PI / 2);
     return floor;
 };
-},{"../const":66,"three":33}],61:[function(require,module,exports){
+},{"../const":67,"three":33}],61:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var wall = require('./facet');
@@ -53118,7 +53118,44 @@ module.exports = function (_mediator_, _listener_) {
         create: create
     }
 };
-},{"../const":66,"./block":57,"./facet":59,"./floor":60,"lodash.foreach":28,"three":33}],62:[function(require,module,exports){
+},{"../const":67,"./block":57,"./facet":59,"./floor":60,"lodash.foreach":28,"three":33}],62:[function(require,module,exports){
+var THREE = require('three');
+module.exports = function(mediator, listener){
+    var group = new THREE.Object3D();
+    var audio = new THREE.PositionalAudio(listener);
+    var light = new THREE.PointLight( 0xE25822 , 2, 125, 1);
+    light.castShadow = true;
+    light.position.set(0,0,0);
+    audio.load('audio/torch__burning.mp3');
+    audio.autoplay = true;
+    audio.setLoop(true);
+    audio.setVolume(0.20);
+    var flickerPointLight = ( function() {
+        var lastAdjuster;
+        return function flickerPointLight() {
+            var adjuster = ( Math.random() - 0.5 );
+            if ( lastAdjuster ) {
+
+                diff = ( adjuster - lastAdjuster ) * .2;
+                adjuster = lastAdjuster + diff;
+
+            }
+            var intensity = 4;
+            intensity += adjuster * 4;
+            light.intensity = intensity;
+            light.distance = adjuster * 50 + 200;
+            light.decay = adjuster * 5 + 3;
+            lastAdjuster = adjuster;
+        }
+    } )();
+    mediator.on('animate', function(){
+        flickerPointLight();
+    });
+    group.add(audio);
+    group.add(light);
+    return group;
+};
+},{"three":33}],63:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -53155,7 +53192,7 @@ module.exports = function () {
     group.add(topMesh);
     return group;
 };
-},{"../const":66,"three":33}],63:[function(require,module,exports){
+},{"../const":67,"three":33}],64:[function(require,module,exports){
 module.exports=[
   [{
     "sounds": ["growl--distant.mp3"],
@@ -53171,7 +53208,7 @@ module.exports=[
     "type": "win"
   }]
 ]
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 module.exports={
   "start": {
     "title": "Wake up",
@@ -53186,7 +53223,7 @@ module.exports={
     "text": "You are death"
   }
 }
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 module.exports=[
   "img/cobblestone.png",
   "img/cobblestone_mossy.png",
@@ -53194,7 +53231,7 @@ module.exports=[
   "img/door/door_wood_upper.png",
   "img/stonebrick.png"
 ]
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 var CONST = {};
 CONST.texture = {
     widht: 32,
@@ -53218,7 +53255,7 @@ CONST.audio = {
 CONST.speed = 100;
 
 module.exports = CONST;
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 var THREE = require('three');
 var vkey = require('vkey');
 var _ = {
@@ -53247,7 +53284,7 @@ module.exports = function (mediator) {
         }
     }
 };
-},{"lodash.debounce":26,"three":33,"vkey":53}],68:[function(require,module,exports){
+},{"lodash.debounce":26,"three":33,"vkey":53}],69:[function(require,module,exports){
 console.log = null;
 delete console.log;
 
@@ -53288,11 +53325,12 @@ function animate() {
 
     }, 1000 / 60 );
     TWEEN.update();
+    mediator.trigger('animate');
     renderer.render( scene, camera);
 }
 
 window.app = init;
-},{"./controls/controls":67,"./services/camera":70,"./services/gameCycle":71,"./services/roomGenerator":72,"./services/scene":73,"./services/textures":74,"./services/user":75,"./services/wanderer":76,"./ui/popup":77,"dom-delegator":8,"mediatorjs":30,"q":32,"three":33,"tween.js":34}],69:[function(require,module,exports){
+},{"./controls/controls":68,"./services/camera":71,"./services/gameCycle":72,"./services/roomGenerator":73,"./services/scene":74,"./services/textures":75,"./services/user":76,"./services/wanderer":77,"./ui/popup":78,"dom-delegator":8,"mediatorjs":30,"q":32,"three":33,"tween.js":34}],70:[function(require,module,exports){
 var libs = {};
 
 libs.distanceVector = function (v1, v2) {
@@ -53304,36 +53342,30 @@ libs.distanceVector = function (v1, v2) {
 };
 
 module.exports = libs;
-},{}],70:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var CONST = require('../const');
 var libs = require('../libs');
+var torch = require('../components/torch');
 var _ = {
     clone: require('lodash.clone')
 };
 var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator, listener) {
-    var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 10000);
-    var light = new THREE.PointLight( 0xE25822 , 1, 125);
-    light.position.set(0,0,0);
-    camera.add(light);
+    var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 250);
     camera.add(listener);
     var steps = new THREE.PositionalAudio(listener);
-    var torch = new THREE.PositionalAudio(listener);
     var ambient = new THREE.PositionalAudio(listener);
+    var torchInst = torch(mediator, listener);
     steps.load('audio/character__steps--cement.mp3');
-    torch.load('audio/torch__burning.mp3');
     ambient.load('audio/ambient.mp3');
-    torch.autoplay = true;
     ambient.autoplay = true;
-    torch.setLoop(true);
     ambient.setLoop(true);
     ambient.setVolume(0.6);
-    torch.setVolume(0.15);
     steps.position.y = -5;
     camera.add(steps);
-    camera.add(torch);
+    camera.add(torchInst);
     camera.add(ambient);
     mediator.on('camera.rotate', rotate);
     mediator.on('camera.move', move);
@@ -53421,7 +53453,7 @@ module.exports = function (mediator, listener) {
     return camera;
 };
 
-},{"../const":66,"../libs":69,"lodash.clone":25,"three":33,"tween.js":34}],71:[function(require,module,exports){
+},{"../components/torch":62,"../const":67,"../libs":70,"lodash.clone":25,"three":33,"tween.js":34}],72:[function(require,module,exports){
 var cycle = 0;
 var mediator;
 
@@ -53435,7 +53467,7 @@ module.exports = function(_mediator_){
     mediator = _mediator_;
     gameCycle();
 };
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 var map = require('../config/map.json');
 var CONST = require('../const');
 var _ = {
@@ -53607,7 +53639,7 @@ module.exports = function (mediator, listener) {
         return doors;
     }
 };
-},{"../components/door":58,"../components/room":61,"../config/map.json":63,"../const":66,"lodash.difference":27,"lodash.foreach":28}],73:[function(require,module,exports){
+},{"../components/door":58,"../components/room":61,"../config/map.json":64,"../const":67,"lodash.difference":27,"lodash.foreach":28}],74:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -53621,7 +53653,7 @@ module.exports = function(mediator){
     return scene;
 
 };
-},{"three":33}],74:[function(require,module,exports){
+},{"three":33}],75:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -53642,7 +53674,7 @@ module.exports = function(){
     });
     return defer.promise;
 };
-},{"../config/textures.json":65,"lodash.foreach":28,"q":32,"three":33}],75:[function(require,module,exports){
+},{"../config/textures.json":66,"lodash.foreach":28,"q":32,"three":33}],76:[function(require,module,exports){
 _ = {
     clone: require('lodash.clone')
 };
@@ -53789,7 +53821,7 @@ module.exports = function (mediator) {
     mediator.on('game.reset', init);
     init();
 };
-},{"../config/map.json":63,"../const":66,"javascript-state-machine":17,"lodash.clone":25}],76:[function(require,module,exports){
+},{"../config/map.json":64,"../const":67,"javascript-state-machine":17,"lodash.clone":25}],77:[function(require,module,exports){
 var CONST = require('../const');
 var THREE = require('three');
 var map = require('../config/map.json');
@@ -54024,7 +54056,7 @@ module.exports = function(mediator, listener){
         z: 1
     });
 };
-},{"../config/map.json":63,"../const":66,"../libs":69,"javascript-state-machine":17,"three":33,"tween.js":34}],77:[function(require,module,exports){
+},{"../config/map.json":64,"../const":67,"../libs":70,"javascript-state-machine":17,"three":33,"tween.js":34}],78:[function(require,module,exports){
 var messages = require('../config/messages.json');
 var vDom = {
     h: require('virtual-dom/h'),
@@ -54081,4 +54113,4 @@ module.exports = function (mediator, container) {
 
     container.appendChild(popup)
 };
-},{"../config/messages.json":64,"javascript-state-machine":17,"virtual-dom/create-element":35,"virtual-dom/h":36}]},{},[68]);
+},{"../config/messages.json":65,"javascript-state-machine":17,"virtual-dom/create-element":35,"virtual-dom/h":36}]},{},[69]);
