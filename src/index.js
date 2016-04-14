@@ -21,7 +21,7 @@ function init(container) {
     popup(mediator, container);
     $q.all(defers).then(function(){
         var user = require('./services/user')(mediator, listener);
-        //var wanderer = require('./services/wanderer')(mediator, listener);
+        var wanderer = require('./services/wanderer')(mediator, listener);
         renderer = new THREE.WebGLRenderer();
         renderer.setSize( window.innerWidth - 10, window.innerHeight -10);
         container.appendChild( renderer.domElement );

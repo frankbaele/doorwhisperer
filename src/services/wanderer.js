@@ -2,6 +2,7 @@ var CONST = require('../const');
 var THREE = require('three');
 var map = require('../config/map.json');
 var TWEEN = require('tween.js');
+var libs = require('../libs');
 var StateMachine = require('javascript-state-machine');
 var height = CONST.texture.height + CONST.texture.height * 0.5;
 
@@ -55,14 +56,8 @@ module.exports = function(mediator, listener){
                     direction = direction + 1;
                 }
             },
-            onback: function (event, from, to) {
-                if(from =='door.open'){
-                    var id = doorId(position, direction);
-                    mediator.trigger('door.close.' + id, position);
-                }
-            },
             onturning: function(){
-                state.stopped()
+                state.stopped();
             },
             onleavestate: function (event, from, to) {
                 if (event == 'right' || event == 'left') {
@@ -231,8 +226,8 @@ module.exports = function(mediator, listener){
 
     mediator.on('game.reset', function(){
         init({
-            x: 2,
-            z: 0
+            x: 1,
+            z: 1
         });
     });
     init({
