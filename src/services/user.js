@@ -27,9 +27,7 @@ module.exports = function (mediator) {
                 return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined';
             },
             onforward: function (event, from, to) {
-                if (from == 'center') {
-                    mediator.trigger('room.add', nextRoom(position, direction));
-                }
+                mediator.trigger('room.add', nextRoom(position, direction));
             },
             onleft: function () {
                 if (direction == 0) {
