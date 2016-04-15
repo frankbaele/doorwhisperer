@@ -2,6 +2,7 @@ var THREE = require('three');
 var CONST = require('../const');
 var wall = require('./facet');
 var floor = require('./floor');
+var ceiling = require('./ceiling');
 var block = require('./block');
 var _ = {
     forEach : require('lodash.foreach')
@@ -14,7 +15,7 @@ function create(opts){
     var group = new THREE.Object3D();
     context = opts.z + '_' + opts.x;
     group.add(floor());
-    
+
     if(opts.data){
         _.forEach(opts.data.sounds, function(sound){
             sounds[sound] = new THREE.PositionalAudio(listener);
