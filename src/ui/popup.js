@@ -50,7 +50,11 @@ module.exports = function (mediator, container) {
     mediator.on('message.show', function (type) {
         open(messages[type]);
     });
-
+    mediator.on('input', function (type) {
+        if (type == 'exit'){
+            close();
+        }
+    });
 
     container.appendChild(popup)
 };

@@ -53171,21 +53171,30 @@ module.exports = function (_mediator_, _listener_) {
 };
 },{"../const":68,"./block":57,"./ceiling":58,"./facet":60,"./floor":61,"lodash.foreach":28,"three":33}],63:[function(require,module,exports){
 var THREE = require('three');
-module.exports = function(mediator, listener){
+var libs = require('../libs');
+module.exports = function (mediator, listener) {
     var group = new THREE.Object3D();
     var audio = new THREE.PositionalAudio(listener);
-    var light = new THREE.PointLight( 0xE25822 , 2, 125, 1);
+    var light = new THREE.PointLight(0xE25822, 2, 125, 1);
+    var userPos = {
+        x: 0,
+        z: 0
+    };
+    var wandererPos = {
+        x: 0,
+        z: 0
+    };
     light.castShadow = true;
-    light.position.set(0,0,0);
+    light.position.set(0, 0, 0);
     audio.load('audio/torch__burning.mp3');
     audio.autoplay = true;
     audio.setLoop(true);
     audio.setVolume(0.20);
-    var flickerPointLight = ( function() {
+    var flickerPointLight = (function () {
         var lastAdjuster;
         return function flickerPointLight() {
             var adjuster = ( Math.random() - 0.5 );
-            if ( lastAdjuster ) {
+            if (lastAdjuster) {
 
                 diff = ( adjuster - lastAdjuster ) * .2;
                 adjuster = lastAdjuster + diff;
@@ -53198,15 +53207,38 @@ module.exports = function(mediator, listener){
             light.decay = adjuster * 5 + 3;
             lastAdjuster = adjuster;
         }
-    } )();
-    mediator.on('animate', function(){
+    })();
+
+    function setColor() {
+        var distance = libs.distanceVector2(userPos, wandererPos);
+        if (distance == 1) {
+            light.color.setHex( '0xE24822' );
+        } else if (distance < 2) {
+            light.color.setHex( '0xE25822' );
+        } else {
+            light.color.setHex( '0xE26822' );
+        }
+    }
+
+    mediator.on('animate', function () {
         flickerPointLight();
     });
+
+    mediator.on('user.position', function (coords) {
+        userPos = coords;
+        setColor();
+    });
+
+    mediator.on('wanderer.position', function (coords) {
+        wandererPos = coords;
+        setColor();
+    });
+
     group.add(audio);
     group.add(light);
     return group;
 };
-},{"three":33}],64:[function(require,module,exports){
+},{"../libs":71,"three":33}],64:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -53333,6 +53365,9 @@ module.exports = function (mediator) {
         if (code == '<space>') {
             mediator.trigger('input', 'enter');
         }
+        if (code == '<escape>' || code == '<enter>' ) {
+            mediator.trigger('input', 'exit');
+        }
     }
 };
 },{"lodash.debounce":26,"three":33,"vkey":53}],70:[function(require,module,exports){
@@ -53380,12 +53415,16 @@ window.app = init;
 },{"./controls/controls":69,"./services/camera":72,"./services/gameCycle":73,"./services/roomGenerator":74,"./services/scene":75,"./services/textures":76,"./services/user":77,"./services/wanderer":78,"./ui/popup":79,"dom-delegator":8,"mediatorjs":30,"q":32,"three":33,"tween.js":34}],71:[function(require,module,exports){
 var libs = {};
 
-libs.distanceVector = function (v1, v2) {
+libs.distanceVector3 = function (v1, v2) {
     var dx = v1.x - v2.x;
     var dy = v1.y - v2.y;
     var dz = v1.z - v2.z;
-
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
+};
+libs.distanceVector2 = function (v1, v2) {
+    var dx = v1.x - v2.x;
+    var dz = v1.z - v2.z;
+    return Math.sqrt(dx * dx + dz * dz);
 };
 
 module.exports = libs;
@@ -53431,7 +53470,7 @@ module.exports = function (mediator, listener) {
         value.x = opts.coords.x * CONST.room.width;
         value.z = opts.coords.z * CONST.room.width + CONST.room.width / 2;
         value.y = height;
-        var distance = libs.distanceVector(camera.position, value);
+        var distance = libs.distanceVector3(camera.position, value);
         var time = Math.round(Math.abs(distance)/CONST.speed * 1000);
         steps.play();
         new TWEEN.Tween(camera.position)
@@ -53813,6 +53852,7 @@ module.exports = function (mediator) {
                                     mediator.trigger('room.remove', position);
                                     mediator.trigger('door.close.' + doorId(position, direction), position);
                                     position = coords;
+                                    mediator.trigger('user.position', coords);
                                     state.transition();
                                 }
                             });
@@ -53857,6 +53897,7 @@ module.exports = function (mediator) {
         direction = 0;
         mediator.trigger('camera.center', position);
         mediator.trigger('room.center', position);
+        mediator.trigger('user.position', position);
     }
 
 
@@ -53881,7 +53922,6 @@ module.exports = function(mediator, listener){
     var steps = new THREE.PositionalAudio(listener);
     steps.load('audio/character__steps--cement.mp3');
     steps.position.y = -5;
-
     var group = new THREE.Object3D();
     var position;
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
@@ -53967,6 +54007,7 @@ module.exports = function(mediator, listener){
                             mediator.trigger('room.remove.doors', position);
                             mediator.trigger('door.close.' + doorId(position, direction), position);
                             position = coords;
+                            mediator.trigger('wanderer.position', coords);
                             state.transition();
                         }
                     });
@@ -53975,6 +54016,7 @@ module.exports = function(mediator, listener){
             }
         }
     });
+
     function rotate(opts) {
         var value = group.rotation.y;
         if (opts.direction == 'left') {
@@ -54032,7 +54074,7 @@ module.exports = function(mediator, listener){
         value.x = opts.coords.x * CONST.room.width;
         value.z = opts.coords.z * CONST.room.width + CONST.room.width / 2;
         value.y = height;
-        var distance = libs.distanceVector(group.position, value);
+        var distance = libs.distanceVector3(group.position, value);
         var time = Math.round(Math.abs(distance)/CONST.speed * 1000);
         steps.play();
         new TWEEN.Tween(group.position)
@@ -54078,9 +54120,11 @@ module.exports = function(mediator, listener){
     function init(coords){
         position = coords;
         direction =  0;
+        group.rotation.y = 0;
         group.position.z = coords.z * CONST.room.width + CONST.room.width / 2;
         group.position.y = height;
         group.position.x = coords.x * CONST.room.width;
+        mediator.trigger('wanderer.position', coords);
     }
 
     mediator.trigger('scene.add', group);
@@ -54156,7 +54200,11 @@ module.exports = function (mediator, container) {
     mediator.on('message.show', function (type) {
         open(messages[type]);
     });
-
+    mediator.on('input', function (type) {
+        if (type == 'exit'){
+            close();
+        }
+    });
 
     container.appendChild(popup)
 };

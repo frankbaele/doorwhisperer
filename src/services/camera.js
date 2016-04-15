@@ -39,7 +39,7 @@ module.exports = function (mediator, listener) {
         value.x = opts.coords.x * CONST.room.width;
         value.z = opts.coords.z * CONST.room.width + CONST.room.width / 2;
         value.y = height;
-        var distance = libs.distanceVector(camera.position, value);
+        var distance = libs.distanceVector3(camera.position, value);
         var time = Math.round(Math.abs(distance)/CONST.speed * 1000);
         steps.play();
         new TWEEN.Tween(camera.position)

@@ -10,7 +10,6 @@ module.exports = function(mediator, listener){
     var steps = new THREE.PositionalAudio(listener);
     steps.load('audio/character__steps--cement.mp3');
     steps.position.y = -5;
-
     var group = new THREE.Object3D();
     var position;
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
@@ -96,6 +95,7 @@ module.exports = function(mediator, listener){
                             mediator.trigger('room.remove.doors', position);
                             mediator.trigger('door.close.' + doorId(position, direction), position);
                             position = coords;
+                            mediator.trigger('wanderer.position', coords);
                             state.transition();
                         }
                     });
@@ -104,6 +104,7 @@ module.exports = function(mediator, listener){
             }
         }
     });
+
     function rotate(opts) {
         var value = group.rotation.y;
         if (opts.direction == 'left') {
@@ -161,7 +162,7 @@ module.exports = function(mediator, listener){
         value.x = opts.coords.x * CONST.room.width;
         value.z = opts.coords.z * CONST.room.width + CONST.room.width / 2;
         value.y = height;
-        var distance = libs.distanceVector(group.position, value);
+        var distance = libs.distanceVector3(group.position, value);
         var time = Math.round(Math.abs(distance)/CONST.speed * 1000);
         steps.play();
         new TWEEN.Tween(group.position)
@@ -207,9 +208,11 @@ module.exports = function(mediator, listener){
     function init(coords){
         position = coords;
         direction =  0;
+        group.rotation.y = 0;
         group.position.z = coords.z * CONST.room.width + CONST.room.width / 2;
         group.position.y = height;
         group.position.x = coords.x * CONST.room.width;
+        mediator.trigger('wanderer.position', coords);
     }
 
     mediator.trigger('scene.add', group);

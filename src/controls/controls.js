@@ -24,5 +24,8 @@ module.exports = function (mediator) {
         if (code == '<space>') {
             mediator.trigger('input', 'enter');
         }
+        if (code == '<escape>' || code == '<enter>' ) {
+            mediator.trigger('input', 'exit');
+        }
     }
 };
