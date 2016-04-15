@@ -14,11 +14,11 @@ module.exports = function (mediator, listener) {
     var ambient = new THREE.PositionalAudio(listener);
     var torchInst = torch(mediator, listener);
     steps.load('audio/character__steps--cement.mp3');
+    steps.position.y = -16;
     ambient.load('audio/ambient.mp3');
     ambient.autoplay = true;
     ambient.setLoop(true);
     ambient.setVolume(0.6);
-    steps.position.y = -5;
     camera.add(steps);
     camera.add(torchInst);
     camera.add(ambient);

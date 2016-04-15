@@ -128,7 +128,7 @@ module.exports = function (mediator) {
 
     function init(coords) {
         position = {
-            x: 2,
+            x: 0,
             z: 0
         };
         direction = 0;

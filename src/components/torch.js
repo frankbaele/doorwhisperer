@@ -17,7 +17,8 @@ module.exports = function (mediator, listener) {
     audio.load('audio/torch__burning.mp3');
     audio.autoplay = true;
     audio.setLoop(true);
-    audio.setVolume(0.20);
+    audio.setRefDistance(15);
+    audio.setVolume(0.10);
     var flickerPointLight = (function () {
         var lastAdjuster;
         return function flickerPointLight() {

@@ -27,7 +27,6 @@ module.exports = function (mediator, listener) {
         if (map[coords.z] && map[coords.z][coords.x + 1]) {
             walls.right = true;
         }
-
         rooms[coords.z + '_' + coords.x] = {
             instance: room.create({
                 x: coords.x,

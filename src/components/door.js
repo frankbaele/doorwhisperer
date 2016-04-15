@@ -18,7 +18,6 @@ function create(opts) {
     upper.position.x = 16;
     bottom.position.y = -32;
     bottom.position.x = 16;
-
     // First check if how we are moving
     if (opts.from.x != opts.to.x) {
         //horizontal movement
@@ -39,13 +38,12 @@ function create(opts) {
     var closeSound = new THREE.PositionalAudio(listener);
     openSound.load('audio/door__open-close--knob.mp3');
     closeSound.load('audio/door__close--wood.mp3');
-    openSound.setRefDistance(75);
-    closeSound.setRefDistance(75);
+    openSound.setRefDistance(15);
+    closeSound.setRefDistance(15);
     group.add(upper);
     group.add(bottom);
     group.add(openSound);
     mediator.trigger('scene.add', group);
-
     var state = StateMachine.create({
         initial: 'closed',
         error: function (eventName, from, to, args, errorCode, errorMessage) {

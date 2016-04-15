@@ -20,7 +20,7 @@ function create(opts){
         _.forEach(opts.data.sounds, function(sound){
             sounds[sound] = new THREE.PositionalAudio(listener);
             sounds[sound].load(CONST.audio.url + sound);
-            sounds[sound].setRefDistance( 75 );
+            sounds[sound].setRefDistance( 15 );
             sounds[sound].autoplay = true;
             group.add(sounds[sound]);
         })
@@ -34,7 +34,7 @@ function create(opts){
     if (opts.walls.left) {
         group.add(wall({x: -CONST.room.width / 2 + 8, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
     }else {
-        group.add(wall({x: -CONST.room.width / 2 + 8, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
+        group.add(block({x: -CONST.room.width / 2 + 8, y: 0, z: CONST.room.width / 2, rotation: Math.PI / 2}));
     }
 
     if (opts.walls.right) {

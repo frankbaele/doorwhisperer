@@ -8,8 +8,13 @@ var height = CONST.texture.height + CONST.texture.height * 0.5;
 
 module.exports = function(mediator, listener){
     var steps = new THREE.PositionalAudio(listener);
+    var growl = new THREE.PositionalAudio(listener);
+    steps.setRefDistance(15);
+    growl.setRefDistance(15);
+    steps.position.y = -16;
     steps.load('audio/character__steps--cement.mp3');
-    steps.position.y = -5;
+    growl.load('audio/growl--distant.mp3');
+    steps.setVolume(0.6);
     var group = new THREE.Object3D();
     var position;
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
@@ -19,11 +24,15 @@ module.exports = function(mediator, listener){
         x: 0,
         z: 0
     };
+
     var geom = new THREE.BoxGeometry(25, 25, 25);
     var mat = new THREE.MeshLambertMaterial();
     var mesh = new THREE.Mesh(geom, mat);
+
     group.add(steps);
+    group.add(growl);
     group.add(mesh);
+
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {},
@@ -94,12 +103,14 @@ module.exports = function(mediator, listener){
                     var id = doorId(position, direction);
                     mediator.trigger('door.open.' + id, position);
                     position = coords;
+                    setTimeout(function(){
+                        mediator.trigger('wanderer.position', coords);
+                    }, 150);
                     moveRoom({
                         'coords': coords,
                         'callback': function () {
                             mediator.trigger('room.remove.doors', position);
                             mediator.trigger('door.close.' + doorId(position, direction), position);
-                            mediator.trigger('wanderer.position', coords);
                             state.transition();
                         }
                     });
@@ -226,7 +237,7 @@ module.exports = function(mediator, listener){
             mediator.trigger('message.show', 'lose');
             mediator.trigger('game.reset');
         }
-        if(cycle % 5 === 0){
+        if(cycle % 20 == 0){
             var availableStates = state.transitions();
             var index = getRandomInt(0, availableStates.length -1);
             if(state.can(availableStates[index])){
@@ -245,7 +256,6 @@ module.exports = function(mediator, listener){
             z: 1
         });
     });
-
     init({
         x: 1,
         z: 1
