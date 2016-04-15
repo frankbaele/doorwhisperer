@@ -101,14 +101,12 @@ module.exports = function(mediator, listener){
                 else if (event == 'enter') {
                     var coords = nextRoom(position, direction);
                     var id = doorId(position, direction);
-                    mediator.trigger('door.open.' + id, position);
-                    position = coords;
-                    setTimeout(function(){
-                        mediator.trigger('wanderer.position', coords);
-                    }, 150);
+                    mediator.trigger('door.open' + id, position);
                     moveRoom({
                         'coords': coords,
                         'callback': function () {
+                            mediator.trigger('wanderer.position', coords);
+                            position = coords;
                             mediator.trigger('room.remove.doors', position);
                             mediator.trigger('door.close.' + doorId(position, direction), position);
                             state.transition();
@@ -159,7 +157,7 @@ module.exports = function(mediator, listener){
         } else if (worldDirection.z == -1) {
             value.z = value.z - temp;
         }
-        var time = Math.round(Math.abs(temp) /CONST.speed * 1000);
+        var time = Math.round(Math.abs(temp) /CONST.speed/2 * 1000);
         steps.play();
         new TWEEN.Tween(group.position)
             .to({z: value.z, x: value.x}, time)
@@ -178,7 +176,7 @@ module.exports = function(mediator, listener){
         value.z = opts.coords.z * CONST.room.width + CONST.room.width / 2;
         value.y = height;
         var distance = libs.distanceVector3(group.position, value);
-        var time = Math.round(Math.abs(distance)/CONST.speed * 1000);
+        var time = Math.round(Math.abs(distance)/CONST.speed/2 * 1000);
         steps.play();
         new TWEEN.Tween(group.position)
             .to({z: value.z, x: value.x},time)
@@ -236,8 +234,6 @@ module.exports = function(mediator, listener){
         //check if they are in the same room
 
         if(userPos.x == position.x && userPos.z == position.z){
-            console.log(userPos);
-            console.log(position);
             mediator.trigger('message.show', 'lose');
             mediator.trigger('game.reset');
         }

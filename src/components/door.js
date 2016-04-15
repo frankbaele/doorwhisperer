@@ -39,7 +39,9 @@ function create(opts) {
     openSound.load('audio/door__open-close--knob.mp3');
     closeSound.load('audio/door__close--wood.mp3');
     openSound.setRefDistance(15);
+    openSound.setVolume(0.6);
     closeSound.setRefDistance(15);
+    closeSound.setVolume(0.6);
     group.add(upper);
     group.add(bottom);
     group.add(openSound);
