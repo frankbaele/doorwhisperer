@@ -40,11 +40,11 @@ module.exports = function (mediator, listener) {
     function setColor() {
         var distance = libs.distanceVector2(userPos, wandererPos);
         if (distance == 1) {
-            light.color.setHex( '0xE24822' );
+            light.color.setHex( '0xE23822');
         } else if (distance < 2) {
-            light.color.setHex( '0xE25822' );
+            light.color.setHex( '0xE24822');
         } else {
-            light.color.setHex( '0xE26822' );
+            light.color.setHex( '0xE25822');
         }
     }
 

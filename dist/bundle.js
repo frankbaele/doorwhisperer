@@ -53212,11 +53212,11 @@ module.exports = function (mediator, listener) {
     function setColor() {
         var distance = libs.distanceVector2(userPos, wandererPos);
         if (distance == 1) {
-            light.color.setHex( '0xE24822' );
+            light.color.setHex( '0xE23822');
         } else if (distance < 2) {
-            light.color.setHex( '0xE25822' );
+            light.color.setHex( '0xE24822');
         } else {
-            light.color.setHex( '0xE26822' );
+            light.color.setHex( '0xE25822');
         }
     }
 
@@ -53546,7 +53546,7 @@ var mediator;
 function gameCycle(){
     cycle++;
     mediator.trigger('new.gamecycle', cycle);
-    setTimeout(gameCycle, 500);
+    setTimeout(gameCycle, 200);
 }
 
 module.exports = function(_mediator_){
@@ -53927,6 +53927,10 @@ module.exports = function(mediator, listener){
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
     var directions = ['north', 'east', 'south', 'west'];
     var direction;
+    var userPos = {
+        x: 0,
+        z: 0
+    };
     var geom = new THREE.BoxGeometry(25, 25, 25);
     var mat = new THREE.MeshLambertMaterial();
     var mesh = new THREE.Mesh(geom, mat);
@@ -54001,12 +54005,12 @@ module.exports = function(mediator, listener){
                     var coords = nextRoom(position, direction);
                     var id = doorId(position, direction);
                     mediator.trigger('door.open.' + id, position);
+                    position = coords;
                     moveRoom({
                         'coords': coords,
                         'callback': function () {
                             mediator.trigger('room.remove.doors', position);
                             mediator.trigger('door.close.' + doorId(position, direction), position);
-                            position = coords;
                             mediator.trigger('wanderer.position', coords);
                             state.transition();
                         }
@@ -54128,12 +54132,23 @@ module.exports = function(mediator, listener){
     }
 
     mediator.trigger('scene.add', group);
-    mediator.on('new.gamecycle', function(){
-        var availableStates = state.transitions();
-        var index = getRandomInt(0, availableStates.length -1);
-        if(state.can(availableStates[index])){
-            state[availableStates[index]]();
+    mediator.on('new.gamecycle', function(cycle){
+        //check if they are in the same room
+        if(userPos.x == position.x  && userPos.y == position.y){
+            mediator.trigger('message.show', 'lose');
+            mediator.trigger('game.reset');
         }
+        if(cycle % 5 === 0){
+            var availableStates = state.transitions();
+            var index = getRandomInt(0, availableStates.length -1);
+            if(state.can(availableStates[index])){
+                state[availableStates[index]]();
+            }
+        }
+    });
+
+    mediator.on('user.position', function (coords) {
+        userPos = coords;
     });
 
     mediator.on('game.reset', function(){
@@ -54142,6 +54157,7 @@ module.exports = function(mediator, listener){
             z: 1
         });
     });
+
     init({
         x: 1,
         z: 1
