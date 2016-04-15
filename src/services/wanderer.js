@@ -13,7 +13,11 @@ module.exports = function(mediator, listener){
     growl.setRefDistance(15);
     steps.position.y = -16;
     steps.load('audio/character__steps--cement.mp3');
-    growl.load('audio/growl--distant.mp3');
+    growl.load('audio/growl--close.mp3');
+    growl.setLoop(true);
+    growl.autoplay = true;
+    growl.setRefDistance(10);
+    growl.setVolume(0.7);
     steps.setVolume(0.6);
     var group = new THREE.Object3D();
     var position;
@@ -234,7 +238,7 @@ module.exports = function(mediator, listener){
         //check if they are in the same room
 
         if(userPos.x == position.x && userPos.z == position.z){
-            mediator.trigger('message.show', 'lose');
+            mediator.trigger('message.show', 'wanderer');
             mediator.trigger('game.reset');
         }
         if(cycle % 10 == 0){

@@ -9,15 +9,24 @@ module.exports = function (mediator, container) {
 
     var text;
     var title;
+    var img;
     function close(){
         text.innerHTML = '';
         title.innerHTML = '';
+        img.src = '';
         popup.style.display = 'none';
     }
 
     function open(opts){
         text.innerHTML = opts.text;
         title.innerHTML = opts.title;
+        if(opts.img){
+            img.src = opts.img;
+            img.style.display = 'block';
+        } else {
+            img.style.display = 'none';
+        }
+
         popup.style.display = 'block';
     }
 
@@ -30,10 +39,17 @@ module.exports = function (mediator, container) {
         title = node;
     };
 
+    var AfterRenderIMG = function () {};
+    AfterRenderIMG.prototype.hook = function (node) {
+        img = node;
+    };
     var popup = vDom.create(
         vDom.h('div.popup', [
             vDom.h('h2.title', {
                 afterRender: new AfterRenderTitle()
+            }),
+            vDom.h('img', {
+                afterRender: new AfterRenderIMG()
             }),
             vDom.h('p.text', {
                 afterRender: new AfterRenderText()

@@ -18,7 +18,7 @@ module.exports = function (mediator, listener) {
     ambient.load('audio/ambient.mp3');
     ambient.autoplay = true;
     ambient.setLoop(true);
-    ambient.setVolume(0.6);
+    ambient.setVolume(0.5);
     camera.add(steps);
     camera.add(torchInst);
     camera.add(ambient);

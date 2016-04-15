@@ -15,6 +15,7 @@ var roomGen = require('./services/roomGenerator')(mediator, listener);
 var gameCycle = require('./services/gameCycle')(mediator);
 var textures = require('./services/textures');
 var popup = require('./ui/popup');
+var renderer;
 function init(container) {
     var defers = [];
     defers.push(textures());

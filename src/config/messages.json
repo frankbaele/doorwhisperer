@@ -10,5 +10,10 @@
   "lose": {
     "title": "Game over",
     "text": "You are death"
+  },
+  "wanderer": {
+    "title": "Game over",
+    "img": "img/wanderer.png",
+    "text": "You where devoured by the wanderer"
   }
 }

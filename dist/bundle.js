@@ -52967,9 +52967,9 @@ function create(opts) {
     openSound.load('audio/door__open-close--knob.mp3');
     closeSound.load('audio/door__close--wood.mp3');
     openSound.setRefDistance(15);
-    openSound.setVolume(0.6);
+    openSound.setVolume(0.5);
     closeSound.setRefDistance(15);
-    closeSound.setVolume(0.6);
+    closeSound.setVolume(0.5);
     group.add(upper);
     group.add(bottom);
     group.add(openSound);
@@ -53306,6 +53306,11 @@ module.exports={
   "lose": {
     "title": "Game over",
     "text": "You are death"
+  },
+  "wanderer": {
+    "title": "Game over",
+    "img": "img/wanderer.png",
+    "text": "You where devoured by the wanderer"
   }
 }
 },{}],67:[function(require,module,exports){
@@ -53390,6 +53395,7 @@ var roomGen = require('./services/roomGenerator')(mediator, listener);
 var gameCycle = require('./services/gameCycle')(mediator);
 var textures = require('./services/textures');
 var popup = require('./ui/popup');
+var renderer;
 function init(container) {
     var defers = [];
     defers.push(textures());
@@ -53457,7 +53463,7 @@ module.exports = function (mediator, listener) {
     ambient.load('audio/ambient.mp3');
     ambient.autoplay = true;
     ambient.setLoop(true);
-    ambient.setVolume(0.6);
+    ambient.setVolume(0.5);
     camera.add(steps);
     camera.add(torchInst);
     camera.add(ambient);
@@ -53931,7 +53937,11 @@ module.exports = function(mediator, listener){
     growl.setRefDistance(15);
     steps.position.y = -16;
     steps.load('audio/character__steps--cement.mp3');
-    growl.load('audio/growl--distant.mp3');
+    growl.load('audio/growl--close.mp3');
+    growl.setLoop(true);
+    growl.autoplay = true;
+    growl.setRefDistance(10);
+    growl.setVolume(0.7);
     steps.setVolume(0.6);
     var group = new THREE.Object3D();
     var position;
@@ -54152,7 +54162,7 @@ module.exports = function(mediator, listener){
         //check if they are in the same room
 
         if(userPos.x == position.x && userPos.z == position.z){
-            mediator.trigger('message.show', 'lose');
+            mediator.trigger('message.show', 'wanderer');
             mediator.trigger('game.reset');
         }
         if(cycle % 10 == 0){
@@ -54191,15 +54201,24 @@ module.exports = function (mediator, container) {
 
     var text;
     var title;
+    var img;
     function close(){
         text.innerHTML = '';
         title.innerHTML = '';
+        img.src = '';
         popup.style.display = 'none';
     }
 
     function open(opts){
         text.innerHTML = opts.text;
         title.innerHTML = opts.title;
+        if(opts.img){
+            img.src = opts.img;
+            img.style.display = 'block';
+        } else {
+            img.style.display = 'none';
+        }
+
         popup.style.display = 'block';
     }
 
@@ -54212,10 +54231,17 @@ module.exports = function (mediator, container) {
         title = node;
     };
 
+    var AfterRenderIMG = function () {};
+    AfterRenderIMG.prototype.hook = function (node) {
+        img = node;
+    };
     var popup = vDom.create(
         vDom.h('div.popup', [
             vDom.h('h2.title', {
                 afterRender: new AfterRenderTitle()
+            }),
+            vDom.h('img', {
+                afterRender: new AfterRenderIMG()
             }),
             vDom.h('p.text', {
                 afterRender: new AfterRenderText()
