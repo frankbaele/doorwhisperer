@@ -24,7 +24,7 @@ module.exports = function (mediator) {
         callbacks: {
             onbeforeforward: function (event, from, to) {
                 var coords = nextRoom(position, direction);
-                return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined';
+                return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined' && map[coords.z][coords.x] !== null;
             },
             onforward: function (event, from, to) {
                 mediator.trigger('room.add', nextRoom(position, direction));
@@ -136,7 +136,6 @@ module.exports = function (mediator) {
         mediator.trigger('room.center', position);
         mediator.trigger('user.position', position);
     }
-
 
     mediator.on('input', function (type) {
         if (state.can(type)) {
