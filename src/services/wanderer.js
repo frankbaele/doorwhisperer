@@ -47,7 +47,7 @@ module.exports = function(mediator, listener){
         callbacks: {
             onbeforeforward: function (event, from, to) {
                 var coords = nextRoom(position, direction);
-                return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined';
+                return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined' && map[coords.z][coords.x] !== null;
             },
             onforward: function (event, from, to) {
                 mediator.trigger('room.add.doors', nextRoom(position, direction));
@@ -212,6 +212,7 @@ module.exports = function(mediator, listener){
         }
         return id;
     }
+
     /**
     * Returns a random integer between min (inclusive) and max (inclusive)
     * Using Math.round() will give you a non-uniform distribution!
@@ -233,11 +234,14 @@ module.exports = function(mediator, listener){
     mediator.trigger('scene.add', group);
     mediator.on('new.gamecycle', function(cycle){
         //check if they are in the same room
-        if(userPos.x == position.x  && userPos.y == position.y){
+
+        if(userPos.x == position.x && userPos.z == position.z){
+            console.log(userPos);
+            console.log(position);
             mediator.trigger('message.show', 'lose');
             mediator.trigger('game.reset');
         }
-        if(cycle % 20 == 0){
+        if(cycle % 10 == 0){
             var availableStates = state.transitions();
             var index = getRandomInt(0, availableStates.length -1);
             if(state.can(availableStates[index])){
@@ -252,12 +256,12 @@ module.exports = function(mediator, listener){
 
     mediator.on('game.reset', function(){
         init({
-            x: 1,
-            z: 1
+            x: 2,
+            z: 2
         });
     });
     init({
-        x: 1,
-        z: 1
+        x: 2,
+        z: 2
     });
 };
