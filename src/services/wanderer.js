@@ -17,8 +17,8 @@ module.exports = function(mediator, listener){
     growl.setLoop(true);
     growl.autoplay = true;
     growl.setRefDistance(10);
-    growl.setVolume(0.7);
-    steps.setVolume(0.6);
+    growl.setVolume(1);
+    steps.setVolume(0.9);
     var group = new THREE.Object3D();
     var position;
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
@@ -32,11 +32,9 @@ module.exports = function(mediator, listener){
     var geom = new THREE.BoxGeometry(25, 25, 25);
     var mat = new THREE.MeshLambertMaterial();
     var mesh = new THREE.Mesh(geom, mat);
-
     group.add(steps);
     group.add(growl);
     group.add(mesh);
-
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {},

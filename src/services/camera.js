@@ -15,10 +15,12 @@ module.exports = function (mediator, listener) {
     var torchInst = torch(mediator, listener);
     steps.load('audio/character__steps--cement.mp3');
     steps.position.y = -16;
+    steps.setRefDistance(15);
+    steps.setVolume(0.35);
     ambient.load('audio/ambient.mp3');
     ambient.autoplay = true;
     ambient.setLoop(true);
-    ambient.setVolume(0.5);
+    ambient.setVolume(0.80);
     camera.add(steps);
     camera.add(torchInst);
     camera.add(ambient);

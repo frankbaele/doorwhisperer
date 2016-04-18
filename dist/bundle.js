@@ -52967,9 +52967,9 @@ function create(opts) {
     openSound.load('audio/door__open-close--knob.mp3');
     closeSound.load('audio/door__close--wood.mp3');
     openSound.setRefDistance(15);
-    openSound.setVolume(0.5);
+    openSound.setVolume(0.80);
     closeSound.setRefDistance(15);
-    closeSound.setVolume(0.5);
+    closeSound.setVolume(0.80);
     group.add(upper);
     group.add(bottom);
     group.add(openSound);
@@ -53195,8 +53195,8 @@ module.exports = function (mediator, listener) {
     heart.setLoop(true);
     audio.setRefDistance(15);
     heart.setRefDistance(15);
-    audio.setVolume(0.10);
-    heart.setVolume(0.10);
+    audio.setVolume(0.40);
+    heart.setVolume(0.40);
     var flickerPointLight = (function () {
         var lastAdjuster;
         return function flickerPointLight() {
@@ -53219,13 +53219,13 @@ module.exports = function (mediator, listener) {
     function setColor() {
         var distance = libs.distanceVector2(userPos, wandererPos);
         if (distance == 1) {
-            heart.setVolume(0.50);
+            heart.setVolume(0.80);
             light.color.setHex( '0xE23822');
         } else if (distance < 2) {
-            heart.setVolume(0.25);
+            heart.setVolume(0.55);
             light.color.setHex( '0xE24822');
         } else {
-            heart.setVolume(0.10);
+            heart.setVolume(0.40);
             light.color.setHex( '0xE25822');
         }
     }
@@ -53460,10 +53460,12 @@ module.exports = function (mediator, listener) {
     var torchInst = torch(mediator, listener);
     steps.load('audio/character__steps--cement.mp3');
     steps.position.y = -16;
+    steps.setRefDistance(15);
+    steps.setVolume(0.35);
     ambient.load('audio/ambient.mp3');
     ambient.autoplay = true;
     ambient.setLoop(true);
-    ambient.setVolume(0.5);
+    ambient.setVolume(0.80);
     camera.add(steps);
     camera.add(torchInst);
     camera.add(ambient);
@@ -53941,8 +53943,8 @@ module.exports = function(mediator, listener){
     growl.setLoop(true);
     growl.autoplay = true;
     growl.setRefDistance(10);
-    growl.setVolume(0.7);
-    steps.setVolume(0.6);
+    growl.setVolume(1);
+    steps.setVolume(0.9);
     var group = new THREE.Object3D();
     var position;
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
@@ -53956,11 +53958,9 @@ module.exports = function(mediator, listener){
     var geom = new THREE.BoxGeometry(25, 25, 25);
     var mat = new THREE.MeshLambertMaterial();
     var mesh = new THREE.Mesh(geom, mat);
-
     group.add(steps);
     group.add(growl);
     group.add(mesh);
-
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {},

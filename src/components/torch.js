@@ -23,8 +23,8 @@ module.exports = function (mediator, listener) {
     heart.setLoop(true);
     audio.setRefDistance(15);
     heart.setRefDistance(15);
-    audio.setVolume(0.10);
-    heart.setVolume(0.10);
+    audio.setVolume(0.40);
+    heart.setVolume(0.40);
     var flickerPointLight = (function () {
         var lastAdjuster;
         return function flickerPointLight() {
@@ -47,13 +47,13 @@ module.exports = function (mediator, listener) {
     function setColor() {
         var distance = libs.distanceVector2(userPos, wandererPos);
         if (distance == 1) {
-            heart.setVolume(0.50);
+            heart.setVolume(0.80);
             light.color.setHex( '0xE23822');
         } else if (distance < 2) {
-            heart.setVolume(0.25);
+            heart.setVolume(0.55);
             light.color.setHex( '0xE24822');
         } else {
-            heart.setVolume(0.10);
+            heart.setVolume(0.40);
             light.color.setHex( '0xE25822');
         }
     }
