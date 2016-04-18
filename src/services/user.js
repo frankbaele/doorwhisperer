@@ -89,7 +89,6 @@ module.exports = function (mediator) {
                                     mediator.trigger('room.remove', position);
                                     mediator.trigger('door.close.' + doorId(position, direction), position);
                                     position = coords;
-                                    mediator.trigger('user.position', coords);
                                     state.transition();
                                 }
                             });
@@ -134,7 +133,6 @@ module.exports = function (mediator) {
         direction = 0;
         mediator.trigger('camera.center', position);
         mediator.trigger('room.center', position);
-        mediator.trigger('user.position', position);
     }
 
     mediator.on('input', function (type) {

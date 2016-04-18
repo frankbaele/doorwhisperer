@@ -53172,11 +53172,14 @@ module.exports = function (_mediator_, _listener_) {
 },{"../const":68,"./block":57,"./ceiling":58,"./facet":60,"./floor":61,"lodash.foreach":28,"three":33}],63:[function(require,module,exports){
 var THREE = require('three');
 var libs = require('../libs');
+var CONST = require('../const');
 module.exports = function (mediator, listener) {
     var group = new THREE.Object3D();
     var audio = new THREE.PositionalAudio(listener);
     var heart = new THREE.PositionalAudio(listener);
     var light = new THREE.PointLight(0xE25822, 2, 125, 1);
+    var red = 226 / 256;
+    var blue = 34 / 256;
     var userPos = {
         x: 0,
         z: 0
@@ -53217,16 +53220,14 @@ module.exports = function (mediator, listener) {
     })();
 
     function setColor() {
-        var distance = libs.distanceVector2(userPos, wandererPos);
-        if (distance == 1) {
-            heart.setVolume(0.80);
-            light.color.setHex( '0xE23822');
-        } else if (distance < 2) {
-            heart.setVolume(0.55);
-            light.color.setHex( '0xE24822');
-        } else {
-            heart.setVolume(0.40);
-            light.color.setHex( '0xE25822');
+        var distance = libs.distanceVector3(userPos, wandererPos);
+
+        if (!isNaN(distance)) {
+            var value = distance / (CONST.room.width * 2);
+            var green = (55 + value.clamp(0, 1) * 60) / 256;
+            var volume = 0.90 - value.clamp(0, 1) * 0.40;
+            light.color.setRGB(red, green, blue);
+            heart.setVolume(volume);
         }
     }
 
@@ -53236,11 +53237,12 @@ module.exports = function (mediator, listener) {
 
     mediator.on('user.position', function (coords) {
         userPos = coords;
-        setColor();
     });
 
     mediator.on('wanderer.position', function (coords) {
         wandererPos = coords;
+    });
+    mediator.on('new.gamecycle', function () {
         setColor();
     });
 
@@ -53249,7 +53251,7 @@ module.exports = function (mediator, listener) {
     group.add(light);
     return group;
 };
-},{"../libs":71,"three":33}],64:[function(require,module,exports){
+},{"../const":68,"../libs":71,"three":33}],64:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -53440,6 +53442,20 @@ libs.distanceVector2 = function (v1, v2) {
     var dz = v1.z - v2.z;
     return Math.sqrt(dx * dx + dz * dz);
 };
+/**
+ * Returns a number whose value is limited to the given range.
+ *
+ * Example: limit the output of this computation to between 0 and 255
+ * (x * 255).clamp(0, 255)
+ *
+ * @param {Number} min The lower boundary of the output range
+ * @param {Number} max The upper boundary of the output range
+ * @returns A number in the range [min, max]
+ * @type Number
+ */
+Number.prototype.clamp = function(min, max) {
+    return Math.min(Math.max(this, min), max);
+};
 
 module.exports = libs;
 },{}],72:[function(require,module,exports){
@@ -53469,6 +53485,9 @@ module.exports = function (mediator, listener) {
     camera.add(steps);
     camera.add(torchInst);
     camera.add(ambient);
+    mediator.on('new.gamecycle', function(){
+        mediator.trigger('user.position', camera.position);
+    });
     mediator.on('camera.rotate', rotate);
     mediator.on('camera.move', move);
     mediator.on('camera.move.room', moveRoom);
@@ -53867,7 +53886,6 @@ module.exports = function (mediator) {
                                     mediator.trigger('room.remove', position);
                                     mediator.trigger('door.close.' + doorId(position, direction), position);
                                     position = coords;
-                                    mediator.trigger('user.position', coords);
                                     state.transition();
                                 }
                             });
@@ -53912,7 +53930,6 @@ module.exports = function (mediator) {
         direction = 0;
         mediator.trigger('camera.center', position);
         mediator.trigger('room.center', position);
-        mediator.trigger('user.position', position);
     }
 
     mediator.on('input', function (type) {
@@ -54160,8 +54177,8 @@ module.exports = function(mediator, listener){
     mediator.trigger('scene.add', group);
     mediator.on('new.gamecycle', function(cycle){
         //check if they are in the same room
-
-        if(userPos.x == position.x && userPos.z == position.z){
+        mediator.trigger('wanderer.position', group.position);
+        if(userPos.x == group.position.x && userPos.z == group.position.z){
             mediator.trigger('message.show', 'wanderer');
             mediator.trigger('game.reset');
         }

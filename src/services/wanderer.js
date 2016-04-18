@@ -234,8 +234,8 @@ module.exports = function(mediator, listener){
     mediator.trigger('scene.add', group);
     mediator.on('new.gamecycle', function(cycle){
         //check if they are in the same room
-
-        if(userPos.x == position.x && userPos.z == position.z){
+        mediator.trigger('wanderer.position', group.position);
+        if(userPos.x == group.position.x && userPos.z == group.position.z){
             mediator.trigger('message.show', 'wanderer');
             mediator.trigger('game.reset');
         }

@@ -1,10 +1,13 @@
 var THREE = require('three');
 var libs = require('../libs');
+var CONST = require('../const');
 module.exports = function (mediator, listener) {
     var group = new THREE.Object3D();
     var audio = new THREE.PositionalAudio(listener);
     var heart = new THREE.PositionalAudio(listener);
     var light = new THREE.PointLight(0xE25822, 2, 125, 1);
+    var red = 226 / 256;
+    var blue = 34 / 256;
     var userPos = {
         x: 0,
         z: 0
@@ -45,16 +48,14 @@ module.exports = function (mediator, listener) {
     })();
 
     function setColor() {
-        var distance = libs.distanceVector2(userPos, wandererPos);
-        if (distance == 1) {
-            heart.setVolume(0.80);
-            light.color.setHex( '0xE23822');
-        } else if (distance < 2) {
-            heart.setVolume(0.55);
-            light.color.setHex( '0xE24822');
-        } else {
-            heart.setVolume(0.40);
-            light.color.setHex( '0xE25822');
+        var distance = libs.distanceVector3(userPos, wandererPos);
+
+        if (!isNaN(distance)) {
+            var value = distance / (CONST.room.width * 2);
+            var green = (55 + value.clamp(0, 1) * 60) / 256;
+            var volume = 0.90 - value.clamp(0, 1) * 0.40;
+            light.color.setRGB(red, green, blue);
+            heart.setVolume(volume);
         }
     }
 
@@ -64,11 +65,12 @@ module.exports = function (mediator, listener) {
 
     mediator.on('user.position', function (coords) {
         userPos = coords;
-        setColor();
     });
 
     mediator.on('wanderer.position', function (coords) {
         wandererPos = coords;
+    });
+    mediator.on('new.gamecycle', function () {
         setColor();
     });
 

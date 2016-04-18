@@ -24,6 +24,9 @@ module.exports = function (mediator, listener) {
     camera.add(steps);
     camera.add(torchInst);
     camera.add(ambient);
+    mediator.on('new.gamecycle', function(){
+        mediator.trigger('user.position', camera.position);
+    });
     mediator.on('camera.rotate', rotate);
     mediator.on('camera.move', move);
     mediator.on('camera.move.room', moveRoom);
