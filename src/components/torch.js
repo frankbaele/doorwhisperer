@@ -12,10 +12,12 @@ module.exports = function (mediator, listener) {
         x: 0,
         z: 0
     };
+
     var wandererPos = {
         x: 0,
         z: 0
     };
+
     light.castShadow = true;
     light.position.set(0, 0, 0);
     audio.load('audio/torch__burning.mp3');
@@ -49,10 +51,9 @@ module.exports = function (mediator, listener) {
 
     function setColor() {
         var distance = libs.distanceVector3(userPos, wandererPos);
-
         if (!isNaN(distance)) {
             var value = distance / (CONST.room.width * 2);
-            var green = (55 + value.clamp(0, 1) * 60) / 256;
+            var green = (60 + value.clamp(0, 1) * 40) / 256;
             var volume = 0.90 - value.clamp(0, 1) * 0.40;
             light.color.setRGB(red, green, blue);
             heart.setVolume(volume);

@@ -2,13 +2,15 @@ _ = {
     clone: require('lodash.clone')
 };
 var CONST = require('../const');
-var map = require('../config/map.json');
+var map = require('../services/dungeon').map;
+var startPos = require('../services/dungeon').startPos();
 var StateMachine = require('javascript-state-machine');
 module.exports = function (mediator) {
     var position;
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
     var directions = ['north', 'east', 'south', 'west'];
     var direction;
+
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {
@@ -126,10 +128,7 @@ module.exports = function (mediator) {
     }
 
     function init(coords) {
-        position = {
-            x: 0,
-            z: 0
-        };
+        position = _.clone(coords);
         direction = 0;
         mediator.trigger('camera.center', position);
         mediator.trigger('room.center', position);
@@ -140,6 +139,8 @@ module.exports = function (mediator) {
             state[type]();
         }
     });
-    mediator.on('game.reset', init);
-    init();
+    mediator.on('game.reset', function () {
+        init(startPos);
+    });
+    init(startPos);
 };

@@ -1,6 +1,6 @@
 var CONST = require('../const');
 var THREE = require('three');
-var map = require('../config/map.json');
+var map = require('../services/dungeon').map();
 var TWEEN = require('tween.js');
 var libs = require('../libs');
 var StateMachine = require('javascript-state-machine');
