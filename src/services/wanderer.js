@@ -12,13 +12,13 @@ module.exports = function(mediator, listener){
     steps.setRefDistance(15);
     growl.setRefDistance(15);
     steps.position.y = -16;
-    steps.load('audio/character__steps--cement.mp3');
+    steps.load('audio/player__stepforloop.wav');
     growl.load('audio/growl--close.mp3');
     growl.setLoop(true);
     growl.autoplay = true;
     growl.setRefDistance(10);
     growl.setVolume(1);
-    steps.setVolume(0.9);
+    steps.setVolume(0.7);
     var group = new THREE.Object3D();
     var position;
     var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];

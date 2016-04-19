@@ -36,15 +36,17 @@ function create(opts) {
 
     var openSound = new THREE.PositionalAudio(listener);
     var closeSound = new THREE.PositionalAudio(listener);
-    openSound.load('audio/door__open-close--knob.mp3');
-    closeSound.load('audio/door__close--wood.mp3');
+    openSound.load('audio/door__open--long.wav');
+
+    closeSound.load('audio/door__close--short.wav');
     openSound.setRefDistance(15);
-    openSound.setVolume(0.80);
-    closeSound.setRefDistance(15);
-    closeSound.setVolume(0.80);
+    openSound.setVolume(1);
+    closeSound.setRefDistance(20);
+    closeSound.setVolume(1);
     group.add(upper);
     group.add(bottom);
     group.add(openSound);
+    group.add(closeSound);
     mediator.trigger('scene.add', group);
     var state = StateMachine.create({
         initial: 'closed',
@@ -59,9 +61,6 @@ function create(opts) {
                 if (event == 'open') {
                     var value;
                     openSound.play();
-                    setTimeout(function () {
-                        openSound.stop();
-                    }, 500);
                     if (from.x == opts.from.x && from.z == opts.from.z) {
                         value = '-' + Math.PI / 2;
                     } else {
@@ -77,9 +76,7 @@ function create(opts) {
                 }
                 else if (event == 'close') {
                     var value;
-                    setTimeout(function () {
-                        closeSound.play();
-                    }, 150);
+                    closeSound.play();
                     if (from.x == opts.from.x && from.z == opts.from.z) {
                         value = '+' + Math.PI / 2;
                     } else {

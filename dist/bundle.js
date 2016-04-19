@@ -54693,15 +54693,17 @@ function create(opts) {
 
     var openSound = new THREE.PositionalAudio(listener);
     var closeSound = new THREE.PositionalAudio(listener);
-    openSound.load('audio/door__open-close--knob.mp3');
-    closeSound.load('audio/door__close--wood.mp3');
+    openSound.load('audio/door__open--long.wav');
+
+    closeSound.load('audio/door__close--short.wav');
     openSound.setRefDistance(15);
-    openSound.setVolume(0.80);
-    closeSound.setRefDistance(15);
-    closeSound.setVolume(0.80);
+    openSound.setVolume(1);
+    closeSound.setRefDistance(20);
+    closeSound.setVolume(1);
     group.add(upper);
     group.add(bottom);
     group.add(openSound);
+    group.add(closeSound);
     mediator.trigger('scene.add', group);
     var state = StateMachine.create({
         initial: 'closed',
@@ -54716,9 +54718,6 @@ function create(opts) {
                 if (event == 'open') {
                     var value;
                     openSound.play();
-                    setTimeout(function () {
-                        openSound.stop();
-                    }, 500);
                     if (from.x == opts.from.x && from.z == opts.from.z) {
                         value = '-' + Math.PI / 2;
                     } else {
@@ -54734,9 +54733,7 @@ function create(opts) {
                 }
                 else if (event == 'close') {
                     var value;
-                    setTimeout(function () {
-                        closeSound.play();
-                    }, 150);
+                    closeSound.play();
                     if (from.x == opts.from.x && from.z == opts.from.z) {
                         value = '+' + Math.PI / 2;
                     } else {
@@ -55195,18 +55192,37 @@ var height = CONST.texture.height + CONST.texture.height * 0.5;
 module.exports = function (mediator, listener) {
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 250);
     camera.add(listener);
-    var steps = new THREE.PositionalAudio(listener);
-    var ambient = new THREE.PositionalAudio(listener);
     var torchInst = torch(mediator, listener);
-    steps.load('audio/character__steps--cement.mp3');
+    var steptodoor = new THREE.PositionalAudio(listener);
+    var stepbackdoor = new THREE.PositionalAudio(listener);
+    var steps = new THREE.PositionalAudio(listener);
+    var turn = new THREE.PositionalAudio(listener);
+    var ambient = new THREE.PositionalAudio(listener);
+    steptodoor.load('audio/player__steptodoor.wav');
+    steptodoor.setVolume(0.35);
+    steptodoor.position.y = -16;
+    steptodoor.setRefDistance(15);
+    stepbackdoor.load('audio/player__stepbackdoor.wav');
+    stepbackdoor.setVolume(0.35);
+    stepbackdoor.position.y = -16;
+    stepbackdoor.setRefDistance(15);
+    steps.load('audio/player__stepforloop.wav');
+    steps.setVolume(0.35);
     steps.position.y = -16;
     steps.setRefDistance(15);
-    steps.setVolume(0.35);
+    steps.setLoop(true);
+    turn.load('audio/player__turn.wav');
+    turn.setVolume(0.35);
+    turn.position.y = -16;
+    turn.setRefDistance(15);
     ambient.load('audio/ambient.mp3');
     ambient.autoplay = true;
     ambient.setLoop(true);
     ambient.setVolume(0.80);
     camera.add(steps);
+    camera.add(steptodoor);
+    camera.add(stepbackdoor);
+    camera.add(turn);
     camera.add(torchInst);
     camera.add(ambient);
     mediator.on('new.gamecycle', function(){
@@ -55246,9 +55262,11 @@ module.exports = function (mediator, listener) {
     function move(opts) {
         if (opts.direction == 'back') {
             temp = CONST.room.width * 0.25;
+            steptodoor.play();
         }
         if (opts.direction == 'forward') {
             temp = -CONST.room.width * 0.25;
+            stepbackdoor.play();
         }
         var worldDirection = camera.getWorldDirection();
         var value = _.clone(camera.position);
@@ -55263,11 +55281,10 @@ module.exports = function (mediator, listener) {
             value.z = value.z + temp;
         }
         var time = Math.round(Math.abs(temp) /CONST.speed * 1000);
-        steps.play();
+
         new TWEEN.Tween(camera.position)
             .to({z: value.z, x: value.x}, time)
             .onComplete(function () {
-                steps.stop();
                 if(opts.callback){
                     opts.callback();
                 }
@@ -55283,11 +55300,10 @@ module.exports = function (mediator, listener) {
             value = value - Math.PI / 2;
         }
         var time = 400;
-        steps.play();
+        turn.play();
         new TWEEN.Tween(camera.rotation)
             .to({y: value}, time)
             .onComplete(function () {
-                steps.stop();
                 if(opts.callback){
                     opts.callback();
                 }
