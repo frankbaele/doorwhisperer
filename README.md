@@ -4,4 +4,5 @@ This will be done by interacting with the doors, who can talk and given an insig
 
 # controls
 movement -> arrow keys
+
 open door -> space
