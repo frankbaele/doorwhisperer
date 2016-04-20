@@ -4,7 +4,6 @@ var _ = {
     difference: require('lodash.difference'),
     forEach: require('lodash.foreach')
 };
-
 module.exports = function (mediator, listener) {
     var room = require('../components/room')(mediator, listener);
     var door = require('../components/door')(mediator, listener);

@@ -1,6 +1,6 @@
 var THREE = require('three');
 var CONST = require('../const');
-var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
+var floorTexture = new THREE.TextureLoader().load('img/floor/bedrock.png');
 floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);

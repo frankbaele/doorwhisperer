@@ -6,6 +6,11 @@ var TWEEN = require('tween.js');
 var libs = require('../libs');
 var StateMachine = require('javascript-state-machine');
 var height = CONST.texture.height + CONST.texture.height * 0.5;
+var wanTexture = new THREE.TextureLoader().load('img/char/wanderer.png');
+wanTexture.wrapS = THREE.RepeatWrapping;
+wanTexture.wrapT = THREE.RepeatWrapping;
+wanTexture.repeat.set(1,1);
+var wanMat = new THREE.MeshPhongMaterial({map: wanTexture});
 
 module.exports = function(mediator, listener){
     var steps = new THREE.PositionalAudio(listener);
@@ -31,8 +36,7 @@ module.exports = function(mediator, listener){
     };
 
     var geom = new THREE.BoxGeometry(25, 25, 25);
-    var mat = new THREE.MeshLambertMaterial();
-    var mesh = new THREE.Mesh(geom, mat);
+    var mesh = new THREE.Mesh(geom, wanMat);
     group.add(steps);
     group.add(growl);
     group.add(mesh);

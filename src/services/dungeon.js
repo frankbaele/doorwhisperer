@@ -8,6 +8,14 @@ var _ = {
     filter: require('lodash.filter'),
     clone: require('lodash.clone')
 };
+var textures = [
+    "img/walls/cobblestone.png",
+    "img/walls/cobblestone_mossy.png",
+    "img/walls/brick.png",
+    "img/walls/sandstone.png",
+    "img/walls/dirt.png",
+];
+
 var roomsCount = 6;
 var dungeon;
 var startPos;
@@ -43,7 +51,15 @@ function generate(){
     for (var y = 0; y < dungeon.size[1]; y++) {
         var row = [];
         for (var x = 0; x < dungeon.size[0]; x++) {
-            row.push(dungeon.walls.get([x, y]) ? null : {});
+            if(dungeon.walls.get([x, y])){
+                row.push(null);
+            }
+            else {
+                var textureIndex = libs.getRandomInt(0, textures.length - 1);
+                row.push({
+                    texture: textures[textureIndex]
+                });
+            }
         }
         map.push(row);
     }
@@ -52,7 +68,7 @@ function generate(){
         z: dungeon.start_pos[1],
         x: dungeon.start_pos[0]
     };
-
+    map[startPos.z][startPos.x].texture = 'img/walls/nether_brick.png';
     var lastRoom = dungeon.children[dungeon.children.length - 1];
     exitPos = {
         z: lastRoom.position[1] + 1,
@@ -63,6 +79,7 @@ function generate(){
     map[exitPos.z][exitPos.x].id = "exit";
 
     var wandererRoom = dungeon.children[libs.getRandomInt(5, roomsCount - 1)];
+
     wandererPos = {
         z: wandererRoom.position[1] + 1,
         x: wandererRoom.position[0] + 1
