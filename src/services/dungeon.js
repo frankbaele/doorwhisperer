@@ -8,8 +8,7 @@ var _ = {
     filter: require('lodash.filter'),
     clone: require('lodash.clone')
 };
-var roomsCount = 10;
-var trapRoomCount = 5;
+var roomsCount = 6;
 var dungeon;
 var startPos;
 var exitPos;

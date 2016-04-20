@@ -55168,7 +55168,7 @@ module.exports={
   },
   "skeletons": {
     "title": "Game over",
-    "text": "You were flayed alive by a bunch of drunk skeletons"
+    "text": "You were flayed alive by a gang of drunk skeletons"
   }
 }
 },{}],81:[function(require,module,exports){
@@ -55478,8 +55478,7 @@ var _ = {
     filter: require('lodash.filter'),
     clone: require('lodash.clone')
 };
-var roomsCount = 10;
-var trapRoomCount = 5;
+var roomsCount = 6;
 var dungeon;
 var startPos;
 var exitPos;
@@ -55581,7 +55580,7 @@ var mediator;
 function gameCycle(){
     cycle++;
     mediator.trigger('new.gamecycle', cycle);
-    setTimeout(gameCycle, 200);
+    setTimeout(gameCycle, 100);
 }
 
 module.exports = function(_mediator_){
@@ -56178,7 +56177,8 @@ module.exports = function(mediator, listener){
     mediator.on('new.gamecycle', function(cycle){
         //check if they are in the same room
         mediator.trigger('wanderer.position', group.position);
-        if(userPos.x == group.position.x && userPos.z == group.position.z){
+        var distance = libs.distanceVector3(group.position, userPos);
+        if(distance < 75){
             mediator.trigger('message.show', 'wanderer');
             mediator.trigger('game.reset');
         }

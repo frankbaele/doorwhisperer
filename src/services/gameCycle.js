@@ -4,7 +4,7 @@ var mediator;
 function gameCycle(){
     cycle++;
     mediator.trigger('new.gamecycle', cycle);
-    setTimeout(gameCycle, 200);
+    setTimeout(gameCycle, 100);
 }
 
 module.exports = function(_mediator_){
