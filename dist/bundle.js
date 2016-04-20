@@ -55487,7 +55487,7 @@ var textures = [
     "img/walls/cobblestone_mossy.png",
     "img/walls/brick.png",
     "img/walls/sandstone.png",
-    "img/walls/dirt.png",
+    "img/walls/dirt.png"
 ];
 
 var roomsCount = 6;
