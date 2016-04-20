@@ -19,9 +19,9 @@ var popup = require('./ui/popup');
 var renderer;
 function init(container) {
     var defers = [];
-    defers.push(textures());
+    defers.push();
     popup(mediator, container);
-    $q.all(defers).then(function(){
+    textures().then(function(){
         var user = require('./services/user')(mediator, listener);
         var wanderer = require('./services/wanderer')(mediator, listener);
         renderer = new THREE.WebGLRenderer();

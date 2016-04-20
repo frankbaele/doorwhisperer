@@ -17,7 +17,6 @@ module.exports = function (mediator, container) {
     }
 
     function open(opts){
-        console.log(opts);
         text.innerHTML = opts.text;
         title.innerHTML = opts.title;
         if(opts.img){
