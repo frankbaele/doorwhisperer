@@ -12,6 +12,7 @@ module.exports = function (mediator, listener) {
     camera.add(listener);
     var torchInst = torch(mediator, listener);
     var steptodoor = new THREE.PositionalAudio(listener);
+    var death = new THREE.PositionalAudio(listener);
     var stepbackdoor = new THREE.PositionalAudio(listener);
     var steps = new THREE.PositionalAudio(listener);
     var turn = new THREE.PositionalAudio(listener);
@@ -37,12 +38,16 @@ module.exports = function (mediator, listener) {
     ambient.autoplay = true;
     ambient.setLoop(true);
     ambient.setVolume(0.80);
+    death.load('audio/player__deadWilhelm.wav');
+    death.setVolume(0.50);
+
     camera.add(steps);
     camera.add(steptodoor);
     camera.add(stepbackdoor);
     camera.add(turn);
     camera.add(torchInst);
     camera.add(ambient);
+    camera.add(death);
     mediator.on('new.gamecycle', function(){
         mediator.trigger('user.position', camera.position);
     });
@@ -128,6 +133,8 @@ module.exports = function (mediator, listener) {
             })
             .start();
     }
-
+    mediator.on('game.death', function(){
+        death.play()
+    });
     return camera;
 };

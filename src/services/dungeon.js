@@ -40,7 +40,6 @@ function generate(){
     );
 
     dungeon.generate();
-    dungeon.print();
     for (var y = 0; y < dungeon.size[1]; y++) {
         var row = [];
         for (var x = 0; x < dungeon.size[0]; x++) {
@@ -53,6 +52,7 @@ function generate(){
         z: dungeon.start_pos[1],
         x: dungeon.start_pos[0]
     };
+
     var lastRoom = dungeon.children[dungeon.children.length - 1];
     exitPos = {
         z: lastRoom.position[1] + 1,
@@ -60,6 +60,8 @@ function generate(){
     };
 
     map[exitPos.z][exitPos.x].type = "win";
+    map[exitPos.z][exitPos.x].id = "exit";
+
     var wandererRoom = dungeon.children[libs.getRandomInt(5, roomsCount - 1)];
     wandererPos = {
         z: wandererRoom.position[1] + 1,

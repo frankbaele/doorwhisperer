@@ -6,7 +6,6 @@ var vDom = {
 var StateMachine = require('javascript-state-machine');
 module.exports = function (mediator, container) {
 
-
     var text;
     var title;
     var img;
@@ -18,6 +17,7 @@ module.exports = function (mediator, container) {
     }
 
     function open(opts){
+        console.log(opts);
         text.innerHTML = opts.text;
         title.innerHTML = opts.title;
         if(opts.img){
@@ -43,6 +43,7 @@ module.exports = function (mediator, container) {
     AfterRenderIMG.prototype.hook = function (node) {
         img = node;
     };
+
     var popup = vDom.create(
         vDom.h('div.popup', [
             vDom.h('h2.title', {

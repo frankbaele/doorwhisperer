@@ -226,10 +226,6 @@ module.exports = function(mediator, listener){
         mediator.trigger('wanderer.position', coords);
     }
 
-    function calculateSpawn(){
-
-    }
-
     mediator.trigger('scene.add', group);
     mediator.on('new.gamecycle', function(cycle){
         //check if they are in the same room
@@ -237,6 +233,7 @@ module.exports = function(mediator, listener){
         var distance = libs.distanceVector3(group.position, userPos);
         if(distance < 75){
             mediator.trigger('message.show', 'wanderer');
+            mediator.trigger('game.death');
             mediator.trigger('game.reset');
         }
         if(cycle % 10 == 0){

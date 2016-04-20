@@ -56,11 +56,13 @@ function create(opts){
             mediator.trigger('message.show', opts.data.id);
             if( opts.data.type == 'lose'){
                 mediator.trigger('game.reset');
+                mediator.trigger('game.death');
                 if(callbacks.condition){
                     callbacks.condition();
                 }
             } else if(opts.data.type == 'win'){
                 mediator.trigger('game.reset');
+                mediator.trigger('game.win');
                 if(callbacks.condition){
                     callbacks.condition();
                 }

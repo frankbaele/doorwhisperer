@@ -54998,11 +54998,13 @@ function create(opts){
             mediator.trigger('message.show', opts.data.id);
             if( opts.data.type == 'lose'){
                 mediator.trigger('game.reset');
+                mediator.trigger('game.death');
                 if(callbacks.condition){
                     callbacks.condition();
                 }
             } else if(opts.data.type == 'win'){
                 mediator.trigger('game.reset');
+                mediator.trigger('game.win');
                 if(callbacks.condition){
                     callbacks.condition();
                 }
@@ -55158,7 +55160,7 @@ module.exports={
     "title": "Wake up",
     "text": "You find yourself a dark unknown place"
   },
-  "win": {
+  "exit": {
     "title": "Congratulation",
     "text": "you have escaped the dungeon"
   },
@@ -55347,6 +55349,7 @@ module.exports = function (mediator, listener) {
     camera.add(listener);
     var torchInst = torch(mediator, listener);
     var steptodoor = new THREE.PositionalAudio(listener);
+    var death = new THREE.PositionalAudio(listener);
     var stepbackdoor = new THREE.PositionalAudio(listener);
     var steps = new THREE.PositionalAudio(listener);
     var turn = new THREE.PositionalAudio(listener);
@@ -55372,12 +55375,16 @@ module.exports = function (mediator, listener) {
     ambient.autoplay = true;
     ambient.setLoop(true);
     ambient.setVolume(0.80);
+    death.load('audio/player__deadWilhelm.wav');
+    death.setVolume(0.50);
+
     camera.add(steps);
     camera.add(steptodoor);
     camera.add(stepbackdoor);
     camera.add(turn);
     camera.add(torchInst);
     camera.add(ambient);
+    camera.add(death);
     mediator.on('new.gamecycle', function(){
         mediator.trigger('user.position', camera.position);
     });
@@ -55463,7 +55470,9 @@ module.exports = function (mediator, listener) {
             })
             .start();
     }
-
+    mediator.on('game.death', function(){
+        death.play()
+    });
     return camera;
 };
 
@@ -55510,7 +55519,6 @@ function generate(){
     );
 
     dungeon.generate();
-    dungeon.print();
     for (var y = 0; y < dungeon.size[1]; y++) {
         var row = [];
         for (var x = 0; x < dungeon.size[0]; x++) {
@@ -55523,6 +55531,7 @@ function generate(){
         z: dungeon.start_pos[1],
         x: dungeon.start_pos[0]
     };
+
     var lastRoom = dungeon.children[dungeon.children.length - 1];
     exitPos = {
         z: lastRoom.position[1] + 1,
@@ -55530,6 +55539,8 @@ function generate(){
     };
 
     map[exitPos.z][exitPos.x].type = "win";
+    map[exitPos.z][exitPos.x].id = "exit";
+
     var wandererRoom = dungeon.children[libs.getRandomInt(5, roomsCount - 1)];
     wandererPos = {
         z: wandererRoom.position[1] + 1,
@@ -56169,10 +56180,6 @@ module.exports = function(mediator, listener){
         mediator.trigger('wanderer.position', coords);
     }
 
-    function calculateSpawn(){
-
-    }
-
     mediator.trigger('scene.add', group);
     mediator.on('new.gamecycle', function(cycle){
         //check if they are in the same room
@@ -56180,6 +56187,7 @@ module.exports = function(mediator, listener){
         var distance = libs.distanceVector3(group.position, userPos);
         if(distance < 75){
             mediator.trigger('message.show', 'wanderer');
+            mediator.trigger('game.death');
             mediator.trigger('game.reset');
         }
         if(cycle % 10 == 0){
@@ -56209,7 +56217,6 @@ var vDom = {
 var StateMachine = require('javascript-state-machine');
 module.exports = function (mediator, container) {
 
-
     var text;
     var title;
     var img;
@@ -56221,6 +56228,7 @@ module.exports = function (mediator, container) {
     }
 
     function open(opts){
+        console.log(opts);
         text.innerHTML = opts.text;
         title.innerHTML = opts.title;
         if(opts.img){
@@ -56246,6 +56254,7 @@ module.exports = function (mediator, container) {
     AfterRenderIMG.prototype.hook = function (node) {
         img = node;
     };
+
     var popup = vDom.create(
         vDom.h('div.popup', [
             vDom.h('h2.title', {
