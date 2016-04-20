@@ -8,7 +8,7 @@ var Mediator = require("mediatorjs").Mediator,
 var scene = require('./services/scene')(mediator);
 var $q = require('q');
 require("dom-delegator")();
-require("./services/dungeon");
+require("./services/dungeon").generate();
 var listener = new THREE.AudioListener();
 var controls = require('./controls/controls')(mediator);
 var camera = require('./services/camera')(mediator, listener);
@@ -23,7 +23,7 @@ function init(container) {
     popup(mediator, container);
     $q.all(defers).then(function(){
         var user = require('./services/user')(mediator, listener);
-        //var wanderer = require('./services/wanderer')(mediator, listener);
+        var wanderer = require('./services/wanderer')(mediator, listener);
         renderer = new THREE.WebGLRenderer();
         renderer.setSize( window.innerWidth, window.innerHeight - 4);
         container.appendChild( renderer.domElement );
@@ -31,7 +31,6 @@ function init(container) {
         animate();
     });
     window.addEventListener( 'resize', onWindowResize, false );
-
     function onWindowResize(){
         renderer.setSize( window.innerWidth, window.innerHeight );
 

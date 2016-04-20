@@ -34,6 +34,7 @@
     "lodash.clone": "^4.3.2",
     "lodash.debounce": "^4.0.4",
     "lodash.difference": "^4.2.0",
+    "lodash.filter": "^4.3.0",
     "lodash.foreach": "^4.1.1",
     "mediatorjs": "^0.1.4",
     "q": "^1.4.1",

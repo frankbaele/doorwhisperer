@@ -1,0 +1,7 @@
+[
+  {
+    "sounds": ["growl--distant.mp3"],
+    "id" : "skeletons",
+    "type": "lose"
+  }
+]

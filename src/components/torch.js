@@ -71,6 +71,7 @@ module.exports = function (mediator, listener) {
     mediator.on('wanderer.position', function (coords) {
         wandererPos = coords;
     });
+
     mediator.on('new.gamecycle', function () {
         setColor();
     });

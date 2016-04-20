@@ -53,7 +53,7 @@ function create(opts){
 
     mediator.on('room.enter.' + context, function(callbacks){
         if(opts.data  && opts.data.type){
-            mediator.trigger('message.show', opts.data.type);
+            mediator.trigger('message.show', opts.data.id);
             if( opts.data.type == 'lose'){
                 mediator.trigger('game.reset');
                 if(callbacks.condition){

@@ -7,13 +7,12 @@
     "title": "Congratulation",
     "text": "you have escaped the dungeon"
   },
-  "lose": {
-    "title": "Game over",
-    "text": "You are death"
-  },
   "wanderer": {
     "title": "Game over",
-    "img": "img/wanderer.png",
-    "text": "You where devoured by the wanderer"
+    "text": "You were devoured by the wanderer"
+  },
+  "skeletons": {
+    "title": "Game over",
+    "text": "You were flayed alive by a bunch of drunk skeletons"
   }
 }

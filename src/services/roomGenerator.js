@@ -1,4 +1,4 @@
-var map = require('../services/dungeon').map;
+var map = require('../services/dungeon').map();
 var CONST = require('../const');
 var _ = {
     difference: require('lodash.difference'),

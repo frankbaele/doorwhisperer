@@ -710,7 +710,7 @@ function Handle() {
     this.type = "dom-delegator-handle"
 }
 
-},{"./add-event.js":6,"./proxy-event.js":10,"./remove-event.js":11,"ev-store":23,"global/document":24,"weakmap-shim/create-store":67}],8:[function(require,module,exports){
+},{"./add-event.js":6,"./proxy-event.js":10,"./remove-event.js":11,"ev-store":23,"global/document":24,"weakmap-shim/create-store":69}],8:[function(require,module,exports){
 var Individual = require("individual")
 var cuid = require("cuid")
 var globalDocument = require("global/document")
@@ -2045,7 +2045,7 @@ var Random = function () {
 
 exports.default = Random;
 ;
-},{"random-seed":45}],22:[function(require,module,exports){
+},{"random-seed":47}],22:[function(require,module,exports){
 "use strict";
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -4563,7 +4563,7 @@ function isKeyable(value) {
 
 module.exports = baseDifference;
 
-},{"lodash._setcache":35}],32:[function(require,module,exports){
+},{"lodash._setcache":36}],32:[function(require,module,exports){
 /**
  * lodash 4.1.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -5092,6 +5092,37 @@ module.exports = baseEach;
 
 },{}],33:[function(require,module,exports){
 /**
+ * lodash 4.0.1 (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright 2012-2016 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2016 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <https://lodash.com/license>
+ */
+var baseEach = require('lodash._baseeach');
+
+/**
+ * The base implementation of `_.filter` without support for iteratee shorthands.
+ *
+ * @private
+ * @param {Array|Object} collection The collection to iterate over.
+ * @param {Function} predicate The function invoked per iteration.
+ * @returns {Array} Returns the new filtered array.
+ */
+function baseFilter(collection, predicate) {
+  var result = [];
+  baseEach(collection, function(value, index, collection) {
+    if (predicate(value, index, collection)) {
+      result.push(value);
+    }
+  });
+  return result;
+}
+
+module.exports = baseFilter;
+
+},{"lodash._baseeach":32}],34:[function(require,module,exports){
+/**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
  * Copyright jQuery Foundation and other contributors <https://jquery.org/>
@@ -5441,7 +5472,7 @@ function isObjectLike(value) {
 
 module.exports = baseFlatten;
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.6.0 (Custom Build) <https://lodash.com/>
@@ -7412,7 +7443,7 @@ function property(path) {
 module.exports = baseIteratee;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash._stringtopath":36}],35:[function(require,module,exports){
+},{"lodash._stringtopath":37}],36:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.1.3 (Custom Build) <https://lodash.com/>
@@ -8004,7 +8035,7 @@ function isNative(value) {
 module.exports = SetCache;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 (function (global){
 /**
  * lodash 4.7.0 (Custom Build) <https://lodash.com/>
@@ -8720,7 +8751,7 @@ function toString(value) {
 module.exports = stringToPath;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /**
  * lodash 4.3.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -8761,7 +8792,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"lodash._baseclone":30}],38:[function(require,module,exports){
+},{"lodash._baseclone":30}],39:[function(require,module,exports){
 /**
  * lodash 4.0.4 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -9148,7 +9179,7 @@ function toNumber(value) {
 
 module.exports = debounce;
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -9404,7 +9435,112 @@ function isObjectLike(value) {
 
 module.exports = difference;
 
-},{"lodash._basedifference":31,"lodash._baseflatten":33,"lodash.rest":41}],40:[function(require,module,exports){
+},{"lodash._basedifference":31,"lodash._baseflatten":34,"lodash.rest":43}],41:[function(require,module,exports){
+/**
+ * lodash 4.3.0 (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+var baseFilter = require('lodash._basefilter'),
+    baseIteratee = require('lodash._baseiteratee');
+
+/**
+ * A specialized version of `_.filter` for arrays without support for
+ * iteratee shorthands.
+ *
+ * @private
+ * @param {Array} array The array to iterate over.
+ * @param {Function} predicate The function invoked per iteration.
+ * @returns {Array} Returns the new filtered array.
+ */
+function arrayFilter(array, predicate) {
+  var index = -1,
+      length = array.length,
+      resIndex = 0,
+      result = [];
+
+  while (++index < length) {
+    var value = array[index];
+    if (predicate(value, index, array)) {
+      result[resIndex++] = value;
+    }
+  }
+  return result;
+}
+
+/**
+ * Iterates over elements of `collection`, returning an array of all elements
+ * `predicate` returns truthy for. The predicate is invoked with three
+ * arguments: (value, index|key, collection).
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Collection
+ * @param {Array|Object} collection The collection to iterate over.
+ * @param {Array|Function|Object|string} [predicate=_.identity]
+ *  The function invoked per iteration.
+ * @returns {Array} Returns the new filtered array.
+ * @example
+ *
+ * var users = [
+ *   { 'user': 'barney', 'age': 36, 'active': true },
+ *   { 'user': 'fred',   'age': 40, 'active': false }
+ * ];
+ *
+ * _.filter(users, function(o) { return !o.active; });
+ * // => objects for ['fred']
+ *
+ * // The `_.matches` iteratee shorthand.
+ * _.filter(users, { 'age': 36, 'active': true });
+ * // => objects for ['barney']
+ *
+ * // The `_.matchesProperty` iteratee shorthand.
+ * _.filter(users, ['active', false]);
+ * // => objects for ['fred']
+ *
+ * // The `_.property` iteratee shorthand.
+ * _.filter(users, 'active');
+ * // => objects for ['barney']
+ */
+function filter(collection, predicate) {
+  var func = isArray(collection) ? arrayFilter : baseFilter;
+  return func(collection, baseIteratee(predicate, 3));
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @type {Function}
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is correctly classified,
+ *  else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+module.exports = filter;
+
+},{"lodash._basefilter":33,"lodash._baseiteratee":35}],42:[function(require,module,exports){
 /**
  * lodash 4.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -9501,7 +9637,7 @@ var isArray = Array.isArray;
 
 module.exports = forEach;
 
-},{"lodash._baseeach":32,"lodash._baseiteratee":34}],41:[function(require,module,exports){
+},{"lodash._baseeach":32,"lodash._baseiteratee":35}],43:[function(require,module,exports){
 /**
  * lodash 4.0.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -9817,7 +9953,7 @@ function toNumber(value) {
 
 module.exports = rest;
 
-},{}],42:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 // Generated by CoffeeScript 1.8.0
 (function() {
   var Events, Mediator, mediator;
@@ -9851,7 +9987,7 @@ module.exports = rest;
 
 }).call(this);
 
-},{"backbone-events-standalone":2}],43:[function(require,module,exports){
+},{"backbone-events-standalone":2}],45:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -9944,7 +10080,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],44:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -11996,7 +12132,7 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":43}],45:[function(require,module,exports){
+},{"_process":45}],47:[function(require,module,exports){
 /*
  * random-seed
  * https://github.com/skratchdot/random-seed
@@ -12266,7 +12402,7 @@ uheprng.create = function (seed) {
 };
 module.exports = uheprng;
 
-},{"json-stringify-safe":29}],46:[function(require,module,exports){
+},{"json-stringify-safe":29}],48:[function(require,module,exports){
 var self = self || {};// File:src/Three.js
 
 /**
@@ -52948,7 +53084,7 @@ if (typeof exports !== 'undefined') {
   this['THREE'] = THREE;
 }
 
-},{}],47:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 /**
  * Tween.js - Licensed under the MIT license
  * https://github.com/tweenjs/tween.js
@@ -53840,24 +53976,24 @@ TWEEN.Interpolation = {
 
 })(this);
 
-},{}],48:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":52}],49:[function(require,module,exports){
+},{"./vdom/create-element.js":54}],51:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":55}],50:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":57}],52:[function(require,module,exports){
 "use strict";
 
 module.exports = function isObject(x) {
 	return typeof x === "object" && x !== null;
 };
 
-},{}],51:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -53956,7 +54092,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":59,"is-object":50}],52:[function(require,module,exports){
+},{"../vnode/is-vhook.js":61,"is-object":52}],54:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -54004,7 +54140,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":57,"../vnode/is-vnode.js":60,"../vnode/is-vtext.js":61,"../vnode/is-widget.js":62,"./apply-properties":51,"global/document":24}],53:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":59,"../vnode/is-vnode.js":62,"../vnode/is-vtext.js":63,"../vnode/is-widget.js":64,"./apply-properties":53,"global/document":24}],55:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -54033,7 +54169,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":23}],54:[function(require,module,exports){
+},{"ev-store":23}],56:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -54052,7 +54188,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],55:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -54191,7 +54327,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":58,"../vnode/is-vhook":59,"../vnode/is-vnode":60,"../vnode/is-vtext":61,"../vnode/is-widget":62,"../vnode/vnode.js":64,"../vnode/vtext.js":65,"./hooks/ev-hook.js":53,"./hooks/soft-set-hook.js":54,"./parse-tag.js":56,"x-is-array":69}],56:[function(require,module,exports){
+},{"../vnode/is-thunk":60,"../vnode/is-vhook":61,"../vnode/is-vnode":62,"../vnode/is-vtext":63,"../vnode/is-widget":64,"../vnode/vnode.js":66,"../vnode/vtext.js":67,"./hooks/ev-hook.js":55,"./hooks/soft-set-hook.js":56,"./parse-tag.js":58,"x-is-array":71}],58:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -54247,7 +54383,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":4}],57:[function(require,module,exports){
+},{"browser-split":4}],59:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -54289,14 +54425,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":58,"./is-vnode":60,"./is-vtext":61,"./is-widget":62}],58:[function(require,module,exports){
+},{"./is-thunk":60,"./is-vnode":62,"./is-vtext":63,"./is-widget":64}],60:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],59:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -54305,7 +54441,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],60:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -54314,7 +54450,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":63}],61:[function(require,module,exports){
+},{"./version":65}],63:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -54323,17 +54459,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":63}],62:[function(require,module,exports){
+},{"./version":65}],64:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],63:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 module.exports = "2"
 
-},{}],64:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -54407,7 +54543,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":58,"./is-vhook":59,"./is-vnode":60,"./is-widget":62,"./version":63}],65:[function(require,module,exports){
+},{"./is-thunk":60,"./is-vhook":61,"./is-vnode":62,"./is-widget":64,"./version":65}],67:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -54419,7 +54555,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":63}],66:[function(require,module,exports){
+},{"./version":65}],68:[function(require,module,exports){
 var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -54557,7 +54693,7 @@ for(i = 112; i < 136; ++i) {
   output[i] = 'F'+(i-111)
 }
 
-},{}],67:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 var hiddenStore = require('./hidden-store.js');
 
 module.exports = createStore;
@@ -54578,7 +54714,7 @@ function createStore() {
     };
 }
 
-},{"./hidden-store.js":68}],68:[function(require,module,exports){
+},{"./hidden-store.js":70}],70:[function(require,module,exports){
 module.exports = hiddenStore;
 
 function hiddenStore(obj, key) {
@@ -54596,7 +54732,7 @@ function hiddenStore(obj, key) {
     return store;
 }
 
-},{}],69:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -54606,7 +54742,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],70:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 // Textures
@@ -54636,7 +54772,7 @@ module.exports = function (opts) {
 
     return group;
 };
-},{"../const":80,"three":46}],71:[function(require,module,exports){
+},{"../const":83,"three":48}],73:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var floorTexture = new THREE.TextureLoader().load('img/cobblestone_mossy.png');
@@ -54654,7 +54790,7 @@ module.exports = function(){
     return floor;
 };
 
-},{"../const":80,"three":46}],72:[function(require,module,exports){
+},{"../const":83,"three":48}],74:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
@@ -54774,7 +54910,7 @@ module.exports = function (_mediator_, _listener_) {
         create: create
     };
 };
-},{"../const":80,"javascript-state-machine":28,"three":46,"tween.js":47}],73:[function(require,module,exports){
+},{"../const":83,"javascript-state-machine":28,"three":48,"tween.js":49}],75:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var wall = require('./wall');
@@ -54786,7 +54922,7 @@ module.exports = function(opts){
     group.rotation.y = opts.rotation;
     return group;
 };
-},{"../const":80,"./wall":77,"three":46}],74:[function(require,module,exports){
+},{"../const":83,"./wall":79,"three":48}],76:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var floorTexture = new THREE.TextureLoader().load('img/stonebrick.png');
@@ -54803,7 +54939,7 @@ module.exports = function(){
     floor.rotateX(Math.PI / 2);
     return floor;
 };
-},{"../const":80,"three":46}],75:[function(require,module,exports){
+},{"../const":83,"three":48}],77:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var wall = require('./facet');
@@ -54859,7 +54995,7 @@ function create(opts){
 
     mediator.on('room.enter.' + context, function(callbacks){
         if(opts.data  && opts.data.type){
-            mediator.trigger('message.show', opts.data.type);
+            mediator.trigger('message.show', opts.data.id);
             if( opts.data.type == 'lose'){
                 mediator.trigger('game.reset');
                 if(callbacks.condition){
@@ -54895,7 +55031,7 @@ module.exports = function (_mediator_, _listener_) {
         create: create
     }
 };
-},{"../const":80,"./block":70,"./ceiling":71,"./facet":73,"./floor":74,"lodash.foreach":40,"three":46}],76:[function(require,module,exports){
+},{"../const":83,"./block":72,"./ceiling":73,"./facet":75,"./floor":76,"lodash.foreach":42,"three":48}],78:[function(require,module,exports){
 var THREE = require('three');
 var libs = require('../libs');
 var CONST = require('../const');
@@ -54969,6 +55105,7 @@ module.exports = function (mediator, listener) {
     mediator.on('wanderer.position', function (coords) {
         wandererPos = coords;
     });
+
     mediator.on('new.gamecycle', function () {
         setColor();
     });
@@ -54978,7 +55115,7 @@ module.exports = function (mediator, listener) {
     group.add(light);
     return group;
 };
-},{"../const":80,"../libs":83,"three":46}],77:[function(require,module,exports){
+},{"../const":83,"../libs":86,"three":48}],79:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -55015,7 +55152,7 @@ module.exports = function () {
     group.add(topMesh);
     return group;
 };
-},{"../const":80,"three":46}],78:[function(require,module,exports){
+},{"../const":83,"three":48}],80:[function(require,module,exports){
 module.exports={
   "start": {
     "title": "Wake up",
@@ -55025,17 +55162,24 @@ module.exports={
     "title": "Congratulation",
     "text": "you have escaped the dungeon"
   },
-  "lose": {
-    "title": "Game over",
-    "text": "You are death"
-  },
   "wanderer": {
     "title": "Game over",
-    "img": "img/wanderer.png",
-    "text": "You where devoured by the wanderer"
+    "text": "You were devoured by the wanderer"
+  },
+  "skeletons": {
+    "title": "Game over",
+    "text": "You were flayed alive by a bunch of drunk skeletons"
   }
 }
-},{}],79:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
+module.exports=[
+  {
+    "sounds": ["growl--distant.mp3"],
+    "id" : "skeletons",
+    "type": "lose"
+  }
+]
+},{}],82:[function(require,module,exports){
 module.exports=[
   "img/cobblestone.png",
   "img/cobblestone_mossy.png",
@@ -55043,7 +55187,7 @@ module.exports=[
   "img/door/door_wood_upper.png",
   "img/stonebrick.png"
 ]
-},{}],80:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 var CONST = {};
 CONST.texture = {
     widht: 32,
@@ -55067,7 +55211,7 @@ CONST.audio = {
 CONST.speed = 100;
 
 module.exports = CONST;
-},{}],81:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 var THREE = require('three');
 var vkey = require('vkey');
 var _ = {
@@ -55099,7 +55243,7 @@ module.exports = function (mediator) {
         }
     }
 };
-},{"lodash.debounce":38,"three":46,"vkey":66}],82:[function(require,module,exports){
+},{"lodash.debounce":39,"three":48,"vkey":68}],85:[function(require,module,exports){
 console.log = null;
 delete console.log;
 
@@ -55110,7 +55254,7 @@ var Mediator = require("mediatorjs").Mediator,
 var scene = require('./services/scene')(mediator);
 var $q = require('q');
 require("dom-delegator")();
-require("./services/dungeon");
+require("./services/dungeon").generate();
 var listener = new THREE.AudioListener();
 var controls = require('./controls/controls')(mediator);
 var camera = require('./services/camera')(mediator, listener);
@@ -55125,7 +55269,7 @@ function init(container) {
     popup(mediator, container);
     $q.all(defers).then(function(){
         var user = require('./services/user')(mediator, listener);
-        //var wanderer = require('./services/wanderer')(mediator, listener);
+        var wanderer = require('./services/wanderer')(mediator, listener);
         renderer = new THREE.WebGLRenderer();
         renderer.setSize( window.innerWidth, window.innerHeight - 4);
         container.appendChild( renderer.domElement );
@@ -55133,7 +55277,6 @@ function init(container) {
         animate();
     });
     window.addEventListener( 'resize', onWindowResize, false );
-
     function onWindowResize(){
         renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -55149,7 +55292,7 @@ function animate() {
 }
 
 window.app = init;
-},{"./controls/controls":81,"./services/camera":84,"./services/dungeon":85,"./services/gameCycle":86,"./services/roomGenerator":87,"./services/scene":88,"./services/textures":89,"./services/user":90,"./ui/popup":91,"dom-delegator":8,"mediatorjs":42,"q":44,"three":46,"tween.js":47}],83:[function(require,module,exports){
+},{"./controls/controls":84,"./services/camera":87,"./services/dungeon":88,"./services/gameCycle":89,"./services/roomGenerator":90,"./services/scene":91,"./services/textures":92,"./services/user":93,"./services/wanderer":94,"./ui/popup":95,"dom-delegator":8,"mediatorjs":44,"q":46,"three":48,"tween.js":49}],86:[function(require,module,exports){
 var libs = {};
 
 libs.distanceVector3 = function (v1, v2) {
@@ -55158,11 +55301,21 @@ libs.distanceVector3 = function (v1, v2) {
     var dz = v1.z - v2.z;
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
 };
+
 libs.distanceVector2 = function (v1, v2) {
     var dx = v1.x - v2.x;
     var dz = v1.z - v2.z;
     return Math.sqrt(dx * dx + dz * dz);
 };
+
+/**
+ * Returns a random integer between min (inclusive) and max (inclusive)
+ * Using Math.round() will give you a non-uniform distribution!
+ */
+libs.getRandomInt = function(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
 /**
  * Returns a number whose value is limited to the given range.
  *
@@ -55179,7 +55332,7 @@ Number.prototype.clamp = function(min, max) {
 };
 
 module.exports = libs;
-},{}],84:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var CONST = require('../const');
@@ -55314,59 +55467,114 @@ module.exports = function (mediator, listener) {
     return camera;
 };
 
-},{"../components/torch":76,"../const":80,"../libs":83,"lodash.clone":37,"three":46,"tween.js":47}],85:[function(require,module,exports){
+},{"../components/torch":78,"../const":83,"../libs":86,"lodash.clone":38,"three":48,"tween.js":49}],88:[function(require,module,exports){
 var Dungeon = require('dungeon-generator');
+var roomTypes = require('../config/roomTypes');
 var map = [];
+var libs = require('../libs');
 var _ = {
     difference: require('lodash.difference'),
-    forEach: require('lodash.foreach')
+    forEach: require('lodash.foreach'),
+    filter: require('lodash.filter'),
+    clone: require('lodash.clone')
 };
-var dungeon = new Dungeon(
-    {
-        "size": [100, 100],
-        "rooms": {
-            "initial": {
-                "min_size": [1, 1],
-                "max_size": [1, 1],
-                "max_exits": 1
+var roomsCount = 10;
+var trapRoomCount = 5;
+var dungeon;
+var startPos;
+var exitPos;
+var wandererPos;
+function generate(){
+    dungeon = new Dungeon(
+        {
+            "size": [100, 100],
+            "rooms": {
+                "initial": {
+                    "min_size": [1,1],
+                    "max_size": [1,1],
+                    "max_exits": 1
+                },
+                "any": {
+                    "min_size": [1,1],
+                    "max_size": [1,1],
+                    "max_exits": 4
+                }
             },
-            "any": {
-                "min_size": [1, 1],
-                "max_size": [1, 1],
-                "max_exits": 4
-            }
-        },
-        "max_corridor_length": 0,
-        "min_corridor_length": 0,
-        "corridor_density": 0,
-        "symmetric_rooms": true,
-        "interconnects": 10,
-        "max_interconnect_length": 1,
-        "room_count": 30
-    }
-);
+            "max_corridor_length": 0,
+            "min_corridor_length": 0,
+            "corridor_density": 0,
+            "symmetric_rooms": true,
+            "interconnects": 1,
+            "max_interconnect_length": 10,
+            "room_count": roomsCount
+        }
+    );
 
-dungeon.generate();
-for (var y = 0; y < dungeon.size[1]; y++) {
-    var row = [];
-    for (var x = 0; x < dungeon.size[0]; x++) {
-        row.push(dungeon.walls.get([x, y]) ? null : {});
+    dungeon.generate();
+    dungeon.print();
+    for (var y = 0; y < dungeon.size[1]; y++) {
+        var row = [];
+        for (var x = 0; x < dungeon.size[0]; x++) {
+            row.push(dungeon.walls.get([x, y]) ? null : {});
+        }
+        map.push(row);
     }
-    map.push(row);
-}
-module.exports = {
-    dungeon: dungeon,
-    map: map,
-    startPos: function(){
-        var coords = {
-            z: dungeon.start_pos[1],
-            x: dungeon.start_pos[0]
+
+    startPos = {
+        z: dungeon.start_pos[1],
+        x: dungeon.start_pos[0]
+    };
+    var lastRoom = dungeon.children[dungeon.children.length - 1];
+    exitPos = {
+        z: lastRoom.position[1] + 1,
+        x: lastRoom.position[0] + 1
+    };
+
+    map[exitPos.z][exitPos.x].type = "win";
+    var wandererRoom = dungeon.children[libs.getRandomInt(5, roomsCount - 1)];
+    wandererPos = {
+        z: wandererRoom.position[1] + 1,
+        x: wandererRoom.position[0] + 1
+    };
+
+    var rooms = _.clone(dungeon.children);
+    // remove first and last room (start and exit);
+    rooms.shift();
+    rooms.pop();
+
+    // we only want rooms with one exit, so we never block the player in a passage room
+    rooms = _.filter(rooms, function(room){
+        return room.exits.length == 1;
+    });
+    _.forEach(rooms, function(room){
+        var roomTypeIndex = libs.getRandomInt(0, roomTypes.length - 1);
+        var roomPos = {
+            z: room.position[1] + 1,
+            x: room.position[0] + 1
         };
-        console.log(coords);
-        return coords;
+        map[roomPos.z][roomPos.x] = _.clone(roomTypes[roomTypeIndex]);
+    });
+}
+
+module.exports = {
+
+    map: function(){
+        return map;
+    },
+    generate: function(){
+        generate();
+    },
+    startPos: function(){
+        return startPos;
+    },
+    exitPos: function(){
+        return exitPos;
+    },
+    wandererPos: function(){
+        return wandererPos;
     }
 };
-},{"dungeon-generator":12,"lodash.difference":39,"lodash.foreach":40}],86:[function(require,module,exports){
+},{"../config/roomTypes":81,"../libs":86,"dungeon-generator":12,"lodash.clone":38,"lodash.difference":40,"lodash.filter":41,"lodash.foreach":42}],89:[function(require,module,exports){
 var cycle = 0;
 var mediator;
 
@@ -55380,8 +55588,8 @@ module.exports = function(_mediator_){
     mediator = _mediator_;
     gameCycle();
 };
-},{}],87:[function(require,module,exports){
-var map = require('../services/dungeon').map;
+},{}],90:[function(require,module,exports){
+var map = require('../services/dungeon').map();
 var CONST = require('../const');
 var _ = {
     difference: require('lodash.difference'),
@@ -55551,7 +55759,7 @@ module.exports = function (mediator, listener) {
         return doors;
     }
 };
-},{"../components/door":72,"../components/room":75,"../const":80,"../services/dungeon":85,"lodash.difference":39,"lodash.foreach":40}],88:[function(require,module,exports){
+},{"../components/door":74,"../components/room":77,"../const":83,"../services/dungeon":88,"lodash.difference":40,"lodash.foreach":42}],91:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -55565,7 +55773,7 @@ module.exports = function(mediator){
     return scene;
 
 };
-},{"three":46}],89:[function(require,module,exports){
+},{"three":48}],92:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -55586,12 +55794,12 @@ module.exports = function(){
     });
     return defer.promise;
 };
-},{"../config/textures.json":79,"lodash.foreach":40,"q":44,"three":46}],90:[function(require,module,exports){
+},{"../config/textures.json":82,"lodash.foreach":42,"q":46,"three":48}],93:[function(require,module,exports){
 _ = {
     clone: require('lodash.clone')
 };
 var CONST = require('../const');
-var map = require('../services/dungeon').map;
+var map = require('../services/dungeon').map();
 var startPos = require('../services/dungeon').startPos();
 var StateMachine = require('javascript-state-machine');
 module.exports = function (mediator) {
@@ -55733,7 +55941,266 @@ module.exports = function (mediator) {
     });
     init(startPos);
 };
-},{"../const":80,"../services/dungeon":85,"javascript-state-machine":28,"lodash.clone":37}],91:[function(require,module,exports){
+},{"../const":83,"../services/dungeon":88,"javascript-state-machine":28,"lodash.clone":38}],94:[function(require,module,exports){
+var CONST = require('../const');
+var THREE = require('three');
+var map = require('../services/dungeon').map();
+var startPos = require('../services/dungeon').wandererPos();
+var TWEEN = require('tween.js');
+var libs = require('../libs');
+var StateMachine = require('javascript-state-machine');
+var height = CONST.texture.height + CONST.texture.height * 0.5;
+
+module.exports = function(mediator, listener){
+    var steps = new THREE.PositionalAudio(listener);
+    var growl = new THREE.PositionalAudio(listener);
+    steps.setRefDistance(15);
+    growl.setRefDistance(15);
+    steps.position.y = -16;
+    steps.load('audio/player__stepforloop.wav');
+    growl.load('audio/growl--close.mp3');
+    growl.setLoop(true);
+    growl.autoplay = true;
+    growl.setRefDistance(10);
+    growl.setVolume(1);
+    steps.setVolume(0.7);
+    var group = new THREE.Object3D();
+    var position;
+    var directionMap = [{z: -1, x: 0}, {z: 0, x: 1}, {z: 1, x: 0}, {z: 0, x: -1}];
+    var directions = ['north', 'east', 'south', 'west'];
+    var direction;
+    var userPos = {
+        x: 0,
+        z: 0
+    };
+
+    var geom = new THREE.BoxGeometry(25, 25, 25);
+    var mat = new THREE.MeshLambertMaterial();
+    var mesh = new THREE.Mesh(geom, mat);
+    group.add(steps);
+    group.add(growl);
+    group.add(mesh);
+    var state = StateMachine.create({
+        initial: 'center',
+        error: function (eventName, from, to, args, errorCode, errorMessage) {},
+        events: [
+            {name: 'left', from: 'center', to: 'turning'},
+            {name: 'right', from: 'center', to: 'turning'},
+            {name: 'stopped', from: 'turning', to: 'center'},
+            {name: 'forward', from: 'center', to: 'door'},
+            {name: 'back', from: 'door', to: 'center'},
+            {name: 'enter', from: 'door', to: 'center'}
+        ],
+        callbacks: {
+            onbeforeforward: function (event, from, to) {
+                var coords = nextRoom(position, direction);
+                return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined' && map[coords.z][coords.x] !== null;
+            },
+            onforward: function (event, from, to) {
+                mediator.trigger('room.add.doors', nextRoom(position, direction));
+            },
+            onleft: function(){
+                if (direction == 0) {
+                    direction = directions.length - 1;
+                } else {
+                    direction = direction - 1;
+                }
+            },
+            onright: function(){
+                if (direction == directions.length - 1) {
+                    direction = 0;
+                } else {
+                    direction = direction + 1;
+                }
+            },
+            onturning: function(){
+                state.stopped();
+            },
+            onleavestate: function (event, from, to) {
+                if (event == 'right' || event == 'left') {
+                    rotate({
+                        'direction': event,
+                        'callback': function () {
+                            state.transition();
+                        }
+                    });
+                    return StateMachine.ASYNC;
+                }
+                else if (event == 'forward') {
+                    move({
+                        'direction': 'forward',
+                        'callback': function () {
+                            state.transition();
+                        }
+                    });
+                    return StateMachine.ASYNC;
+                }
+                else if (event == 'back') {
+                    move({
+                        'direction': 'back',
+                        'callback': function () {
+                            state.transition();
+                            mediator.trigger('room.remove.doors', nextRoom(position, direction));
+                        }
+                    });
+                    return StateMachine.ASYNC;
+                }
+                else if (event == 'enter') {
+                    var coords = nextRoom(position, direction);
+                    var id = doorId(position, direction);
+                    mediator.trigger('door.open' + id, position);
+                    moveRoom({
+                        'coords': coords,
+                        'callback': function () {
+                            mediator.trigger('wanderer.position', coords);
+                            position = coords;
+                            mediator.trigger('room.remove.doors', position);
+                            mediator.trigger('door.close.' + doorId(position, direction), position);
+                            state.transition();
+                        }
+                    });
+                    return StateMachine.ASYNC;
+                }
+            }
+        }
+    });
+
+    function rotate(opts) {
+        var value = group.rotation.y;
+        if (opts.direction == 'left') {
+            value = value + Math.PI / 2;
+        } else {
+            value = value - Math.PI / 2;
+        }
+        var time = 400;
+        steps.play();
+        new TWEEN.Tween(group.rotation)
+            .to({y: value}, time)
+            .onComplete(function () {
+                steps.stop();
+                if(opts.callback){
+                    opts.callback();
+                }
+            })
+            .start();
+    }
+
+    function move(opts) {
+        if (opts.direction == 'back') {
+            temp = CONST.room.width * 0.25;
+        }
+        if (opts.direction == 'forward') {
+            temp = -CONST.room.width * 0.25;
+        }
+        var worldDirection = group.getWorldDirection();
+        var value = _.clone(group.position);
+
+        if (worldDirection.x == 1) {
+            value.x = value.x + temp;
+        } else if (worldDirection.x == -1) {
+            value.x = value.x - temp;
+        } else if (worldDirection.z == 1) {
+            value.z = value.z + temp;
+        } else if (worldDirection.z == -1) {
+            value.z = value.z - temp;
+        }
+        var time = Math.round(Math.abs(temp) /CONST.speed/2 * 1000);
+        steps.play();
+        new TWEEN.Tween(group.position)
+            .to({z: value.z, x: value.x}, time)
+            .onComplete(function () {
+                steps.stop();
+                if(opts.callback){
+                    opts.callback();
+                }
+            })
+            .start();
+    }
+
+    function moveRoom(opts) {
+        var value = {};
+        value.x = opts.coords.x * CONST.room.width;
+        value.z = opts.coords.z * CONST.room.width + CONST.room.width / 2;
+        value.y = height;
+        var distance = libs.distanceVector3(group.position, value);
+        var time = Math.round(Math.abs(distance)/CONST.speed/2 * 1000);
+        steps.play();
+        new TWEEN.Tween(group.position)
+            .to({z: value.z, x: value.x},time)
+            .onComplete(function () {
+                steps.stop();
+                if(opts.callback){
+                    opts.callback();
+                }
+            })
+            .start();
+    }
+
+    function nextRoom(position, direction){
+        return {
+            x: position.x + directionMap[direction].x,
+            z: position.z + directionMap[direction].z
+        };
+    }
+
+    function doorId(position, direction){
+        var id;
+        var coords = nextRoom(position, direction);
+        if (direction == 0) {
+            id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
+        } else if (direction == 1) {
+            id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
+        } else if (direction == 2) {
+            id = position.z + '_' + position.x + '--' + coords.z + '_' + coords.x;
+        } else if (direction == 3) {
+            id = coords.z + '_' + coords.x + '--' + position.z + '_' + position.x;
+        }
+        return id;
+    }
+
+
+
+    function init(coords){
+        position = coords;
+        direction =  0;
+        group.rotation.y = 0;
+        group.position.z = coords.z * CONST.room.width + CONST.room.width / 2;
+        group.position.y = height;
+        group.position.x = coords.x * CONST.room.width;
+        mediator.trigger('wanderer.position', coords);
+    }
+
+    function calculateSpawn(){
+
+    }
+
+    mediator.trigger('scene.add', group);
+    mediator.on('new.gamecycle', function(cycle){
+        //check if they are in the same room
+        mediator.trigger('wanderer.position', group.position);
+        if(userPos.x == group.position.x && userPos.z == group.position.z){
+            mediator.trigger('message.show', 'wanderer');
+            mediator.trigger('game.reset');
+        }
+        if(cycle % 10 == 0){
+            var availableStates = state.transitions();
+            var index = libs.getRandomInt(0, availableStates.length -1);
+            if(state.can(availableStates[index])){
+                state[availableStates[index]]();
+            }
+        }
+    });
+
+    mediator.on('user.position', function (coords) {
+        userPos = coords;
+    });
+
+    mediator.on('game.reset', function(){
+        init(startPos);
+    });
+    init(startPos);
+};
+},{"../const":83,"../libs":86,"../services/dungeon":88,"javascript-state-machine":28,"three":48,"tween.js":49}],95:[function(require,module,exports){
 var messages = require('../config/messages.json');
 var vDom = {
     h: require('virtual-dom/h'),
@@ -55810,4 +56277,4 @@ module.exports = function (mediator, container) {
 
     container.appendChild(popup)
 };
-},{"../config/messages.json":78,"javascript-state-machine":28,"virtual-dom/create-element":48,"virtual-dom/h":49}]},{},[82]);
+},{"../config/messages.json":80,"javascript-state-machine":28,"virtual-dom/create-element":50,"virtual-dom/h":51}]},{},[85]);

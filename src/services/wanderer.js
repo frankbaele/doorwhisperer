@@ -1,6 +1,7 @@
 var CONST = require('../const');
 var THREE = require('three');
 var map = require('../services/dungeon').map();
+var startPos = require('../services/dungeon').wandererPos();
 var TWEEN = require('tween.js');
 var libs = require('../libs');
 var StateMachine = require('javascript-state-machine');
@@ -213,13 +214,7 @@ module.exports = function(mediator, listener){
         return id;
     }
 
-    /**
-    * Returns a random integer between min (inclusive) and max (inclusive)
-    * Using Math.round() will give you a non-uniform distribution!
-    */
-    function getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+
 
     function init(coords){
         position = coords;
@@ -229,6 +224,10 @@ module.exports = function(mediator, listener){
         group.position.y = height;
         group.position.x = coords.x * CONST.room.width;
         mediator.trigger('wanderer.position', coords);
+    }
+
+    function calculateSpawn(){
+
     }
 
     mediator.trigger('scene.add', group);
@@ -241,7 +240,7 @@ module.exports = function(mediator, listener){
         }
         if(cycle % 10 == 0){
             var availableStates = state.transitions();
-            var index = getRandomInt(0, availableStates.length -1);
+            var index = libs.getRandomInt(0, availableStates.length -1);
             if(state.can(availableStates[index])){
                 state[availableStates[index]]();
             }
@@ -253,13 +252,7 @@ module.exports = function(mediator, listener){
     });
 
     mediator.on('game.reset', function(){
-        init({
-            x: 2,
-            z: 2
-        });
+        init(startPos);
     });
-    init({
-        x: 2,
-        z: 2
-    });
+    init(startPos);
 };

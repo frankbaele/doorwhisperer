@@ -2,7 +2,7 @@ _ = {
     clone: require('lodash.clone')
 };
 var CONST = require('../const');
-var map = require('../services/dungeon').map;
+var map = require('../services/dungeon').map();
 var startPos = require('../services/dungeon').startPos();
 var StateMachine = require('javascript-state-machine');
 module.exports = function (mediator) {

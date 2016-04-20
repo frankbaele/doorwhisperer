@@ -6,11 +6,21 @@ libs.distanceVector3 = function (v1, v2) {
     var dz = v1.z - v2.z;
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
 };
+
 libs.distanceVector2 = function (v1, v2) {
     var dx = v1.x - v2.x;
     var dz = v1.z - v2.z;
     return Math.sqrt(dx * dx + dz * dz);
 };
+
+/**
+ * Returns a random integer between min (inclusive) and max (inclusive)
+ * Using Math.round() will give you a non-uniform distribution!
+ */
+libs.getRandomInt = function(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
 /**
  * Returns a number whose value is limited to the given range.
  *
