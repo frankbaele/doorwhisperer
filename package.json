@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "watch": "watchify ./src/index.js -o dist/bundle.js -v --poll",
+    "build": "browserify ./src/index.js | uglifyjs -o dist/bundle.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -40,6 +41,7 @@
     "q": "^1.4.1",
     "three": "^0.75.0",
     "tween.js": "^16.3.4",
+    "uglifyify": "^3.0.1",
     "virtual-dom": "^2.1.1",
     "vkey": "^1.0.0"
   }
