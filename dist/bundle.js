@@ -54913,7 +54913,7 @@ module.exports = function (_mediator_, _listener_) {
 },{"../const":82,"javascript-state-machine":28,"three":48,"tween.js":49}],75:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
-var floorTexture = new THREE.TextureLoader().load('img/floor/bedrock.png');
+var floorTexture = new THREE.TextureLoader().load('img/floor/stonebrick.png');
 floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(20,20);
@@ -55177,12 +55177,10 @@ module.exports=[
   "img/walls/cobblestone.png",
   "img/walls/cobblestone_mossy.png",
   "img/walls/brick.png",
-  "img/walls/sandstone.png",
-  "img/walls/dirt.png",
   "img/walls/nether_brick.png",
   "img/door/door_wood_lower.png",
   "img/door/door_wood_upper.png",
-  "img/floor/bedrock.png"
+  "img/floor/stonebrick.png"
 ]
 },{}],82:[function(require,module,exports){
 var CONST = {};
@@ -55485,9 +55483,7 @@ var _ = {
 var textures = [
     "img/walls/cobblestone.png",
     "img/walls/cobblestone_mossy.png",
-    "img/walls/brick.png",
-    "img/walls/sandstone.png",
-    "img/walls/dirt.png"
+    "img/walls/brick.png"
 ];
 
 var roomsCount = 6;
