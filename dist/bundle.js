@@ -55496,6 +55496,7 @@ var startPos;
 var exitPos;
 var wandererPos;
 function generate(){
+
     dungeon = new Dungeon(
         {
             "size": [100, 100],
