@@ -94,6 +94,7 @@ function generate(){
     rooms = _.filter(rooms, function(room){
         return room.exits.length == 1;
     });
+
     _.forEach(rooms, function(room){
         var roomTypeIndex = libs.getRandomInt(0, roomTypes.length - 1);
         var roomPos = {
