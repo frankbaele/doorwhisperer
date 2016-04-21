@@ -10,6 +10,7 @@ var wanTexture = new THREE.TextureLoader().load('img/char/wanderer.png');
 wanTexture.wrapS = THREE.RepeatWrapping;
 wanTexture.wrapT = THREE.RepeatWrapping;
 wanTexture.repeat.set(1,1);
+var reseting = false;
 var wanMat = new THREE.MeshPhongMaterial({map: wanTexture});
 
 module.exports = function(mediator, listener){
@@ -232,19 +233,22 @@ module.exports = function(mediator, listener){
 
     mediator.trigger('scene.add', group);
     mediator.on('new.gamecycle', function(cycle){
-        //check if they are in the same room
-        mediator.trigger('wanderer.position', group.position);
-        var distance = libs.distanceVector3(group.position, userPos);
-        if(distance < 75){
-            mediator.trigger('message.show', 'wanderer');
-            mediator.trigger('game.death');
-            mediator.trigger('game.reset');
-        }
-        if(cycle % 10 == 0){
-            var availableStates = state.transitions();
-            var index = libs.getRandomInt(0, availableStates.length -1);
-            if(state.can(availableStates[index])){
-                state[availableStates[index]]();
+        if(!reseting){
+            //check if they are in the same room
+            mediator.trigger('wanderer.position', group.position);
+            var distance = libs.distanceVector3(group.position, userPos);
+            if(distance < 75){
+                reseting = true;
+                mediator.trigger('message.show', 'wanderer');
+                mediator.trigger('game.death');
+                mediator.trigger('game.reset');
+            }
+            if(cycle % 10 == 0){
+                var availableStates = state.transitions();
+                var index = libs.getRandomInt(0, availableStates.length -1);
+                if(state.can(availableStates[index])){
+                    state[availableStates[index]]();
+                }
             }
         }
     });
@@ -255,6 +259,7 @@ module.exports = function(mediator, listener){
 
     mediator.on('game.reset', function(){
         init(startPos);
+        reseting = false;
     });
     init(startPos);
 };

@@ -14,13 +14,12 @@ var textures = [
     "img/walls/brick.png"
 ];
 
-var roomsCount = 6;
+var roomsCount = 20;
 var dungeon;
 var startPos;
 var exitPos;
 var wandererPos;
 function generate(){
-
     dungeon = new Dungeon(
         {
             "size": [100, 100],
@@ -40,13 +39,14 @@ function generate(){
             "min_corridor_length": 0,
             "corridor_density": 0,
             "symmetric_rooms": true,
-            "interconnects": 1,
+            "interconnects": 10,
             "max_interconnect_length": 10,
             "room_count": roomsCount
         }
     );
 
     dungeon.generate();
+    dungeon.print();
     for (var y = 0; y < dungeon.size[1]; y++) {
         var row = [];
         for (var x = 0; x < dungeon.size[0]; x++) {
@@ -62,6 +62,7 @@ function generate(){
         }
         map.push(row);
     }
+
 
     startPos = {
         z: dungeon.start_pos[1],
