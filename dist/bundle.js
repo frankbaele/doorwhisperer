@@ -54755,7 +54755,7 @@ module.exports = function (opts) {
     wallTexture.wrapT = THREE.RepeatWrapping;
     wallTexture.repeat.set(CONST.room.width / CONST.texture.widht, CONST.room.height / CONST.texture.height);
     // Materials
-    var wallMat = new THREE.MeshPhongMaterial({map: wallTexture});
+    var wallMat = new THREE.MeshPhongMaterial({map: wallTexture, aoMap: wallTexture});
     var group = new THREE.Object3D();
     var wallMesh = new THREE.Mesh(wallGem, wallMat);
     var light = new THREE.PointLight( 0xE25822, 0.15, 150);
@@ -54795,13 +54795,28 @@ var THREE = require('three');
 var CONST = require('../const');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
 var bottomTex = new THREE.TextureLoader().load('img/door/door_wood_lower.png');
-var upperMat = new THREE.MeshLambertMaterial({map: upperTex});
-var bottomMat = new THREE.MeshLambertMaterial({map: bottomTex});
+var upperMat = new THREE.MeshPhongMaterial({map: upperTex,transparent: true});
+var bottomMat = new THREE.MeshPhongMaterial({map: bottomTex,transparent: true});
 var doorPiece = new THREE.BoxGeometry(32, 32, 4);
 var TWEEN = require('tween.js');
 var StateMachine = require('javascript-state-machine');
 var mediator;
 var listener;
+
+var decalMaterial = new THREE.MeshPhongMaterial( {
+    specular: 0xffffff,
+    shininess: 0.5,
+    map: THREE.ImageUtils.loadTexture( 'img/blood/splatter.png' ),
+    normalMap: THREE.ImageUtils.loadTexture( 'img/blood/wrinkle-normal.jpg' ),
+    normalScale: new THREE.Vector2( .15, .15 ),
+    transparent: true,
+    depthTest: true,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -4,
+    wireframe: false
+});
+
 function create(opts) {
     var x = 0;
     var z = 0;
@@ -54952,7 +54967,12 @@ function create(opts){
             sounds[sound].setRefDistance( 15 );
             sounds[sound].autoplay = true;
             group.add(sounds[sound]);
-        })
+        });
+        if(opts.data.type == 'win'){
+            // shiny shine end light
+            var shinyShine = new THREE.PointLight( 0xE25822, 1, 150);
+            group.add(shinyShine);
+        }
     }
     if (opts.walls.top) {
         group.add(wall({x: 0, y: 0, z: 8, rotation: 0, texture: opts.data.texture}));
@@ -55104,7 +55124,7 @@ module.exports = function (mediator, listener) {
     group.add(light);
     return group;
 };
-},{"../const":82,"../libs":85,"three":48}],78:[function(require,module,exports){
+},{"../const":82,"../libs":86,"three":48}],78:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 
@@ -55238,11 +55258,293 @@ module.exports = function (mediator) {
     }
 };
 },{"lodash.debounce":39,"three":48,"vkey":68}],84:[function(require,module,exports){
+var THREE = require('three');
+//goog.provide( 'green.THREEAddOns' );
+
+THREE.DecalVertex = function( v, n ) {
+
+	this.vertex = v;
+	this.normal = n;
+
+}
+
+THREE.DecalVertex.prototype.clone = function() {
+
+	return new THREE.DecalVertex( this.vertex.clone(), this.normal.clone() );
+
+}
+
+THREE.DecalGeometry = function( mesh, position, rotation, dimensions, check ) {
+
+	THREE.Geometry.call( this );
+
+	if( check === undefined ) check = null;
+	check = check || new THREE.Vector3( 1, 1, 1 );
+
+	this.uvs = [];
+
+	this.cube = new THREE.Mesh( new THREE.BoxGeometry( dimensions.x, dimensions.y, dimensions.z ), new THREE.MeshBasicMaterial() );
+	this.cube.rotation.set( rotation.x, rotation.y, rotation.z );
+	this.cube.position.copy( position );
+	this.cube.scale.set( 1, 1, 1 );
+	this.cube.updateMatrix();
+
+	this.iCubeMatrix = ( new THREE.Matrix4() ).getInverse( this.cube.matrix );
+
+	this.faceIndices = [ 'a', 'b', 'c', 'd' ];
+
+	this.clipFace = function( inVertices, plane ) {
+
+		var size = .5 * Math.abs( ( dimensions.clone() ).dot( plane ) );
+
+		function clip( v0, v1, p ) {
+
+			var d0 = v0.vertex.dot( p ) - size,
+					d1 = v1.vertex.dot( p ) - size;
+
+			var s = d0 / ( d0 - d1 );
+			var v = new THREE.DecalVertex(
+					new THREE.Vector3(
+							v0.vertex.x + s * ( v1.vertex.x - v0.vertex.x ),
+							v0.vertex.y + s * ( v1.vertex.y - v0.vertex.y ),
+							v0.vertex.z + s * ( v1.vertex.z - v0.vertex.z )
+					),
+					new THREE.Vector3(
+							v0.normal.x + s * ( v1.normal.x - v0.normal.x ),
+							v0.normal.y + s * ( v1.normal.y - v0.normal.y ),
+							v0.normal.z + s * ( v1.normal.z - v0.normal.z )
+					)
+			);
+
+			// need to clip more values (texture coordinates)? do it this way:
+			//intersectpoint.value = a.value + s*(b.value-a.value);
+
+			return v;
+
+		}
+
+		if( inVertices.length === 0 ) return [];
+		var outVertices = [];
+
+		for( var j = 0; j < inVertices.length; j += 3 ) {
+
+			var v1Out, v2Out, v3Out, total = 0;
+
+			var d1 = inVertices[ j + 0 ].vertex.dot( plane ) - size,
+					d2 = inVertices[ j + 1 ].vertex.dot( plane ) - size,
+					d3 = inVertices[ j + 2 ].vertex.dot( plane ) - size;
+
+			v1Out = d1 > 0;
+			v2Out = d2 > 0;
+			v3Out = d3 > 0;
+
+			total = ( v1Out?1:0 ) + ( v2Out?1:0 ) + ( v3Out?1:0 );
+
+			switch( total ) {
+				case 0:{
+					outVertices.push( inVertices[ j ] );
+					outVertices.push( inVertices[ j + 1 ] );
+					outVertices.push( inVertices[ j + 2 ] );
+					break;
+				}
+				case 1:{
+					var nV1, nV2, nV3;
+					if( v1Out ) {
+						nV1 = inVertices[ j + 1 ];
+						nV2 = inVertices[ j + 2 ];
+						nV3 = clip( inVertices[ j ], nV1, plane );
+						nV4 = clip( inVertices[ j ], nV2, plane );
+					}
+					if( v2Out ) {
+						nV1 = inVertices[ j ];
+						nV2 = inVertices[ j + 2 ];
+						nV3 = clip( inVertices[ j + 1 ], nV1, plane );
+						nV4 = clip( inVertices[ j + 1 ], nV2, plane );
+
+						outVertices.push( nV3 );
+						outVertices.push( nV2.clone() );
+						outVertices.push( nV1.clone() );
+
+						outVertices.push( nV2.clone() );
+						outVertices.push( nV3.clone() );
+						outVertices.push( nV4 );
+						break;
+					}
+					if( v3Out ) {
+						nV1 = inVertices[ j ];
+						nV2 = inVertices[ j + 1 ];
+						nV3 = clip( inVertices[ j + 2 ], nV1, plane );
+						nV4 = clip( inVertices[ j + 2 ], nV2, plane );
+					}
+
+					outVertices.push( nV1.clone() );
+					outVertices.push( nV2.clone() );
+					outVertices.push( nV3 );
+
+					outVertices.push( nV4 );
+					outVertices.push( nV3.clone() );
+					outVertices.push( nV2.clone() );
+
+					break;
+				}
+				case 2: {
+					var nV1, nV2, nV3;
+					if( !v1Out ) {
+						nV1 = inVertices[ j ].clone();
+						nV2 = clip( nV1, inVertices[ j + 1 ], plane );
+						nV3 = clip( nV1, inVertices[ j + 2 ], plane );
+						outVertices.push( nV1 );
+						outVertices.push( nV2 );
+						outVertices.push( nV3 );
+					}
+					if( !v2Out ) {
+						nV1 = inVertices[ j + 1 ].clone();
+						nV2 = clip( nV1, inVertices[ j + 2 ], plane );
+						nV3 = clip( nV1, inVertices[ j ], plane );
+						outVertices.push( nV1 );
+						outVertices.push( nV2 );
+						outVertices.push( nV3 );
+					}
+					if( !v3Out ) {
+						nV1 = inVertices[ j + 2 ].clone();
+						nV2 = clip( nV1, inVertices[ j ], plane );
+						nV3 = clip( nV1, inVertices[ j + 1 ], plane );
+						outVertices.push( nV1 );
+						outVertices.push( nV2 );
+						outVertices.push( nV3 );
+					}
+
+					break;
+				}
+				case 3: {
+					break;
+				}
+			}
+
+		}
+
+		return outVertices;
+
+	}
+
+	this.pushVertex = function( vertices, id, n ){
+
+		var v = mesh.geometry.vertices[ id ].clone();
+		v.applyMatrix4( mesh.matrix );
+		v.applyMatrix4( this.iCubeMatrix );
+		vertices.push( new THREE.DecalVertex( v, n.clone() ) );
+
+	}
+
+	this.computeDecal = function() {
+
+		var finalVertices = [];
+
+		for( var i = 0; i < mesh.geometry.faces.length; i++ ) {
+
+			var f = mesh.geometry.faces[ i ];
+			var n = ( f instanceof THREE.Face3 ) ? 3 : 4;
+			var vertices = [];
+
+			if( n === 3 ) {
+
+				this.pushVertex( vertices, f[ this.faceIndices[ 0 ] ], f.vertexNormals[ 0 ] );
+				this.pushVertex( vertices, f[ this.faceIndices[ 1 ] ], f.vertexNormals[ 1 ] );
+				this.pushVertex( vertices, f[ this.faceIndices[ 2 ] ], f.vertexNormals[ 2 ] );
+
+			} else {
+
+				this.pushVertex( vertices, f[ this.faceIndices[ 0 ] ], f.vertexNormals[ 0 ] );
+				this.pushVertex( vertices, f[ this.faceIndices[ 1 ] ], f.vertexNormals[ 1 ] );
+				this.pushVertex( vertices, f[ this.faceIndices[ 2 ] ], f.vertexNormals[ 2 ] );
+
+				this.pushVertex( vertices, f[ this.faceIndices[ 3 ] ], f.vertexNormals[ 3 ] );
+				this.pushVertex( vertices, f[ this.faceIndices[ 0 ] ], f.vertexNormals[ 0 ] );
+				this.pushVertex( vertices, f[ this.faceIndices[ 2 ] ], f.vertexNormals[ 2 ] );
+
+			}
+
+			if( check.x ) {
+				vertices = this.clipFace( vertices, new THREE.Vector3( 1, 0, 0 ) );
+				vertices = this.clipFace( vertices, new THREE.Vector3( -1, 0, 0 ) );
+			}
+			if( check.y ) {
+				vertices = this.clipFace( vertices, new THREE.Vector3( 0, 1, 0 ) );
+				vertices = this.clipFace( vertices, new THREE.Vector3( 0, -1, 0 ) );
+			}
+			if( check.z ) {
+				vertices = this.clipFace( vertices, new THREE.Vector3( 0, 0, 1 ) );
+				vertices = this.clipFace( vertices, new THREE.Vector3( 0, 0, -1 ) );
+			}
+
+			for( var j = 0; j < vertices.length; j++ ) {
+
+				var v = vertices[ j ];
+
+				this.uvs.push( new THREE.Vector2(
+						.5 + ( v.vertex.x / dimensions.x ),
+						.5 + ( v.vertex.y / dimensions.y )
+				) );
+
+				vertices[ j ].vertex.applyMatrix4( this.cube.matrix );
+
+			}
+
+			if( vertices.length === 0 ) continue;
+
+			finalVertices = finalVertices.concat( vertices );
+
+		}
+
+		for( var k = 0; k < finalVertices.length; k += 3 ) {
+
+			this.vertices.push(
+					finalVertices[ k ].vertex,
+					finalVertices[ k + 1 ].vertex,
+					finalVertices[ k + 2 ].vertex
+			);
+
+			var f = new THREE.Face3(
+					k,
+					k + 1,
+					k + 2
+			)
+			f.vertexNormals.push( finalVertices[ k + 0 ].normal );
+			f.vertexNormals.push( finalVertices[ k + 1 ].normal );
+			f.vertexNormals.push( finalVertices[ k + 2 ].normal );
+
+			this.faces.push( f );
+
+			this.faceVertexUvs[ 0 ].push( [
+				this.uvs[ k ],
+				this.uvs[ k + 1 ],
+				this.uvs[ k + 2 ]
+			] );
+
+		}
+
+		this.verticesNeedUpdate = true;
+		this.elementsNeedUpdate = true;
+		this.morphTargetsNeedUpdate = true;
+		this.uvsNeedUpdate = true;
+		this.normalsNeedUpdate = true;
+		this.colorsNeedUpdate = true;
+		this.tangentsNeedUpdate = true;
+		this.computeFaceNormals();
+
+	}
+
+	this.computeDecal();
+
+}
+
+THREE.DecalGeometry.prototype = Object.create( THREE.Geometry.prototype );
+},{"three":48}],85:[function(require,module,exports){
 console.log = null;
 delete console.log;
-
 var THREE = require('three');
 var TWEEN = require('tween.js');
+require('./extentions/Decal');
 var Mediator = require("mediatorjs").Mediator,
     mediator = new Mediator();
 var scene = require('./services/scene')(mediator);
@@ -55286,7 +55588,7 @@ function animate() {
 }
 
 window.app = init;
-},{"./controls/controls":83,"./services/camera":86,"./services/dungeon":87,"./services/gameCycle":88,"./services/roomGenerator":89,"./services/scene":90,"./services/textures":91,"./services/user":92,"./services/wanderer":93,"./ui/popup":94,"dom-delegator":8,"mediatorjs":44,"q":46,"three":48,"tween.js":49}],85:[function(require,module,exports){
+},{"./controls/controls":83,"./extentions/Decal":84,"./services/camera":87,"./services/dungeon":88,"./services/gameCycle":89,"./services/roomGenerator":90,"./services/scene":91,"./services/textures":92,"./services/user":93,"./services/wanderer":94,"./ui/popup":95,"dom-delegator":8,"mediatorjs":44,"q":46,"three":48,"tween.js":49}],86:[function(require,module,exports){
 var libs = {};
 
 libs.distanceVector3 = function (v1, v2) {
@@ -55326,7 +55628,7 @@ Number.prototype.clamp = function(min, max) {
 };
 
 module.exports = libs;
-},{}],86:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var CONST = require('../const');
@@ -55459,7 +55761,7 @@ module.exports = function (mediator, listener) {
     return camera;
 };
 
-},{"../components/torch":77,"../const":82,"../libs":85,"lodash.clone":38,"three":48,"tween.js":49}],87:[function(require,module,exports){
+},{"../components/torch":77,"../const":82,"../libs":86,"lodash.clone":38,"three":48,"tween.js":49}],88:[function(require,module,exports){
 var Dungeon = require('dungeon-generator');
 var roomTypes = require('../config/roomTypes');
 var map = [];
@@ -55585,7 +55887,7 @@ module.exports = {
         return wandererPos;
     }
 };
-},{"../config/roomTypes":80,"../libs":85,"dungeon-generator":12,"lodash.clone":38,"lodash.difference":40,"lodash.filter":41,"lodash.foreach":42}],88:[function(require,module,exports){
+},{"../config/roomTypes":80,"../libs":86,"dungeon-generator":12,"lodash.clone":38,"lodash.difference":40,"lodash.filter":41,"lodash.foreach":42}],89:[function(require,module,exports){
 var cycle = 0;
 var mediator;
 
@@ -55599,7 +55901,7 @@ module.exports = function(_mediator_){
     mediator = _mediator_;
     gameCycle();
 };
-},{}],89:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 var map = require('../services/dungeon').map();
 var CONST = require('../const');
 var _ = {
@@ -55769,7 +56071,7 @@ module.exports = function (mediator, listener) {
         return doors;
     }
 };
-},{"../components/door":74,"../components/room":76,"../const":82,"../services/dungeon":87,"lodash.difference":40,"lodash.foreach":42}],90:[function(require,module,exports){
+},{"../components/door":74,"../components/room":76,"../const":82,"../services/dungeon":88,"lodash.difference":40,"lodash.foreach":42}],91:[function(require,module,exports){
 var THREE = require('three');
 
 module.exports = function(mediator){
@@ -55783,7 +56085,7 @@ module.exports = function(mediator){
     return scene;
 
 };
-},{"three":48}],91:[function(require,module,exports){
+},{"three":48}],92:[function(require,module,exports){
 var THREE = require('three');
 var _ = {
     forEach : require('lodash.foreach')
@@ -55804,7 +56106,7 @@ module.exports = function(){
     });
     return defer.promise;
 };
-},{"../config/textures.json":81,"lodash.foreach":42,"q":46,"three":48}],92:[function(require,module,exports){
+},{"../config/textures.json":81,"lodash.foreach":42,"q":46,"three":48}],93:[function(require,module,exports){
 _ = {
     clone: require('lodash.clone')
 };
@@ -55951,7 +56253,7 @@ module.exports = function (mediator) {
     });
     init(startPos);
 };
-},{"../const":82,"../services/dungeon":87,"javascript-state-machine":28,"lodash.clone":38}],93:[function(require,module,exports){
+},{"../const":82,"../services/dungeon":88,"javascript-state-machine":28,"lodash.clone":38}],94:[function(require,module,exports){
 var CONST = require('../const');
 var THREE = require('three');
 var map = require('../services/dungeon').map();
@@ -55968,6 +56270,7 @@ var reseting = false;
 var wanMat = new THREE.MeshPhongMaterial({map: wanTexture});
 
 module.exports = function(mediator, listener){
+    var torchInst = new THREE.PointLight( 0xE25822, 1, 150);
     var steps = new THREE.PositionalAudio(listener);
     var growl = new THREE.PositionalAudio(listener);
     steps.setRefDistance(15);
@@ -55995,6 +56298,7 @@ module.exports = function(mediator, listener){
     group.add(steps);
     group.add(growl);
     group.add(mesh);
+    group.add(torchInst);
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {},
@@ -56217,7 +56521,7 @@ module.exports = function(mediator, listener){
     });
     init(startPos);
 };
-},{"../const":82,"../libs":85,"../services/dungeon":87,"javascript-state-machine":28,"three":48,"tween.js":49}],94:[function(require,module,exports){
+},{"../const":82,"../libs":86,"../services/dungeon":88,"javascript-state-machine":28,"three":48,"tween.js":49}],95:[function(require,module,exports){
 var messages = require('../config/messages.json');
 var vDom = {
     h: require('virtual-dom/h'),
@@ -56294,4 +56598,4 @@ module.exports = function (mediator, container) {
 
     container.appendChild(popup)
 };
-},{"../config/messages.json":79,"javascript-state-machine":28,"virtual-dom/create-element":50,"virtual-dom/h":51}]},{},[84]);
+},{"../config/messages.json":79,"javascript-state-machine":28,"virtual-dom/create-element":50,"virtual-dom/h":51}]},{},[85]);

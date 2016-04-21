@@ -14,6 +14,7 @@ var reseting = false;
 var wanMat = new THREE.MeshPhongMaterial({map: wanTexture});
 
 module.exports = function(mediator, listener){
+    var torchInst = new THREE.PointLight( 0xE25822, 1, 150);
     var steps = new THREE.PositionalAudio(listener);
     var growl = new THREE.PositionalAudio(listener);
     steps.setRefDistance(15);
@@ -41,6 +42,7 @@ module.exports = function(mediator, listener){
     group.add(steps);
     group.add(growl);
     group.add(mesh);
+    group.add(torchInst);
     var state = StateMachine.create({
         initial: 'center',
         error: function (eventName, from, to, args, errorCode, errorMessage) {},

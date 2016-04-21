@@ -2,13 +2,28 @@ var THREE = require('three');
 var CONST = require('../const');
 var upperTex = new THREE.TextureLoader().load('img/door/door_wood_upper.png');
 var bottomTex = new THREE.TextureLoader().load('img/door/door_wood_lower.png');
-var upperMat = new THREE.MeshLambertMaterial({map: upperTex});
-var bottomMat = new THREE.MeshLambertMaterial({map: bottomTex});
+var upperMat = new THREE.MeshPhongMaterial({map: upperTex,transparent: true});
+var bottomMat = new THREE.MeshPhongMaterial({map: bottomTex,transparent: true});
 var doorPiece = new THREE.BoxGeometry(32, 32, 4);
 var TWEEN = require('tween.js');
 var StateMachine = require('javascript-state-machine');
 var mediator;
 var listener;
+
+var decalMaterial = new THREE.MeshPhongMaterial( {
+    specular: 0xffffff,
+    shininess: 0.5,
+    map: THREE.ImageUtils.loadTexture( 'img/blood/splatter.png' ),
+    normalMap: THREE.ImageUtils.loadTexture( 'img/blood/wrinkle-normal.jpg' ),
+    normalScale: new THREE.Vector2( .15, .15 ),
+    transparent: true,
+    depthTest: true,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -4,
+    wireframe: false
+});
+
 function create(opts) {
     var x = 0;
     var z = 0;

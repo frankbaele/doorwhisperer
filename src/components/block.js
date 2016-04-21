@@ -10,7 +10,7 @@ module.exports = function (opts) {
     wallTexture.wrapT = THREE.RepeatWrapping;
     wallTexture.repeat.set(CONST.room.width / CONST.texture.widht, CONST.room.height / CONST.texture.height);
     // Materials
-    var wallMat = new THREE.MeshPhongMaterial({map: wallTexture});
+    var wallMat = new THREE.MeshPhongMaterial({map: wallTexture, aoMap: wallTexture});
     var group = new THREE.Object3D();
     var wallMesh = new THREE.Mesh(wallGem, wallMat);
     var light = new THREE.PointLight( 0xE25822, 0.15, 150);

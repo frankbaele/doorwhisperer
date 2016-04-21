@@ -22,7 +22,12 @@ function create(opts){
             sounds[sound].setRefDistance( 15 );
             sounds[sound].autoplay = true;
             group.add(sounds[sound]);
-        })
+        });
+        if(opts.data.type == 'win'){
+            // shiny shine end light
+            var shinyShine = new THREE.PointLight( 0xE25822, 1, 150);
+            group.add(shinyShine);
+        }
     }
     if (opts.walls.top) {
         group.add(wall({x: 0, y: 0, z: 8, rotation: 0, texture: opts.data.texture}));

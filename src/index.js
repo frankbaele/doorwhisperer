@@ -1,8 +1,8 @@
 console.log = null;
 delete console.log;
-
 var THREE = require('three');
 var TWEEN = require('tween.js');
+require('./extentions/Decal');
 var Mediator = require("mediatorjs").Mediator,
     mediator = new Mediator();
 var scene = require('./services/scene')(mediator);
