@@ -54745,17 +54745,25 @@ function isArray(obj) {
 },{}],72:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
-
-// Objects
-var wallGem = new THREE.BoxGeometry(CONST.room.width, CONST.room.height, 8);
-module.exports = function (opts) {
-    // Textures
-    var wallTexture = new THREE.TextureLoader().load(opts.texture);
+var _ = {
+    forEach: require('lodash.foreach')
+};
+var textures = {};
+_.forEach(CONST.wallTextures, function(texture){
+    var wallTexture = new THREE.TextureLoader().load(texture);
     wallTexture.wrapS = THREE.RepeatWrapping;
     wallTexture.wrapT = THREE.RepeatWrapping;
     wallTexture.repeat.set(CONST.room.width / CONST.texture.widht, CONST.room.height / CONST.texture.height);
+
+    textures[texture] = {
+        wall: wallTexture
+    }
+});
+// Objects
+var wallGem = new THREE.BoxGeometry(CONST.room.width, CONST.room.height, 8);
+module.exports = function (opts) {
     // Materials
-    var wallMat = new THREE.MeshPhongMaterial({map: wallTexture, aoMap: wallTexture});
+    var wallMat = new THREE.MeshPhongMaterial({map: textures[opts.texture].wall});
     var group = new THREE.Object3D();
     var wallMesh = new THREE.Mesh(wallGem, wallMat);
     var light = new THREE.PointLight( 0xE25822, 0.15, 150);
@@ -54772,7 +54780,7 @@ module.exports = function (opts) {
 
     return group;
 };
-},{"../const":82,"three":48}],73:[function(require,module,exports){
+},{"../const":82,"lodash.foreach":42,"three":48}],73:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
 var floorTexture = new THREE.TextureLoader().load('img/floor/bedrock.png');
@@ -54799,27 +54807,14 @@ var upperMat = new THREE.MeshPhongMaterial({map: upperTex,transparent: true});
 var bottomMat = new THREE.MeshPhongMaterial({map: bottomTex,transparent: true});
 var doorPiece = new THREE.BoxGeometry(32, 32, 4);
 var TWEEN = require('tween.js');
-var StateMachine = require('javascript-state-machine');
+var StateMachine = require('javascript-state-machin\e');
 var mediator;
 var listener;
-
-var decalMaterial = new THREE.MeshPhongMaterial( {
-    specular: 0xffffff,
-    shininess: 0.5,
-    map: THREE.ImageUtils.loadTexture( 'img/blood/splatter.png' ),
-    normalMap: THREE.ImageUtils.loadTexture( 'img/blood/wrinkle-normal.jpg' ),
-    normalScale: new THREE.Vector2( .15, .15 ),
-    transparent: true,
-    depthTest: true,
-    depthWrite: false,
-    polygonOffset: true,
-    polygonOffsetFactor: -4,
-    wireframe: false
-});
 
 function create(opts) {
     var x = 0;
     var z = 0;
+    var vertical = false;
     var group = new THREE.Object3D();
     var upper = new THREE.Mesh(doorPiece, upperMat);
     var bottom = new THREE.Mesh(doorPiece, bottomMat);
@@ -54836,7 +54831,6 @@ function create(opts) {
     }
 
     else {
-        //vertical movement
         x = opts.from.x * CONST.room.width;
         z = opts.to.z * CONST.room.width;
         group.position.set(x - 16, CONST.room.height / 2, z);
@@ -54845,7 +54839,6 @@ function create(opts) {
     var openSound = new THREE.PositionalAudio(listener);
     var closeSound = new THREE.PositionalAudio(listener);
     openSound.load('audio/door__open--long.wav');
-
     closeSound.load('audio/door__close--short.wav');
     openSound.setRefDistance(15);
     openSound.setVolume(1);
@@ -54865,11 +54858,12 @@ function create(opts) {
             {name: 'close', from: 'opened', to: 'closed'}
         ],
         callbacks: {
-            onleavestate: function (event, from, to) {
+            onleavestate: function (event, from, to, args) {
                 if (event == 'open') {
                     var value;
                     openSound.play();
-                    if (from.x == opts.from.x && from.z == opts.from.z) {
+                    if (args.x == opts.from.x && args.z == opts.from.z) {
+                        // reverse opening
                         value = '-' + Math.PI / 2;
                     } else {
                         value = '+' + Math.PI / 2;
@@ -54885,7 +54879,7 @@ function create(opts) {
                 else if (event == 'close') {
                     var value;
                     closeSound.play();
-                    if (from.x == opts.from.x && from.z == opts.from.z) {
+                    if (args.x == opts.from.x && args.z == opts.from.z) {
                         value = '+' + Math.PI / 2;
                     } else {
                         value = '-' + Math.PI / 2;
@@ -54903,13 +54897,14 @@ function create(opts) {
     });
     mediator.on('door.open.' + opts.id, function (from) {
         if(state.can('open')){
-            state.open();
+            state.open(from);
         }
     });
 
     mediator.on('door.close.' + opts.id, function (from) {
         if(state.can('close')){
-            state.close();
+            state.close(from);
+
         }
     });
 
@@ -55127,10 +55122,13 @@ module.exports = function (mediator, listener) {
 },{"../const":82,"../libs":86,"three":48}],78:[function(require,module,exports){
 var THREE = require('three');
 var CONST = require('../const');
+var _ = {
+    forEach: require('lodash.foreach')
+};
 
 // Objects
 var mergeGeometry = new THREE.Geometry();
-
+var textures = {};
 var wallPiece = new THREE.BoxGeometry((CONST.room.width - CONST.door.width) / 2, CONST.room.height, 16);
 mergeGeometry.merge(wallPiece, wallPiece.matrix);
 wallPiece.applyMatrix(new THREE.Matrix4().makeTranslation((CONST.room.width - CONST.door.width) / 2 + CONST.door.width, 0, 0));
@@ -55139,31 +55137,36 @@ mergeGeometry.center();
 
 var wallPieceTop = new THREE.BoxGeometry(CONST.door.width, CONST.room.height - CONST.door.height, 16);
 wallPieceTop.applyMatrix(new THREE.Matrix4().makeTranslation(0, CONST.door.height / 2, 0));
-
-module.exports = function (opts) {
-    // Textures
-    var wallTexture = new THREE.TextureLoader().load(opts.texture);
+_.forEach(CONST.wallTextures, function(texture){
+    var wallTexture = new THREE.TextureLoader().load(texture);
     wallTexture.wrapS = THREE.RepeatWrapping;
     wallTexture.wrapT = THREE.RepeatWrapping;
     wallTexture.repeat.set((CONST.room.width - CONST.door.width) / 2 / CONST.texture.widht, CONST.room.height / CONST.texture.height);
 
-    var topTexture = new THREE.TextureLoader().load(opts.texture);
+    var topTexture = new THREE.TextureLoader().load(texture);
     topTexture.wrapS = THREE.RepeatWrapping;
     topTexture.wrapT = THREE.RepeatWrapping;
     topTexture.repeat.set(CONST.door.width / CONST.texture.widht, (CONST.room.height - CONST.door.height) / CONST.texture.height);
+
+    textures[texture] = {
+        wall: wallTexture,
+        top: topTexture
+    }
+});
+module.exports = function (opts) {
     // Materials
-    var wallMat = new THREE.MeshPhongMaterial({map: wallTexture});
-    var topMat = new THREE.MeshPhongMaterial({map: topTexture});
+    var wallMat = new THREE.MeshPhongMaterial({map: textures[opts.texture].wall});
+    var topMat = new THREE.MeshPhongMaterial({map: textures[opts.texture].top});
     var wallMesh = new THREE.Mesh(mergeGeometry, wallMat);
     var topMesh = new THREE.Mesh(wallPieceTop, topMat);
     var group = new THREE.Object3D();
     group.add(wallMesh);
     group.add(topMesh);
-    group.position.set(opts.x,opts.y, opts.z);
+    group.position.set(opts.x, opts.y, opts.z);
     group.rotation.y = opts.rotation;
     return group;
 };
-},{"../const":82,"three":48}],79:[function(require,module,exports){
+},{"../const":82,"lodash.foreach":42,"three":48}],79:[function(require,module,exports){
 module.exports={
   "start": {
     "title": "Wake up",
@@ -55217,6 +55220,13 @@ CONST.door = {
     height: 64,
     width: 32
 };
+
+CONST.wallTextures = [
+    "img/walls/cobblestone.png",
+    "img/walls/cobblestone_mossy.png",
+    "img/walls/brick.png",
+    "img/walls/nether_brick.png"
+];
 
 CONST.audio = {
     "url" : 'audio/'
@@ -55765,6 +55775,7 @@ module.exports = function (mediator, listener) {
 var Dungeon = require('dungeon-generator');
 var roomTypes = require('../config/roomTypes');
 var map = [];
+var CONST = require('../const');
 var libs = require('../libs');
 var _ = {
     difference: require('lodash.difference'),
@@ -55772,11 +55783,6 @@ var _ = {
     filter: require('lodash.filter'),
     clone: require('lodash.clone')
 };
-var textures = [
-    "img/walls/cobblestone.png",
-    "img/walls/cobblestone_mossy.png",
-    "img/walls/brick.png"
-];
 
 var roomsCount = 20;
 var dungeon;
@@ -55818,15 +55824,14 @@ function generate(){
                 row.push(null);
             }
             else {
-                var textureIndex = libs.getRandomInt(0, textures.length - 1);
+                var textureIndex = libs.getRandomInt(0, CONST.wallTextures.length - 1);
                 row.push({
-                    texture: textures[textureIndex]
+                    texture: CONST.wallTextures[textureIndex]
                 });
             }
         }
         map.push(row);
     }
-
 
     startPos = {
         z: dungeon.start_pos[1],
@@ -55887,7 +55892,7 @@ module.exports = {
         return wandererPos;
     }
 };
-},{"../config/roomTypes":80,"../libs":86,"dungeon-generator":12,"lodash.clone":38,"lodash.difference":40,"lodash.filter":41,"lodash.foreach":42}],89:[function(require,module,exports){
+},{"../config/roomTypes":80,"../const":82,"../libs":86,"dungeon-generator":12,"lodash.clone":38,"lodash.difference":40,"lodash.filter":41,"lodash.foreach":42}],89:[function(require,module,exports){
 var cycle = 0;
 var mediator;
 

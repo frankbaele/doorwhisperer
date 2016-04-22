@@ -14,6 +14,13 @@ CONST.door = {
     width: 32
 };
 
+CONST.wallTextures = [
+    "img/walls/cobblestone.png",
+    "img/walls/cobblestone_mossy.png",
+    "img/walls/brick.png",
+    "img/walls/nether_brick.png"
+];
+
 CONST.audio = {
     "url" : 'audio/'
 };

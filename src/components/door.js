@@ -6,27 +6,14 @@ var upperMat = new THREE.MeshPhongMaterial({map: upperTex,transparent: true});
 var bottomMat = new THREE.MeshPhongMaterial({map: bottomTex,transparent: true});
 var doorPiece = new THREE.BoxGeometry(32, 32, 4);
 var TWEEN = require('tween.js');
-var StateMachine = require('javascript-state-machine');
+var StateMachine = require('javascript-state-machin\e');
 var mediator;
 var listener;
-
-var decalMaterial = new THREE.MeshPhongMaterial( {
-    specular: 0xffffff,
-    shininess: 0.5,
-    map: THREE.ImageUtils.loadTexture( 'img/blood/splatter.png' ),
-    normalMap: THREE.ImageUtils.loadTexture( 'img/blood/wrinkle-normal.jpg' ),
-    normalScale: new THREE.Vector2( .15, .15 ),
-    transparent: true,
-    depthTest: true,
-    depthWrite: false,
-    polygonOffset: true,
-    polygonOffsetFactor: -4,
-    wireframe: false
-});
 
 function create(opts) {
     var x = 0;
     var z = 0;
+    var vertical = false;
     var group = new THREE.Object3D();
     var upper = new THREE.Mesh(doorPiece, upperMat);
     var bottom = new THREE.Mesh(doorPiece, bottomMat);
@@ -43,7 +30,6 @@ function create(opts) {
     }
 
     else {
-        //vertical movement
         x = opts.from.x * CONST.room.width;
         z = opts.to.z * CONST.room.width;
         group.position.set(x - 16, CONST.room.height / 2, z);
@@ -52,7 +38,6 @@ function create(opts) {
     var openSound = new THREE.PositionalAudio(listener);
     var closeSound = new THREE.PositionalAudio(listener);
     openSound.load('audio/door__open--long.wav');
-
     closeSound.load('audio/door__close--short.wav');
     openSound.setRefDistance(15);
     openSound.setVolume(1);
@@ -72,11 +57,12 @@ function create(opts) {
             {name: 'close', from: 'opened', to: 'closed'}
         ],
         callbacks: {
-            onleavestate: function (event, from, to) {
+            onleavestate: function (event, from, to, args) {
                 if (event == 'open') {
                     var value;
                     openSound.play();
-                    if (from.x == opts.from.x && from.z == opts.from.z) {
+                    if (args.x == opts.from.x && args.z == opts.from.z) {
+                        // reverse opening
                         value = '-' + Math.PI / 2;
                     } else {
                         value = '+' + Math.PI / 2;
@@ -92,7 +78,7 @@ function create(opts) {
                 else if (event == 'close') {
                     var value;
                     closeSound.play();
-                    if (from.x == opts.from.x && from.z == opts.from.z) {
+                    if (args.x == opts.from.x && args.z == opts.from.z) {
                         value = '+' + Math.PI / 2;
                     } else {
                         value = '-' + Math.PI / 2;
@@ -110,13 +96,14 @@ function create(opts) {
     });
     mediator.on('door.open.' + opts.id, function (from) {
         if(state.can('open')){
-            state.open();
+            state.open(from);
         }
     });
 
     mediator.on('door.close.' + opts.id, function (from) {
         if(state.can('close')){
-            state.close();
+            state.close(from);
+
         }
     });
 

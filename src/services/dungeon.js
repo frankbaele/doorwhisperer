@@ -1,6 +1,7 @@
 var Dungeon = require('dungeon-generator');
 var roomTypes = require('../config/roomTypes');
 var map = [];
+var CONST = require('../const');
 var libs = require('../libs');
 var _ = {
     difference: require('lodash.difference'),
@@ -8,11 +9,6 @@ var _ = {
     filter: require('lodash.filter'),
     clone: require('lodash.clone')
 };
-var textures = [
-    "img/walls/cobblestone.png",
-    "img/walls/cobblestone_mossy.png",
-    "img/walls/brick.png"
-];
 
 var roomsCount = 20;
 var dungeon;
@@ -54,15 +50,14 @@ function generate(){
                 row.push(null);
             }
             else {
-                var textureIndex = libs.getRandomInt(0, textures.length - 1);
+                var textureIndex = libs.getRandomInt(0, CONST.wallTextures.length - 1);
                 row.push({
-                    texture: textures[textureIndex]
+                    texture: CONST.wallTextures[textureIndex]
                 });
             }
         }
         map.push(row);
     }
-
 
     startPos = {
         z: dungeon.start_pos[1],
