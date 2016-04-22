@@ -10,7 +10,7 @@ var _ = {
     clone: require('lodash.clone')
 };
 
-var roomsCount = 20;
+var roomsCount = 6;
 var dungeon;
 var startPos;
 var exitPos;
@@ -42,7 +42,6 @@ function generate(){
     );
 
     dungeon.generate();
-    dungeon.print();
     for (var y = 0; y < dungeon.size[1]; y++) {
         var row = [];
         for (var x = 0; x < dungeon.size[0]; x++) {

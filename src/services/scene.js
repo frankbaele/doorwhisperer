@@ -1,6 +1,6 @@
 var THREE = require('three');
-
-module.exports = function(mediator){
+var mediator = require('../services/mediator');
+module.exports = function(){
     var scene = new THREE.Scene();
     mediator.on('scene.add',function(object){
         scene.add(object);

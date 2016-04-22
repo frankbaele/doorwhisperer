@@ -7,7 +7,7 @@ var bottomMat = new THREE.MeshPhongMaterial({map: bottomTex,transparent: true});
 var doorPiece = new THREE.BoxGeometry(32, 32, 4);
 var TWEEN = require('tween.js');
 var StateMachine = require('javascript-state-machin\e');
-var mediator;
+var mediator = require('../services/mediator');
 var listener;
 
 function create(opts) {
@@ -112,8 +112,7 @@ function create(opts) {
     });
     return group;
 }
-module.exports = function (_mediator_, _listener_) {
-    mediator = _mediator_;
+module.exports = function (_listener_) {
     listener = _listener_;
     return {
         create: create

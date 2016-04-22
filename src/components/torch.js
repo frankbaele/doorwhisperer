@@ -1,7 +1,8 @@
 var THREE = require('three');
 var libs = require('../libs');
 var CONST = require('../const');
-module.exports = function (mediator, listener) {
+var mediator = require('../services/mediator');
+module.exports = function (listener) {
     var group = new THREE.Object3D();
     var audio = new THREE.PositionalAudio(listener);
     var heart = new THREE.PositionalAudio(listener);
@@ -28,17 +29,15 @@ module.exports = function (mediator, listener) {
     heart.setLoop(true);
     audio.setRefDistance(15);
     heart.setRefDistance(15);
-    audio.setVolume(0.40);
-    heart.setVolume(0.40);
+    audio.setVolume(0.30);
+    heart.setVolume(0.30);
     var flickerPointLight = (function () {
         var lastAdjuster;
         return function flickerPointLight() {
             var adjuster = ( Math.random() - 0.5 );
             if (lastAdjuster) {
-
                 diff = ( adjuster - lastAdjuster ) * .2;
                 adjuster = lastAdjuster + diff;
-
             }
             var intensity = 4;
             intensity += adjuster * 4;

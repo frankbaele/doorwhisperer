@@ -7,7 +7,7 @@ var block = require('./block');
 var _ = {
     forEach : require('lodash.foreach')
 };
-var mediator;
+var mediator = require('../services/mediator');
 var listener;
 function create(opts){
     var context;
@@ -25,7 +25,7 @@ function create(opts){
         });
         if(opts.data.type == 'win'){
             // shiny shine end light
-            var shinyShine = new THREE.PointLight( 0xE25822, 1, 150);
+            var shinyShine = new THREE.PointLight( 0xE25822, 1, 250);
             group.add(shinyShine);
         }
     }
@@ -59,13 +59,13 @@ function create(opts){
         if(opts.data  && opts.data.type){
             mediator.trigger('message.show', opts.data.id);
             if( opts.data.type == 'lose'){
-                mediator.trigger('game.reset');
+                mediator.trigger('game.end');
                 mediator.trigger('game.death');
                 if(callbacks.condition){
                     callbacks.condition();
                 }
             } else if(opts.data.type == 'win'){
-                mediator.trigger('game.reset');
+                mediator.trigger('game.end');
                 mediator.trigger('game.win');
                 if(callbacks.condition){
                     callbacks.condition();
@@ -88,8 +88,7 @@ function create(opts){
     return group;
 }
 
-module.exports = function (_mediator_, _listener_) {
-    mediator = _mediator_;
+module.exports = function (_listener_) {
     listener = _listener_;
     return {
         create: create

@@ -3,8 +3,8 @@ var vkey = require('vkey');
 var _ = {
     debounce : require('lodash.debounce')
 };
-
-module.exports = function (mediator) {
+var mediator = require('../services/mediator');
+module.exports = function () {
     document.addEventListener('keydown', inputListner, false);
 
     function inputListner (ev){

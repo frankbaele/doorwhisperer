@@ -3,9 +3,8 @@ var vDom = {
     h: require('virtual-dom/h'),
     create: require('virtual-dom/create-element')
 };
-var StateMachine = require('javascript-state-machine');
-module.exports = function (mediator, container) {
-
+var mediator = require('../services/mediator');
+module.exports = function (container) {
     var text;
     var title;
     var img;

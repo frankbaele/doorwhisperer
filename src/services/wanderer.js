@@ -1,7 +1,7 @@
 var CONST = require('../const');
 var THREE = require('three');
-var map = require('../services/dungeon').map();
-var startPos = require('../services/dungeon').wandererPos();
+var dungeon = require('../services/dungeon');
+var map;
 var TWEEN = require('tween.js');
 var libs = require('../libs');
 var StateMachine = require('javascript-state-machine');
@@ -10,20 +10,19 @@ var wanTexture = new THREE.TextureLoader().load('img/char/wanderer.png');
 wanTexture.wrapS = THREE.RepeatWrapping;
 wanTexture.wrapT = THREE.RepeatWrapping;
 wanTexture.repeat.set(1,1);
-var reseting = false;
 var wanMat = new THREE.MeshPhongMaterial({map: wanTexture});
-
-module.exports = function(mediator, listener){
+var mediator = require('../services/mediator');
+module.exports = function(listener){
     var torchInst = new THREE.PointLight( 0xE25822, 1, 150);
     var steps = new THREE.PositionalAudio(listener);
     var growl = new THREE.PositionalAudio(listener);
+    var state;
     steps.setRefDistance(15);
     growl.setRefDistance(15);
     steps.position.y = -16;
     steps.load('audio/player__stepforloop.wav');
     growl.load('audio/growl--close.mp3');
     growl.setLoop(true);
-    growl.autoplay = true;
     growl.setRefDistance(10);
     growl.setVolume(1);
     steps.setVolume(0.7);
@@ -43,90 +42,92 @@ module.exports = function(mediator, listener){
     group.add(growl);
     group.add(mesh);
     group.add(torchInst);
-    var state = StateMachine.create({
-        initial: 'center',
-        error: function (eventName, from, to, args, errorCode, errorMessage) {},
-        events: [
-            {name: 'left', from: 'center', to: 'turning'},
-            {name: 'right', from: 'center', to: 'turning'},
-            {name: 'stopped', from: 'turning', to: 'center'},
-            {name: 'forward', from: 'center', to: 'door'},
-            {name: 'back', from: 'door', to: 'center'},
-            {name: 'enter', from: 'door', to: 'center'}
-        ],
-        callbacks: {
-            onbeforeforward: function (event, from, to) {
-                var coords = nextRoom(position, direction);
-                return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined' && map[coords.z][coords.x] !== null;
-            },
-            onforward: function (event, from, to) {
-                mediator.trigger('room.add.doors', nextRoom(position, direction));
-            },
-            onleft: function(){
-                if (direction == 0) {
-                    direction = directions.length - 1;
-                } else {
-                    direction = direction - 1;
-                }
-            },
-            onright: function(){
-                if (direction == directions.length - 1) {
-                    direction = 0;
-                } else {
-                    direction = direction + 1;
-                }
-            },
-            onturning: function(){
-                state.stopped();
-            },
-            onleavestate: function (event, from, to) {
-                if (event == 'right' || event == 'left') {
-                    rotate({
-                        'direction': event,
-                        'callback': function () {
-                            state.transition();
-                        }
-                    });
-                    return StateMachine.ASYNC;
-                }
-                else if (event == 'forward') {
-                    move({
-                        'direction': 'forward',
-                        'callback': function () {
-                            state.transition();
-                        }
-                    });
-                    return StateMachine.ASYNC;
-                }
-                else if (event == 'back') {
-                    move({
-                        'direction': 'back',
-                        'callback': function () {
-                            state.transition();
-                            mediator.trigger('room.remove.doors', nextRoom(position, direction));
-                        }
-                    });
-                    return StateMachine.ASYNC;
-                }
-                else if (event == 'enter') {
+    function createStateMachine(){
+        return StateMachine.create({
+            initial: 'center',
+            error: function (eventName, from, to, args, errorCode, errorMessage) {},
+            events: [
+                {name: 'left', from: 'center', to: 'turning'},
+                {name: 'right', from: 'center', to: 'turning'},
+                {name: 'stopped', from: 'turning', to: 'center'},
+                {name: 'forward', from: 'center', to: 'door'},
+                {name: 'back', from: 'door', to: 'center'},
+                {name: 'enter', from: 'door', to: 'center'}
+            ],
+            callbacks: {
+                onbeforeforward: function (event, from, to) {
                     var coords = nextRoom(position, direction);
-                    var id = doorId(position, direction);
-                    mediator.trigger('door.open' + id, position);
-                    moveRoom({
-                        'coords': coords,
-                        'callback': function () {
-                            mediator.trigger('wanderer.position', coords);
-                            position = coords;
-                            mediator.trigger('room.remove.doors', position);
-                            mediator.trigger('door.close.' + doorId(position, direction), position);
-                            state.transition();
-                        }
-                    });
-                    return StateMachine.ASYNC;
+                    return typeof map[coords.z] !== 'undefined' && typeof map[coords.z][coords.x] !== 'undefined' && map[coords.z][coords.x] !== null;
+                },
+                onforward: function (event, from, to) {
+                    mediator.trigger('room.add.doors', nextRoom(position, direction));
+                },
+                onleft: function(){
+                    if (direction == 0) {
+                        direction = directions.length - 1;
+                    } else {
+                        direction = direction - 1;
+                    }
+                },
+                onright: function(){
+                    if (direction == directions.length - 1) {
+                        direction = 0;
+                    } else {
+                        direction = direction + 1;
+                    }
+                },
+                onturning: function(){
+                    state.stopped();
+                },
+                onleavestate: function (event, from, to) {
+                    if (event == 'right' || event == 'left') {
+                        rotate({
+                            'direction': event,
+                            'callback': function () {
+                                state.transition();
+                            }
+                        });
+                        return StateMachine.ASYNC;
+                    }
+                    else if (event == 'forward') {
+                        move({
+                            'direction': 'forward',
+                            'callback': function () {
+                                state.transition();
+                            }
+                        });
+                        return StateMachine.ASYNC;
+                    }
+                    else if (event == 'back') {
+                        move({
+                            'direction': 'back',
+                            'callback': function () {
+                                state.transition();
+                                mediator.trigger('room.remove.doors', nextRoom(position, direction));
+                            }
+                        });
+                        return StateMachine.ASYNC;
+                    }
+                    else if (event == 'enter') {
+                        var coords = nextRoom(position, direction);
+                        var id = doorId(position, direction);
+                        mediator.trigger('door.open' + id, position);
+                        moveRoom({
+                            'coords': coords,
+                            'callback': function () {
+                                mediator.trigger('wanderer.position', coords);
+                                position = coords;
+                                mediator.trigger('room.remove.doors', position);
+                                mediator.trigger('door.close.' + doorId(position, direction), position);
+                                state.transition();
+                            }
+                        });
+                        return StateMachine.ASYNC;
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 
     function rotate(opts) {
         var value = group.rotation.y;
@@ -221,47 +222,53 @@ module.exports = function(mediator, listener){
         return id;
     }
 
-
-
     function init(coords){
-        position = coords;
+        growl.play();
+        map = dungeon.map();
+        state = createStateMachine();
+        position = dungeon.wandererPos();
         direction =  0;
         group.rotation.y = 0;
         group.position.z = coords.z * CONST.room.width + CONST.room.width / 2;
         group.position.y = height;
         group.position.x = coords.x * CONST.room.width;
         mediator.trigger('wanderer.position', coords);
+        mediator.trigger('scene.add', group);
     }
 
-    mediator.trigger('scene.add', group);
+    function destroy(){
+        growl.stop();
+        mediator.trigger('scene.remove', group);
+    }
+
     mediator.on('new.gamecycle', function(cycle){
-        if(!reseting){
-            //check if they are in the same room
-            mediator.trigger('wanderer.position', group.position);
-            var distance = libs.distanceVector3(group.position, userPos);
-            if(distance < 75){
-                reseting = true;
-                mediator.trigger('message.show', 'wanderer');
-                mediator.trigger('game.death');
-                mediator.trigger('game.reset');
-            }
-            if(cycle % 10 == 0){
-                var availableStates = state.transitions();
-                var index = libs.getRandomInt(0, availableStates.length -1);
-                if(state.can(availableStates[index])){
-                    state[availableStates[index]]();
-                }
+        //check if they are in the same room
+        mediator.trigger('wanderer.position', group.position);
+        var distance = libs.distanceVector3(group.position, userPos);
+        if(distance < 75){
+            mediator.trigger('message.show', 'wanderer');
+            mediator.trigger('game.death');
+            mediator.trigger('game.end');
+        }
+        if(cycle % 10 == 0){
+            var availableStates = state.transitions();
+            var index = libs.getRandomInt(0, availableStates.length -1);
+            if(state.can(availableStates[index])){
+                state[availableStates[index]]();
             }
         }
+    });
+
+    mediator.on('game.start', function(){
+        init();
+    });
+
+    mediator.on('game.end', function(){
+        destroy();
     });
 
     mediator.on('user.position', function (coords) {
         userPos = coords;
     });
 
-    mediator.on('game.reset', function(){
-        init(startPos);
-        reseting = false;
-    });
-    init(startPos);
 };

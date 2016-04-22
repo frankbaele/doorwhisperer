@@ -3,14 +3,15 @@ var TWEEN = require('tween.js');
 var CONST = require('../const');
 var libs = require('../libs');
 var torch = require('../components/torch');
+var mediator = require('../services/mediator');
 var _ = {
     clone: require('lodash.clone')
 };
 var height = CONST.texture.height + CONST.texture.height * 0.5;
-module.exports = function (mediator, listener) {
+module.exports = function (listener) {
     var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 250);
     camera.add(listener);
-    var torchInst = torch(mediator, listener);
+    var torchInst = torch(listener);
     var steptodoor = new THREE.Audio(listener);
     var death = new THREE.Audio(listener);
     var stepbackdoor = new THREE.Audio(listener);
@@ -32,6 +33,7 @@ module.exports = function (mediator, listener) {
     ambient.setVolume(0.80);
     death.load('audio/player__deadWilhelm.wav');
     death.setVolume(0.50);
+
     camera.add(steps);
     camera.add(steptodoor);
     camera.add(stepbackdoor);
@@ -39,9 +41,7 @@ module.exports = function (mediator, listener) {
     camera.add(torchInst);
     camera.add(ambient);
     camera.add(death);
-    mediator.on('new.gamecycle', function(){
-        mediator.trigger('user.position', camera.position);
-    });
+
     mediator.on('camera.rotate', rotate);
     mediator.on('camera.move', move);
     mediator.on('camera.move.room', moveRoom);
@@ -51,7 +51,6 @@ module.exports = function (mediator, listener) {
         camera.position.y = height;
         camera.position.x = coords.x * CONST.room.width;
     });
-
     mediator.trigger('scene.add', camera);
 
     function moveRoom(opts) {
@@ -64,6 +63,12 @@ module.exports = function (mediator, listener) {
         steps.play();
         new TWEEN.Tween(camera.position)
             .to({z: value.z, x: value.x},time)
+            .onStop(function () {
+                steps.stop();
+                if(opts.callback){
+                    opts.callback();
+                }
+            })
             .onComplete(function () {
                 steps.stop();
                 if(opts.callback){
@@ -98,6 +103,11 @@ module.exports = function (mediator, listener) {
 
         new TWEEN.Tween(camera.position)
             .to({z: value.z, x: value.x}, time)
+            .onStop(function () {
+                if(opts.callback){
+                    opts.callback();
+                }
+            })
             .onComplete(function () {
                 if(opts.callback){
                     opts.callback();
@@ -117,6 +127,11 @@ module.exports = function (mediator, listener) {
         turn.play();
         new TWEEN.Tween(camera.rotation)
             .to({y: value}, time)
+            .onStop(function () {
+                if(opts.callback){
+                    opts.callback();
+                }
+            })
             .onComplete(function () {
                 if(opts.callback){
                     opts.callback();
@@ -124,8 +139,20 @@ module.exports = function (mediator, listener) {
             })
             .start();
     }
+    mediator.on('new.gamecycle', function(){
+        mediator.trigger('user.position', camera.position);
+    });
+
     mediator.on('game.death', function(){
         death.play()
+    });
+
+    mediator.on('game.start', function(){
+
+    });
+
+    mediator.on('game.end', function(){
+
     });
     return camera;
 };

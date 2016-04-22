@@ -1,16 +1,20 @@
-var map = require('../services/dungeon').map();
 var CONST = require('../const');
+var map;
+var mediator = require('../services/mediator');
 var _ = {
     difference: require('lodash.difference'),
     forEach: require('lodash.foreach')
 };
-module.exports = function (mediator, listener) {
-    var room = require('../components/room')(mediator, listener);
-    var door = require('../components/door')(mediator, listener);
+
+module.exports = function (listener) {
+    var room = require('../components/room')(listener);
+    var door = require('../components/door')(listener);
     var rooms = {};
     var doorList = {};
 
     function addRoom(coords){
+        console.log(coords);
+        var map = require('../services/dungeon').map();
         var walls = {};
         if (map[coords.z - 1] && map[coords.z - 1][coords.x]) {
             walls.top = true;
@@ -40,7 +44,7 @@ module.exports = function (mediator, listener) {
     }
 
     function addRoomDoors(coords){
-
+        var map = require('../services/dungeon').map();
         if (map[coords.z - 1] && map[coords.z - 1][coords.x]) {
             var id = (coords.z - 1) + '_' + coords.x + '--' + coords.z + '_' + coords.x;
             if (!doorList[id]) {
@@ -106,8 +110,9 @@ module.exports = function (mediator, listener) {
         });
     }
 
-    function reset(){
+    function destroy(){
         _.forEach(rooms, function(room){
+            removeRoomDoors(room);
             removeRoom(room);
         });
     }
@@ -122,7 +127,6 @@ module.exports = function (mediator, listener) {
     });
 
     mediator.on('room.center', function (coords) {
-        reset();
         setTimeout(function(){
             addRoom(coords);
             addRoomDoors(coords);
@@ -148,6 +152,7 @@ module.exports = function (mediator, listener) {
 
     function roomDoors(coords) {
         var doors = [];
+        var map = require('../services/dungeon').map();
         if (map[coords.z - 1] && map[coords.z - 1][coords.x]) {
             var id = (coords.z - 1) + '_' + coords.x + '--' + coords.z + '_' + coords.x;
             doors.push(id);
@@ -166,4 +171,11 @@ module.exports = function (mediator, listener) {
         }
         return doors;
     }
+    mediator.on('game.start', function(){
+
+    });
+
+    mediator.on('game.end', function(){
+        destroy();
+    });
 };
