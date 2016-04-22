@@ -86,21 +86,16 @@ module.exports = function () {
                     else if (event == 'enter') {
                         var coords = nextRoom(position, direction);
                         mediator.trigger('door.open.' + doorId(position, direction), position);
-                        mediator.trigger('room.enter.' + coords.z + '_' + coords.x, {
-                            success: function () {
-                                mediator.trigger('camera.move.room', {
-                                    'coords': coords,
-                                    'callback': function () {
-                                        mediator.trigger('room.remove', position);
-                                        mediator.trigger('door.close.' + doorId(position, direction), position);
-                                        position = coords;
-                                        state.transition();
-                                    }
-                                });
-                            },
-                            condition: function () {
-                                state.transition();
-                            }
+                        mediator.trigger('room.enter.' + coords.z + '_' + coords.x, function () {
+                            mediator.trigger('camera.move.room', {
+                                'coords': coords,
+                                'callback': function () {
+                                    mediator.trigger('room.remove', position);
+                                    mediator.trigger('door.close.' + doorId(position, direction), position);
+                                    position = coords;
+                                    state.transition();
+                                }
+                            });
                         });
                         return StateMachine.ASYNC;
                     }

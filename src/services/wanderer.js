@@ -45,7 +45,14 @@ module.exports = function(listener){
     function createStateMachine(){
         return StateMachine.create({
             initial: 'center',
-            error: function (eventName, from, to, args, errorCode, errorMessage) {},
+            error: function (eventName, from, to, args, errorCode, errorMessage) {
+                console.log(eventName);
+                console.log(from);
+                console.log(to);
+                console.log(args);
+                console.log(errorCode);
+                console.log(errorMessage);
+            },
             events: [
                 {name: 'left', from: 'center', to: 'turning'},
                 {name: 'right', from: 'center', to: 'turning'},

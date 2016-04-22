@@ -32,21 +32,20 @@ function init(container) {
         mediator.trigger('game.start');
         animate();
     });
+
     window.addEventListener( 'resize', onWindowResize, false );
     mediator.on('game.end', function(){
-        TWEEN.removeAll();
         dungeon.generate();
         setTimeout(function(){
-            console.log('restart');
             mediator.trigger('game.start');
-        }, 500);
+        }, 250);
     });
+
     function onWindowResize(){
         renderer.setSize( window.innerWidth, window.innerHeight );
 
     }
 }
-
 
 function animate() {
     requestAnimationFrame( animate );

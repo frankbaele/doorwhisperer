@@ -14,6 +14,7 @@ function create(opts){
     var sounds = {};
     var group = new THREE.Object3D();
     context = opts.z + '_' + opts.x;
+
     group.add(floor());
     if(opts.data){
         _.forEach(opts.data.sounds, function(sound){
@@ -55,26 +56,20 @@ function create(opts){
 
     group.position.set(opts.x * (CONST.room.width), opts.y + CONST.room.height/2, opts.z * (CONST.room.width));
 
-    mediator.on('room.enter.' + context, function(callbacks){
+    mediator.on('room.enter.' + context, function(callback){
         if(opts.data  && opts.data.type){
             mediator.trigger('message.show', opts.data.id);
             if( opts.data.type == 'lose'){
                 mediator.trigger('game.end');
                 mediator.trigger('game.death');
-                if(callbacks.condition){
-                    callbacks.condition();
-                }
             } else if(opts.data.type == 'win'){
                 mediator.trigger('game.end');
-                mediator.trigger('game.win');
-                if(callbacks.condition){
-                    callbacks.condition();
-                }
             }
         }
+
         else {
-            if(callbacks.success){
-                callbacks.success();
+            if(callback){
+                callback();
             }
         }
     }, context);
@@ -82,7 +77,12 @@ function create(opts){
     mediator.on('room.remove.' + context , function(){
         mediator.off(null, null, context);
         mediator.trigger('scene.remove', group);
-    });
+    }, context);
+
+    mediator.on('rooms.remove' , function(){
+        mediator.trigger('scene.remove', group);
+        mediator.off(null, null, context);
+    }, context);
 
     mediator.trigger('scene.add', group);
     return group;

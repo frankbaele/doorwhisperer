@@ -13,7 +13,6 @@ module.exports = function (listener) {
     var doorList = {};
 
     function addRoom(coords){
-        console.log(coords);
         var map = require('../services/dungeon').map();
         var walls = {};
         if (map[coords.z - 1] && map[coords.z - 1][coords.x]) {
@@ -111,10 +110,10 @@ module.exports = function (listener) {
     }
 
     function destroy(){
-        _.forEach(rooms, function(room){
-            removeRoomDoors(room);
-            removeRoom(room);
-        });
+        mediator.trigger('doors.remove');
+        mediator.trigger('rooms.remove');
+        doorList = {};
+        rooms = {};
     }
 
     mediator.on('room.add',function(coords){

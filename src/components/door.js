@@ -17,6 +17,7 @@ function create(opts) {
     var group = new THREE.Object3D();
     var upper = new THREE.Mesh(doorPiece, upperMat);
     var bottom = new THREE.Mesh(doorPiece, bottomMat);
+    var context = opts.id;
     upper.position.x = 16;
     bottom.position.y = -32;
     bottom.position.x = 16;
@@ -51,6 +52,12 @@ function create(opts) {
     var state = StateMachine.create({
         initial: 'closed',
         error: function (eventName, from, to, args, errorCode, errorMessage) {
+            console.log(eventName);
+            console.log(from);
+            console.log(to);
+            console.log(args);
+            console.log(errorCode);
+            console.log(errorMessage);
         },
         events: [
             {name: 'open', from: 'closed', to: 'opened'},
@@ -98,20 +105,28 @@ function create(opts) {
         if(state.can('open')){
             state.open(from);
         }
-    });
+    }, context);
 
     mediator.on('door.close.' + opts.id, function (from) {
         if(state.can('close')){
             state.close(from);
 
         }
-    });
+    }, context);
 
     mediator.on('door.remove.' + opts.id, function () {
         mediator.trigger('scene.remove', group);
-    });
+        mediator.off(null, null, context);
+    }, context);
+
+    mediator.on('doors.remove', function () {
+        mediator.trigger('scene.remove', group);
+        mediator.off(null, null, context);
+    }, context);
+
     return group;
 }
+
 module.exports = function (_listener_) {
     listener = _listener_;
     return {

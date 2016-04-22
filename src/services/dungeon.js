@@ -42,6 +42,7 @@ function generate(){
     );
 
     dungeon.generate();
+
     for (var y = 0; y < dungeon.size[1]; y++) {
         var row = [];
         for (var x = 0; x < dungeon.size[0]; x++) {
