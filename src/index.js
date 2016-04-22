@@ -24,7 +24,7 @@ function init(container) {
     textures().then(function(){
         dungeon.generate();
         var user = require('./services/user')(listener);
-        //var wanderer = require('./services/wanderer')(listener);
+        var wanderer = require('./services/wanderer')(listener);
         renderer = new THREE.WebGLRenderer();
         renderer.setSize( window.innerWidth, window.innerHeight - 4);
         container.appendChild( renderer.domElement );
@@ -38,7 +38,7 @@ function init(container) {
         dungeon.generate();
         setTimeout(function(){
             mediator.trigger('game.start');
-        }, 250);
+        }, 1000);
     });
 
     function onWindowResize(){

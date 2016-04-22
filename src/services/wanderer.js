@@ -5,6 +5,7 @@ var map;
 var TWEEN = require('tween.js');
 var libs = require('../libs');
 var StateMachine = require('javascript-state-machine');
+
 var height = CONST.texture.height + CONST.texture.height * 0.5;
 var wanTexture = new THREE.TextureLoader().load('img/char/wanderer.png');
 wanTexture.wrapS = THREE.RepeatWrapping;
@@ -12,6 +13,7 @@ wanTexture.wrapT = THREE.RepeatWrapping;
 wanTexture.repeat.set(1,1);
 var wanMat = new THREE.MeshPhongMaterial({map: wanTexture});
 var mediator = require('../services/mediator');
+var ended = true;
 module.exports = function(listener){
     var torchInst = new THREE.PointLight( 0xE25822, 1, 150);
     var steps = new THREE.PositionalAudio(listener);
@@ -42,6 +44,7 @@ module.exports = function(listener){
     group.add(growl);
     group.add(mesh);
     group.add(torchInst);
+
     function createStateMachine(){
         return StateMachine.create({
             initial: 'center',
@@ -229,18 +232,19 @@ module.exports = function(listener){
         return id;
     }
 
-    function init(coords){
-        growl.play();
+    function init(){
+        growl.autoplay = true;
         map = dungeon.map();
         state = createStateMachine();
         position = dungeon.wandererPos();
         direction =  0;
         group.rotation.y = 0;
-        group.position.z = coords.z * CONST.room.width + CONST.room.width / 2;
+        group.position.z = position.z * CONST.room.width + CONST.room.width / 2;
         group.position.y = height;
-        group.position.x = coords.x * CONST.room.width;
-        mediator.trigger('wanderer.position', coords);
+        group.position.x = position.x * CONST.room.width;
+        mediator.trigger('wanderer.position', position);
         mediator.trigger('scene.add', group);
+        ended = false;
     }
 
     function destroy(){
@@ -249,19 +253,22 @@ module.exports = function(listener){
     }
 
     mediator.on('new.gamecycle', function(cycle){
-        //check if they are in the same room
-        mediator.trigger('wanderer.position', group.position);
-        var distance = libs.distanceVector3(group.position, userPos);
-        if(distance < 75){
-            mediator.trigger('message.show', 'wanderer');
-            mediator.trigger('game.death');
-            mediator.trigger('game.end');
-        }
-        if(cycle % 10 == 0){
-            var availableStates = state.transitions();
-            var index = libs.getRandomInt(0, availableStates.length -1);
-            if(state.can(availableStates[index])){
-                state[availableStates[index]]();
+        if(!ended){
+            //check if they are in the same room
+            mediator.trigger('wanderer.position', group.position);
+            var distance = libs.distanceVector3(group.position, userPos);
+            if(distance < 75){
+                ended = true;
+                mediator.trigger('message.show', 'wanderer');
+                mediator.trigger('game.death');
+                mediator.trigger('game.end');
+            }
+            if(cycle % 10 == 0){
+                var availableStates = state.transitions();
+                var index = libs.getRandomInt(0, availableStates.length -1);
+                if(state.can(availableStates[index])){
+                    state[availableStates[index]]();
+                }
             }
         }
     });

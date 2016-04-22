@@ -10,12 +10,13 @@ var _ = {
     clone: require('lodash.clone')
 };
 
-var roomsCount = 6;
+var roomsCount = 7;
 var dungeon;
 var startPos;
 var exitPos;
 var wandererPos;
 function generate(){
+    map = [];
     dungeon = new Dungeon(
         {
             "size": [100, 100],
@@ -63,6 +64,7 @@ function generate(){
         z: dungeon.start_pos[1],
         x: dungeon.start_pos[0]
     };
+
     map[startPos.z][startPos.x].texture = 'img/walls/nether_brick.png';
     var lastRoom = dungeon.children[dungeon.children.length - 1];
     exitPos = {
