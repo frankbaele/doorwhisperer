@@ -7,7 +7,3 @@ movement -> arrow keys
 
 open door -> space
 
-# Credits
-
-The game uses the cynipss-synesthesia minecraft texture pack
-http://www.minecraftforum.net/forums/mapping-and-modding/resource-packs/2091395-x512-1-7-cynipss-synesthesia
